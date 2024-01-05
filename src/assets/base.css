@@ -1,0 +1,164 @@
+/* color palette from <https://github.com/vuejs/theme> */
+:root {
+    --vt-c-white: #ffffff;
+    --vt-c-white-soft: #f8f8f8;
+    --vt-c-white-mute: #f2f2f2;
+
+    --vt-c-black: #181818;
+    --vt-c-black-soft: #222222;
+    --vt-c-black-mute: #282828;
+
+    --vt-c-indigo: #2c3e50;
+
+    --vt-c-divider-light-1: rgba(60, 60, 60, 0.29);
+    --vt-c-divider-light-2: rgba(60, 60, 60, 0.12);
+    --vt-c-divider-dark-1: rgba(84, 84, 84, 0.65);
+    --vt-c-divider-dark-2: rgba(84, 84, 84, 0.48);
+
+    --vt-c-text-light-1: var(--vt-c-indigo);
+    --vt-c-text-light-2: rgba(60, 60, 60, 0.66);
+    --vt-c-text-dark-1: var(--vt-c-white);
+    --vt-c-text-dark-2: rgba(235, 235, 235, 0.64);
+
+    --as-color-primary-0: #AA6F39; /* Main Primary color */
+    --as-color-primary-1: #513B27;
+    --as-color-primary-2: #7D5733;
+    --as-color-primary-3: #D78437;
+    --as-color-primary-4: #FF922E;
+
+    --as-color-secondary-1-0: #94A537; /* Main Secondary color (1) */
+    --as-color-secondary-1-1: #484E26;
+    --as-color-secondary-1-2: #6F7A32;
+    --as-color-secondary-1-3: #B9D035;
+    --as-color-secondary-1-4: #D9F82D;
+
+    --as-color-secondary-2-0: #6A266F; /* Main Secondary color (2) */
+    --as-color-secondary-2-1: #331A35;
+    --as-color-secondary-2-2: #4F2252;
+    --as-color-secondary-2-3: #85258C;
+    --as-color-secondary-2-4: #A220AB;
+
+    --as-color-complement-0: #246068; /* Main Complement color */
+    --as-color-complement-1: #192E32;
+    --as-color-complement-2: #20474D;
+    --as-color-complement-3: #247883;
+    --as-color-complement-4: #1F91A1;
+}
+
+
+/* semantic color variables for this project */
+:root {
+    --color-background: var(--vt-c-white);
+    --color-background-soft: var(--as-color-complement-0);
+    --color-background-mute: var(--as-color-complement-1);
+
+    --color-border: var(--as-color-primary-1);
+    --color-border-hover: var(--as-color-primary-0);
+
+    --color-heading: var(--as-color-secondary-1-4);
+    --color-text: var(--vt-c-text-light-1);
+
+    --color-button-primary: var(--as-color-secondary-2-2);
+    --color-button-primary-text: var(--as-color-secondary-1-4);
+    --color-button-secondary: var(--as-color-complement-4);
+    --color-button-secondary-text: var(--as-color-complement-1);
+
+    --section-gap: 160px;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --color-background: var(--vt-c-black);
+        --color-background-soft: var(--vt-c-black-soft);
+        --color-background-mute: var(--vt-c-black-mute);
+
+        --color-border: var(--vt-c-divider-dark-2);
+        --color-border-hover: var(--vt-c-divider-dark-1);
+
+        --color-heading: var(--vt-c-text-dark-1);
+        --color-text: var(--vt-c-text-dark-2);
+
+        --color-button-primary: var(--as-color-secondary-2-4);
+    }
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    position: relative;
+    font-weight: normal;
+}
+
+body {
+    min-height: 100vh;
+    color: var(--color-text);
+    background: var(--color-background);
+    transition: color 0.5s, background-color 0.5s;
+    line-height: 1.6;
+    font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
+    Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+    font-size: 15px;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.btn-icon-only {
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+    padding: 2px;
+}
+
+.btn {
+    background: var(--color-button-secondary);
+    color: var(--color-button-primary-text);
+    border: none;
+    padding: 0.75em;
+    width: fit-content;
+    border-radius: 4px;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+}
+
+.btn-group {
+    display: flex;
+    flex-direction: row;
+    justify-content: end;
+    column-gap: 0.5em;
+}
+
+.btn--is-primary {
+    background: var(--color-button-primary);
+}
+
+.data-table {
+    border-collapse: collapse;
+}
+
+.data-table th {
+    background-color: var(--as-color-secondary-1-4);
+}
+
+.data-table th,
+.data-table td {
+    padding: 0.25em;
+    text-align: start;
+    border-left: 1px solid var(--color-border);
+    margin: 0;
+}
+.data-table th:first-child,
+.data-table td:first-child {
+    border-left: none;
+}
+
+.data-table tr {
+    border-bottom: 1px solid var(--color-border);
+}
+.data-table tr:last-child {
+    border-bottom: none;
+}
