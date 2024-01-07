@@ -33,8 +33,8 @@ export default {
 </script>
 <style scoped>
 header {
-  background-color: var(--as-color-primary-4);
-  color: white;
+  background-color: var(--color-heading);
+  color: var(--color-text);
   display: block;
   margin-bottom: 0.5em;
 }
@@ -43,8 +43,9 @@ header .wrapper nav {
 }
 
 nav {
+  flex-wrap: wrap;
+  display: flex;
   padding: 0.25em;
-  color: white;
   font-size: larger;
   font-weight: bold;
 }

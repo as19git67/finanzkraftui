@@ -52,16 +52,16 @@
     --color-background-soft: var(--as-color-complement-0);
     --color-background-mute: var(--as-color-complement-1);
 
-    --color-border: var(--as-color-primary-1);
+    --color-border: var(--as-color-primary-2);
     --color-border-hover: var(--as-color-primary-0);
 
     --color-heading: var(--as-color-secondary-1-4);
-    --color-text: var(--vt-c-text-light-1);
+    --color-text: var(--as-color-primary-1);
 
-    --color-button-primary: var(--as-color-secondary-2-2);
-    --color-button-primary-text: var(--as-color-secondary-1-4);
-    --color-button-secondary: var(--as-color-complement-4);
-    --color-button-secondary-text: var(--as-color-complement-1);
+    --color-button-primary: var(--as-color-primary-4);
+    --color-button-primary-text: var(--as-color-primary-1);
+    --color-button-secondary: var(--as-color-primary-3);
+    --color-button-secondary-text: var(--as-color-primary-1);
 
     --section-gap: 160px;
 }
