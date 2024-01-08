@@ -2,32 +2,31 @@ import axios from "axios";
 import { defineStore } from "pinia";
 import { UserStore } from "@/stores/user";
 
-export const TiereStore = defineStore("tiere", {
+export const AccountStore = defineStore("account", {
   state: () => {
     return {
-      _gattungen: [],
+      _accounts: [],
     };
   },
   getters: {
-    gattungen(state) {
-      return state._gattungen;
+    accounts(state) {
+      return state._accounts;
     },
   },
   actions: {
-    async getGattungen() {
+    async getAccounts() {
       const userStore = UserStore();
       if (userStore.authenticated) {
         const config = userStore.getBearerAuthRequestHeader();
-        const response = await axios.get("/api/tiere/gattung", config);
-        //const response = await axios.get("/api/tiere", config);
+        const response = await axios.get("/api/accounts", config);
         if (response.status === 200) {
-          this._gattungen = response.data.gattungen;
+          this._accounts = response.data.accounts;
         } else {
-          this._gattungen = [];
+          this._accounts = [];
         }
         return response.status;
       } else {
-        this._gattungen = [];
+        this._accounts = [];
         return 401;
       }
     },

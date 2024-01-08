@@ -1,24 +1,24 @@
 <template>
-<h1>Mein kleines Tierlexikon</h1>
-  <table v-if="gattungen.length">
+<h1>Accounts</h1>
+  <table v-if="accounts.length">
     <thead>
       <tr>
-        <th>Gattungen</th>
+        <th>Accounts</th>
       </tr>
     </thead>
     <tbody>
-      <tr v-for="item of gattungen" :key="item">
-        <td>{{ item }}</td>
+      <tr v-for="item of accounts" :key="item">
+        <td>{{ item.name }}</td>
       </tr>
     </tbody>
   </table>
-  <p v-else>Keine Gattungen vom Server geladen</p>
+  <p v-else>Keine Accounts vom Server geladen</p>
 </template>
 
 <script>
 import { mapActions, mapState, mapStores } from "pinia";
 import { UserStore } from "@/stores/user";
-import { TiereStore } from "@/stores/tiere";
+import { AccountStore } from "@/stores/accounts";
 import router from "@/router";
 
 export default {
@@ -30,15 +30,15 @@ export default {
   },
   computed: {
     ...mapStores(UserStore),
-    ...mapStores(TiereStore),
+    ...mapStores(AccountStore),
     ...mapState(UserStore, ["authenticated"]),
-    ...mapState(TiereStore, ["gattungen"]),
+    ...mapState(AccountStore, ["accounts"]),
   },
   methods: {
-    ...mapActions(TiereStore, ["getGattungen"]),
-    fillGattungen() {
+    ...mapActions(AccountStore, ["getAccounts"]),
+    fillAccounts() {
       this.error = "";
-      this.getGattungen()
+      this.getAccounts()
         .then((result) => {
           switch (result) {
             case 200:
@@ -47,7 +47,7 @@ export default {
               router.replace("/login");
               break;
             default:
-              this.error = `Fehler beim Abrufen der Gattungen: ${result}`;
+              this.error = `Fehler beim Abrufen der Konten: ${result}`;
           }
         })
         .catch((error) => {
@@ -57,7 +57,7 @@ export default {
   },
   mounted() {
     this.error = null;
-    this.fillGattungen();
+    this.fillAccounts();
   },
 };
 </script>
