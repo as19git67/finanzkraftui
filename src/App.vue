@@ -45,7 +45,6 @@ header .wrapper nav {
 nav {
   flex-wrap: wrap;
   display: flex;
-  padding: 0.25em;
   font-size: larger;
   font-weight: bold;
 }
@@ -58,7 +57,6 @@ nav a.router-link-exact-active:hover {
 
 nav a {
   border-left: 1px solid;
-  padding-left: 1em;
 }
 
 nav a:first-of-type {

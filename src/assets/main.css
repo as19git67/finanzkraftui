@@ -9,7 +9,7 @@ a,
 .green {
   text-decoration: none;
   transition: 0.4s;
-  margin-right: 1em;
+  padding: 0.25em 0.5em 0.25em 0.5em;
 }
 
 @media (hover: hover) {
