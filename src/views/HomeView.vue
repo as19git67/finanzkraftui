@@ -5,12 +5,14 @@
       <tr>
         <th>Name</th>
         <th>IBAN</th>
+        <th>Währung</th>
       </tr>
     </thead>
     <tbody>
       <tr v-for="item of accounts" :key="item">
         <td>{{ item.name }}</td>
         <td>{{ item.iban }}</td>
+        <td>{{ item.currencyName }}</td>
       </tr>
     </tbody>
   </table>
