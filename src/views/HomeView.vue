@@ -1,14 +1,16 @@
 <template>
-<h1>Accounts</h1>
+<h1>Konten</h1>
   <table v-if="accounts.length">
     <thead>
       <tr>
-        <th>Accounts</th>
+        <th>Name</th>
+        <th>IBAN</th>
       </tr>
     </thead>
     <tbody>
       <tr v-for="item of accounts" :key="item">
         <td>{{ item.name }}</td>
+        <td>{{ item.iban }}</td>
       </tr>
     </tbody>
   </table>

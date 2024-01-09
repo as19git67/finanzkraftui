@@ -1,6 +1,7 @@
 import axios from "axios";
 import { defineStore } from "pinia";
 import { UserStore } from "@/stores/user";
+import _ from "lodash";
 
 export const AccountStore = defineStore("account", {
   state: () => {
@@ -20,7 +21,13 @@ export const AccountStore = defineStore("account", {
         const config = userStore.getBearerAuthRequestHeader();
         const response = await axios.get("/api/accounts", config);
         if (response.status === 200) {
-          this._accounts = response.data.accounts;
+          if (_.isArray(response.data)) {
+            this._accounts = _.map(response.data, (account) => {
+              return {id: account.id, name: account.name, iban: account.iban};
+            });
+          } else {
+            this._accounts = [];
+          }
         } else {
           this._accounts = [];
         }
