@@ -1,28 +1,26 @@
 <template>
-<h1>Konten</h1>
-  <table v-if="accounts.length">
+<h1>Buchungen</h1>
+  <table v-if="transactions.length">
     <thead>
       <tr>
-        <th>Name</th>
-        <th>IBAN</th>
-        <th>Währung</th>
+        <th>Text</th>
+        <th>Betrag</th>
       </tr>
     </thead>
     <tbody>
-      <tr v-for="item of accounts" :key="item">
-        <td>{{ item.name }}</td>
-        <td>{{ item.iban }}</td>
-        <td>{{ item.currencyName }}</td>
+      <tr v-for="item of transactions" :key="item">
+        <td>{{ item.text }}</td>
+        <td>{{ item.amount }}</td>
       </tr>
     </tbody>
   </table>
-  <p v-else>Keine Accounts vom Server geladen</p>
+  <p v-else>Keine Buchungen vom Server geladen</p>
 </template>
 
 <script>
 import { mapActions, mapState, mapStores } from "pinia";
 import { UserStore } from "@/stores/user";
-import { AccountStore } from "@/stores/accounts";
+import { TransactionStore } from "@/stores/transactions";
 import router from "@/router";
 
 export default {
@@ -34,24 +32,25 @@ export default {
   },
   computed: {
     ...mapStores(UserStore),
-    ...mapStores(AccountStore),
+    ...mapStores(TransactionStore),
     ...mapState(UserStore, ["authenticated"]),
-    ...mapState(AccountStore, ["accounts"]),
+    ...mapState(TransactionStore, ["transactions"]),
   },
   methods: {
-    ...mapActions(AccountStore, ["getAccounts"]),
-    fillAccounts() {
+    ...mapActions(TransactionStore, ["getTransactions"]),
+    fillTransactions() {
       this.error = "";
-      this.getAccounts()
+      this.getTransactions()
         .then((result) => {
           switch (result) {
             case 200:
               break; // all ok
             case 401:
+            case 404:
               router.replace("/login");
               break;
             default:
-              this.error = `Fehler beim Abrufen der Konten: ${result}`;
+              this.error = `Fehler beim Abrufen der Transaktionen: ${result}`;
           }
         })
         .catch((error) => {
@@ -61,7 +60,7 @@ export default {
   },
   mounted() {
     this.error = null;
-    this.fillAccounts();
+    this.fillTransactions();
   },
 };
 </script>

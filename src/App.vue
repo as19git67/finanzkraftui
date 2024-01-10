@@ -9,13 +9,13 @@ import { UserStore } from "@/stores/user";
 
     <div class="wrapper">
       <nav>
-        <RouterLink to="/">Home</RouterLink>
+        <RouterLink to="/" v-if="authenticated">Home</RouterLink>
+        <RouterLink to="/Accounts" v-if="authenticated">Konten</RouterLink>
+        <RouterLink to="/Users" v-if="authenticated">User</RouterLink>
+        <RouterLink to="/Roles" v-if="authenticated">Rollen</RouterLink>
+        <RouterLink to="/registration1" v-if="!authenticated">Register</RouterLink>
         <RouterLink to="/logout" v-if="authenticated">Logout</RouterLink>
         <RouterLink to="/login" v-else>Login</RouterLink>
-        <RouterLink to="/Users">Users</RouterLink>
-        <RouterLink to="/Roles">Roles</RouterLink>
-        <RouterLink to="/registration1">Register</RouterLink>
-        <RouterLink to="/about">About</RouterLink>
       </nav>
     </div>
   </header>
@@ -64,13 +64,5 @@ nav a:first-of-type {
 }
 
 @media (min-width: 1024px) {
-  header {
-  }
-
-  header .wrapper {
-  }
-
-  nav {
-  }
 }
 </style>
