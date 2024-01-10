@@ -1,6 +1,6 @@
 import axios from "axios";
-import { defineStore } from "pinia";
-import { UserStore } from "@/stores/user";
+import {defineStore} from "pinia";
+import {UserStore} from "@/stores/user";
 import _ from "lodash";
 
 export const TransactionStore = defineStore("transaction", {
@@ -25,14 +25,18 @@ export const TransactionStore = defineStore("transaction", {
             if (_.isArray(response.data)) {
               this._transactions = _.map(response.data, (t) => {
                 return {
-                  id: t.id,
-                  text: t.name,
-                  amount: t.amount,
-                  accountId: t.account_id,
+                  account_id: t.account_id,
                   accountName: t.account_name,
-                  currency: t.currency_id,
+                  id: t.t_id,
+                  bookingDate: t.t_booking_date,
+                  valueDate: t.t_value_date,
+                  text: t.t_text,
+                  amount: t.t_amount,
+                  notes: t.t_notes,
+                  categoryId: t.category_id,
+                  categoryName: t.category_name,
                   currencyName: t.currency_name,
-                  currencyShort: t.currency_short
+                  currencyShort: t.currency_short,
                 };
               });
             } else {
@@ -42,7 +46,7 @@ export const TransactionStore = defineStore("transaction", {
             this._transactions = [];
           }
           return response.status;
-        } catch(ex) {
+        } catch (ex) {
           this._transactions = [];
           return ex.error;
         }
