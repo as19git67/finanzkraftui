@@ -9,7 +9,7 @@
     </tr>
     </thead>
     <tbody>
-    <tr v-for="item of accounts" :key="item">
+    <tr v-for="(item, index) of accounts" :key="item" :class="{ 'account-closed': !!item.closedAt, 'table-light': index % 2 }">
       <td>{{ item.name }}</td>
       <td>{{ item.iban }}</td>
       <td>{{ item.currencyName }}</td>
@@ -71,5 +71,14 @@ th {
   font-weight: bold;
   text-align: start;
   border-bottom: 1px solid rebeccapurple;
+}
+td {
+  font-family: "Verdana";
+}
+.account-closed {
+  color: lavender;
+}
+.table-light {
+  background-color: aliceblue;
 }
 </style>

@@ -5,17 +5,17 @@
       <tr>
         <th>Datum</th>
         <th>Text</th>
-        <th>Betrag</th>
+        <th class="right-aligned">Betrag</th>
         <th>Notiz</th>
         <th>Kategorie</th>
         <th>Konto</th>
       </tr>
     </thead>
     <tbody>
-      <tr v-for="item of transactions" :key="item">
-        <td>{{ new DateTime(item.valueDate).toLocaleString() }}</td>
+      <tr v-for="(item, index) of transactions" :key="item" :class="{ 'table-light': index % 2 }">
+        <td>{{ DateTime.fromISO(item.valueDate).toLocaleString() }}</td>
         <td>{{ item.text }}</td>
-        <td>{{ `${item.amount} ${item.currencyShort}` }}</td>
+        <td class="right-aligned">{{ `${item.amount} ${item.currencyShort}` }}</td>
         <td>{{ item.notes }}</td>
         <td>{{ item.categoryName }}</td>
         <td>{{ item.accountName }}</td>
@@ -80,5 +80,14 @@ th {
   font-weight: bold;
   text-align: start;
   border-bottom: 1px solid rebeccapurple;
+}
+td {
+  font-family: "Verdana";
+}
+.right-aligned {
+  text-align: end;
+}
+.table-light {
+  background-color: aliceblue;
 }
 </style>

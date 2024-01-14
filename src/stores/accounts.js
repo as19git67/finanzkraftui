@@ -23,7 +23,7 @@ export const AccountStore = defineStore("account", {
         if (response.status === 200) {
           if (_.isArray(response.data)) {
             this._accounts = _.map(response.data, (account) => {
-              return {id: account.id, name: account.name, iban: account.iban, currency: account.currency_id, currencyName: account.currency_name, currencyShort: account.currency_short};
+              return {id: account.id, name: account.name, iban: account.iban, currency: account.currency_id, currencyName: account.currency_name, currencyShort: account.currency_short, closedAt: account.closedAt};
             });
           } else {
             this._accounts = [];
