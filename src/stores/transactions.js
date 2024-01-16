@@ -6,24 +6,36 @@ import _ from "lodash";
 export const TransactionStore = defineStore("transaction", {
   state: () => {
     return {
+      _maxTransactions: 500,
       _transactions: [],
+      _incomplete: false, // true if more transactions would exists but limited to max transactions
     };
   },
   getters: {
     transactions(state) {
       return state._transactions;
     },
+    maxTransactions(state) {
+      return state._maxTransactions;
+    },
+    incompleteTransactionList(state) {
+      return state._incomplete;
+    },
   },
   actions: {
-    async getTransactions() {
+    async getTransactions(options) {
       const userStore = UserStore();
       if (userStore.authenticated) {
         const config = userStore.getBearerAuthRequestHeader();
+        if (options) {
+          config.params = _.pick(options, 'maxItems', 'searchTerm');
+        }
         try {
           const response = await axios.get("/api/transactions", config);
           if (response.status === 200) {
             if (_.isArray(response.data)) {
-              this._transactions = _.map(response.data, (t) => {
+              this._incomplete = response.data.length > this._maxTransactions;
+              this._transactions = _.map(_.take(response.data, this._maxTransactions), (t) => {
                 return {
                   account_id: t.account_id,
                   accountName: t.account_name,
@@ -41,17 +53,21 @@ export const TransactionStore = defineStore("transaction", {
               });
             } else {
               this._transactions = [];
+              this._incomplete = false;
             }
           } else {
             this._transactions = [];
+            this._incomplete = false;
           }
           return response.status;
         } catch (ex) {
           this._transactions = [];
+          this._incomplete = false;
           return ex.error;
         }
       } else {
         this._transactions = [];
+        this._incomplete = false;
         return 401;
       }
     },

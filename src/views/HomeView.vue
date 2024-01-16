@@ -1,5 +1,8 @@
 <template>
-<h1>Buchungen</h1>
+<h1>Buchungen
+  <span v-if="incompleteTransactionList">(es gibt mehr Ergebnisse als dargestellt)</span></h1>
+  <input v-model="searchTerm" placeholder="Suchbegriff"><button @click="searchTransactions">Suchen
+</button>
   <table v-if="transactions.length">
     <thead>
       <tr>
@@ -38,19 +41,23 @@ export default {
     return {
       DateTime: DateTime,
       error: this.error,
+      searchTerm: this.searchTerm,
     };
   },
   computed: {
     ...mapStores(UserStore),
     ...mapStores(TransactionStore),
     ...mapState(UserStore, ["authenticated"]),
-    ...mapState(TransactionStore, ["transactions"]),
+    ...mapState(TransactionStore, ["transactions", "incompleteTransactionList", "maxTransactions"]),
   },
   methods: {
     ...mapActions(TransactionStore, ["getTransactions"]),
-    fillTransactions() {
+    searchTransactions() {
+      this.fillTransactions(this.searchTerm);
+    },
+    fillTransactions(searchTerm) {
       this.error = "";
-      this.getTransactions()
+      this.getTransactions({maxItems: this.maxTransactions + 10, searchTerm: searchTerm})
         .then((result) => {
           switch (result) {
             case 200:
@@ -70,6 +77,7 @@ export default {
   },
   mounted() {
     this.error = null;
+    this.searchTerm = '';
     this.fillTransactions();
   },
 };
