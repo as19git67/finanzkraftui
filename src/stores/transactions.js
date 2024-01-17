@@ -47,6 +47,7 @@ export const TransactionStore = defineStore("transaction", {
                   notes: t.t_notes,
                   categoryId: t.category_id,
                   categoryName: t.category_name,
+                  currencyId: t.currency_id,
                   currencyName: t.currency_name,
                   currencyShort: t.currency_short,
                 };

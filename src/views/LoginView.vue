@@ -14,6 +14,7 @@
         name="Password"
       />
       <button
+        autofocus
         @click="loginClicked()"
         :disabled="
           !email || email.length < 8 || !password || password.length < 8

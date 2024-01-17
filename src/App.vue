@@ -6,7 +6,6 @@ import { UserStore } from "@/stores/user";
 
 <template>
   <header>
-
     <div class="wrapper">
       <nav>
         <RouterLink to="/" v-if="authenticated">Home</RouterLink>
@@ -19,7 +18,6 @@ import { UserStore } from "@/stores/user";
       </nav>
     </div>
   </header>
-
   <RouterView/>
 </template>
 
@@ -37,9 +35,6 @@ header {
   color: var(--color-text);
   display: block;
   margin-bottom: 0.5em;
-}
-
-header .wrapper nav {
 }
 
 nav {
@@ -61,8 +56,5 @@ nav a {
 
 nav a:first-of-type {
   border: 0;
-}
-
-@media (min-width: 1024px) {
 }
 </style>
