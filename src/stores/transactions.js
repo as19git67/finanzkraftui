@@ -28,7 +28,7 @@ export const TransactionStore = defineStore("transaction", {
       if (userStore.authenticated) {
         const config = userStore.getBearerAuthRequestHeader();
         if (options) {
-          config.params = _.pick(options, 'maxItems', 'searchTerm');
+          config.params = _.pick(options, 'maxItems', 'searchTerm', 'accountsWhereIn');
         }
         try {
           const response = await axios.get("/api/transactions", config);

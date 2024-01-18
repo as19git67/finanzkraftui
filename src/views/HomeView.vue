@@ -8,8 +8,10 @@
     <button @click="searchTransactions" class="btn btn--is-primary">Suchen</button>
   </form>
 <div class="form">
-  <select multiple name="allAccounts">
-    <option v-for="item of accountList" :key="item.id" >{{ item.name}}</option>
+  <label for="accountFilter">Bankkonten:</label>
+  <select name="accountFilter" id="accountFilter" v-model="accountFilter"
+          @change="accountChanged">
+    <option v-for="item of accountList" :key="item.id" :value="item.id">{{ item.name }}</option>
   </select>
 </div>
   <table v-if="transactions.length">
@@ -56,6 +58,7 @@ export default {
       loading: this.loading,
       searchTerm: this.searchTerm,
       accountList: this.accountList,
+      accountFilter: this.accountFilter,
     };
   },
   computed: {
@@ -70,12 +73,17 @@ export default {
     ...mapActions(TransactionStore, ["getTransactions"]),
     ...mapActions(AccountStore, ["getAccounts"]),
     searchTransactions() {
-      this.fillTransactions(this.searchTerm);
+      this.fillTransactions();
     },
-    fillTransactions(searchTerm) {
+    accountChanged() {
+      this.fillTransactions();
+    },
+    fillTransactions() {
       this.error = "";
       this.loading = true;
-      this.getTransactions({maxItems: this.maxTransactions + 10, searchTerm: searchTerm})
+      this._updateAccountsWhereIn();
+      this.getTransactions({maxItems: this.maxTransactions + 10, searchTerm: this.searchTerm,
+        accountsWhereIn: this.accountsWhereIn})
         .then((result) => {
           this.loading = false;
           switch (result) {
@@ -134,7 +142,18 @@ export default {
       this.accountList = accountGroups.concat(this.accounts.filter((account) => {
         return account.closedAt === null;
       }));
-      console.log(`${this.accountList.length} accounts in list`);
+      this.accountsWhereIn = [];
+    },
+    _updateAccountsWhereIn: function () {
+      const filter = this.accountFilter;
+      if (!isNaN(filter)) {
+        const accountId = parseInt(filter);
+        if (accountId) {
+          this.accountsWhereIn = [accountId];
+        } else {
+          this.accountsWhereIn = [];
+        }
+      }
     },
   },
   mounted() {
@@ -142,6 +161,8 @@ export default {
     this.loading = false;
     this.searchTerm = '';
     this.accountList = [];
+    this.accountFilter = 'g1';
+    this.accountsWhereIn = [];
     this.fillTransactions();
   },
 };
