@@ -1,0 +1,12 @@
+{
+  "extends": "airbnb-base",
+  "root": true,
+  "parserOptions": {
+    "ecmaVersion": 13
+  },
+  "rules": {
+    "no-restricted-syntax": ["error", "ForInStatement", "LabeledStatement", "WithStatement"],
+    "no-underscore-dangle": ["error", { "allow": ["bar_", "_foo"] }],
+    "import/extensions": ["error", "never", { "js": "always" }]
+  }
+}
