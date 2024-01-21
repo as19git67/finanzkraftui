@@ -40,6 +40,14 @@ export const UserStore = defineStore("user", {
     },
   },
   actions: {
+    setNotAuthenticated() {
+      this.authenticated = false;
+      this.email = "";
+      this.accessToken = "";
+      this.token = "";
+      this.accessTokenExpiredAfter = "";
+      this.refreshToken = "";
+    },
     setAuthenticated(
       authenticated,
       email,

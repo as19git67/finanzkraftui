@@ -3,43 +3,42 @@ import { defineStore } from 'pinia';
 import _ from 'lodash';
 import { UserStore } from '@/stores/user';
 
-export const AccountStore = defineStore('account', {
+export const MasterDataStore = defineStore('masterdata', {
   state: () => ({
-    _accounts: [],
+    _timespans: [],
   }),
   getters: {
-    accounts(state) {
-      return state._accounts;
+    timespans(state) {
+      return state._timespans;
     },
   },
   actions: {
-    async getAccounts(force) {
-      if (force || this.accounts.length === 0) {
+    async getTimespans(force) {
+      if (force || this._timespans.length === 0) {
         const userStore = UserStore();
         if (userStore.authenticated) {
           const config = userStore.getBearerAuthRequestHeader();
           try {
-            const response = await axios.get('/api/accounts', config);
+            const response = await axios.get('/api/timespans', config);
             if (response.status === 200) {
               if (_.isArray(response.data)) {
-                this._accounts = _.map(response.data, (account) => ({
-                  id: account.id,
-                  name: account.name,
-                  iban: account.iban,
-                  currency: account.currency_id,
-                  currencyName: account.currency_name,
-                  currencyShort: account.currency_short,
-                  closedAt: account.closedAt,
+                this._timespans = _.map(response.data, (t) => ({
+                  id: t.id,
+                  name: t.name,
+                  fromRuleNo: t.fromRuleNo,
+                  fromRuleAttribute: t.fromRuleAttribute,
+                  toRuleNo: t.toRuleNo,
+                  toRuleAttribute: t.toRuleAttribute,
                 }));
               } else {
-                this._accounts = [];
+                this._timespans = [];
               }
             } else {
-              this._accounts = [];
+              this._timespans = [];
             }
             return response.status;
           } catch (ex) {
-            this._accounts = [];
+            this._timespans = [];
             if (ex.response && ex.response.status) {
               if (ex.response.status === 401) {
                 userStore.setNotAuthenticated();
@@ -49,7 +48,7 @@ export const AccountStore = defineStore('account', {
             throw ex;
           }
         } else {
-          this._accounts = [];
+          this._timespans = [];
           return 401;
         }
       } else {

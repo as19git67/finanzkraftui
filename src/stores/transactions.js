@@ -64,7 +64,13 @@ export const TransactionStore = defineStore("transaction", {
         } catch (ex) {
           this._transactions = [];
           this._incomplete = false;
-          return ex.error;
+          if (ex.response && ex.response.status) {
+            if (ex.response.status === 401) {
+              userStore.setNotAuthenticated();
+            }
+            return ex.response.status;
+          }
+          throw ex;
         }
       } else {
         this._transactions = [];
