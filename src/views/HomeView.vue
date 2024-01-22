@@ -102,6 +102,7 @@ export default {
         return item.id === this.dateFilter;
       });
       if (tsInfos.length > 0) {
+        this.dateFilterTo = undefined;
         const tsInfo = tsInfos[0];
         switch (tsInfo.fromRuleNo) {
         case 1: // months back
@@ -131,7 +132,6 @@ export default {
           break;
         default:
           this.dateFilterFrom = undefined;
-          this.dateFilterTo = undefined;
         }
       } else {
         this.dateFilterFrom = undefined;
