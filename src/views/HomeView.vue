@@ -92,7 +92,46 @@ export default {
       this.fillTransactions();
     },
     dateFilterChanged() {
-
+      const tsInfos = this.timespans.filter((item) => {
+        return item.id === this.dateFilter;
+      });
+      if (tsInfos.length > 0) {
+        const tsInfo = tsInfos[0];
+        switch (tsInfo.fromRuleNo) {
+        case 1: // months back
+          const noMonth = parseInt(tsInfo.fromRuleAttribute);
+          this.dateFilterFrom = DateTime.now().minus({months: noMonth}).toISO();
+          break;
+        case 2: // this year
+          const currentYear = DateTime.now().year;
+          this.dateFilterFrom = DateTime.fromObject(
+              {year: currentYear, month: 1, day: 1}).toISO();
+          break;
+        case 3: // last year
+          const lastYear = DateTime.now().minus({years: 1}).year;
+          this.dateFilterFrom = DateTime.fromObject({year: lastYear, month: 1, day: 1}).toISO();
+          this.dateFilterTo = DateTime.fromObject({
+            year: lastYear, month: 12, day: 31, hour: 23, minute: 59,
+            second: 59
+          }).toISO();
+          break;
+        case 4: // given year
+          const year = parseInt(tsInfo.fromRuleAttribute);
+          this.dateFilterFrom = DateTime.fromObject({year: year, month: 1, day: 1}).toISO();
+          this.dateFilterTo = DateTime.fromObject({
+            year: year, month: 12, day: 31, hour: 23, minute: 59,
+            second: 59
+          }).toISO();
+          break;
+        default:
+          this.dateFilterFrom = undefined;
+          this.dateFilterTo = undefined;
+        }
+      } else {
+        this.dateFilterFrom = undefined;
+        this.dateFilterTo = undefined;
+      }
+      this.fillTransactions();
     },
     async fillTransactions() {
       this.error = "";
@@ -104,7 +143,8 @@ export default {
         promises.push(this.getTimespans());
         promises.push(this.getTransactions({
           maxItems: this.maxTransactions + 10, searchTerm: this.searchTerm,
-          accountsWhereIn: this.accountsWhereIn
+          accountsWhereIn: this.accountsWhereIn, dateFilterFrom: this.dateFilterFrom,
+          dateFilterTo: this.dateFilterTo,
         }));
         const results = await Promise.all(promises);
         this.loading = false;
@@ -173,6 +213,8 @@ export default {
     this.accountList = [];
     this.accountFilter = 'g1';
     this.accountsWhereIn = [];
+    this.dateFilterFrom = undefined;
+    this.dateFilterTo = undefined;
     this.fillTransactions();
   },
 };
