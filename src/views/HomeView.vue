@@ -3,24 +3,30 @@
     <span v-if="loading">laden...</span>
     <span v-if="incompleteTransactionList">(es gibt mehr Ergebnisse als dargestellt)</span>
   </h1>
-  <form v-on:submit.prevent v-on:keyup.enter="searchTransactions" class="transaction-filter form form--is-right">
-    <input type="search" autofocus v-model="searchTerm" placeholder="Suchbegriff">
-    <button @click="searchTransactions" class="btn btn--is-primary">Suchen</button>
+  <form v-on:submit.prevent v-on:keyup.enter="searchTransactions"
+        class="transaction-filter form">
+    <div class="form-component">
+      <label for="accountFilter">Bankkonten:</label>
+      <select name="accountFilter" id="accountFilter" v-model="accountFilter"
+              @change="accountChanged">
+        <option v-for="item of accountList" :key="item.id" :value="item.id">{{ item.name }}</option>
+      </select>
+    </div>
+    <div class="form-component">
+      <label for="dateFilter">Zeitspanne:</label>
+      <select name="dateFilter" id="dateFilter" v-model="dateFilter"
+              @change="dateFilterChanged">
+        <option v-for="item of timespanList" :key="item.id" :value="item.id">{{
+            item.name
+          }}
+        </option>
+      </select>
+    </div>
+    <div class="form-component">
+      <input type="search" autofocus v-model="searchTerm" placeholder="Suchbegriff">
+      <button @click="searchTransactions" class="btn btn--is-primary">Suchen</button>
+    </div>
   </form>
-  <div class="form">
-    <label for="accountFilter">Bankkonten:</label>
-    <select name="accountFilter" id="accountFilter" v-model="accountFilter"
-            @change="accountChanged">
-      <option v-for="item of accountList" :key="item.id" :value="item.id">{{ item.name }}</option>
-    </select>
-  </div>
-  <div class="form">
-    <label for="dateFilter">Zeitspanne:</label>
-    <select name="dateFilter" id="dateFilter" v-model="dateFilter"
-            @change="dateFilterChanged">
-      <option v-for="item of timespanList" :key="item.id" :value="item.id">{{ item.name }}</option>
-    </select>
-  </div>
   <table v-if="transactions.length">
     <thead>
     <tr>

@@ -106,11 +106,23 @@ a {
   flex-direction: row;
   justify-content: start;
   align-items: center;
-  column-gap: 0.5em;
+  column-gap: 1em;
+  flex-wrap: wrap;
 }
 
 .form.form--is-right {
   justify-content: end;
+}
+
+.form-component {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  column-gap: 0.5em;
+}
+
+.form select {
+  font-size: 2em;
 }
 
 .btn-icon-only {
