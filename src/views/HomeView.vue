@@ -34,19 +34,21 @@
       <th>Text</th>
       <th class="right-aligned">Betrag</th>
       <th>Notiz</th>
-      <th>Kategorie</th>
       <th>Konto</th>
     </tr>
     </thead>
     <tbody>
     <tr v-for="(item, index) of transactions" :key="item" :class="{ 'alternate-row-background': index % 2 }">
       <td>{{ DateTime.fromISO(item.valueDate).toLocaleString() }}</td>
-      <td>{{ item.text }}</td>
+      <td
+          class="td-text"><div class="td-text-item">{{ item.text }}</div><div
+          class="td-text-item item--is-category">{{ item.categoryName
+        }}</div></td>
       <td class="right-aligned nowrap">
         {{ `${new Intl.NumberFormat(undefined, {style: 'currency', currency: item.currencyId}).format(item.amount)}` }}
       </td>
       <td>{{ item.notes }}</td>
-      <td>{{ item.categoryName }}</td>
+      <td></td>
       <td>{{ item.accountName }}</td>
     </tr>
     </tbody>
@@ -227,4 +229,11 @@ export default {
 </script>
 
 <style scoped>
+.td-text {
+  display: flex;
+  flex-direction: column;
+}
+.item--is-category {
+  font-size: 0.8em;
+}
 </style>
