@@ -1,9 +1,10 @@
-import axios from "axios";
-import { defineStore } from "pinia";
+import axios from 'axios';
+import _ from 'lodash';
+import { defineStore } from 'pinia';
 
-export const UserStore = defineStore("user", {
+export const UserStore = defineStore('user', {
   state: () => {
-    const authData = localStorage.getItem("auth");
+    const authData = localStorage.getItem('auth');
     let authObj;
     if (authData) {
       const auth = JSON.parse(authData);
@@ -17,13 +18,15 @@ export const UserStore = defineStore("user", {
     } else {
       authObj = {
         authenticated: false,
-        email: "",
-        accessToken: "",
-        accessTokenExpiredAfter: "",
-        refreshToken: "",
+        email: '',
+        accessToken: '',
+        accessTokenExpiredAfter: '',
+        refreshToken: '',
       };
     }
-    return { ...authObj, _users: [], _roles: [], _permissions: [] };
+    return {
+      ...authObj, _users: [], _roles: [], _permissions: [],
+    };
   },
   getters: {
     isAuthenticated(state) {
@@ -42,18 +45,18 @@ export const UserStore = defineStore("user", {
   actions: {
     setNotAuthenticated() {
       this.authenticated = false;
-      this.email = "";
-      this.accessToken = "";
-      this.token = "";
-      this.accessTokenExpiredAfter = "";
-      this.refreshToken = "";
+      this.email = '';
+      this.accessToken = '';
+      this.token = '';
+      this.accessTokenExpiredAfter = '';
+      this.refreshToken = '';
     },
     setAuthenticated(
       authenticated,
       email,
       accessToken,
       accessTokenExpiredAfter,
-      refreshToken
+      refreshToken,
     ) {
       if (authenticated) {
         this.email = email;
@@ -61,11 +64,11 @@ export const UserStore = defineStore("user", {
         this.accessTokenExpiredAfter = accessTokenExpiredAfter;
         this.refreshToken = refreshToken;
       } else {
-        this.email = "";
-        this.accessToken = "";
-        this.token = "";
-        this.accessTokenExpiredAfter = "";
-        this.refreshToken = "";
+        this.email = '';
+        this.accessToken = '';
+        this.token = '';
+        this.accessTokenExpiredAfter = '';
+        this.refreshToken = '';
       }
       this.authenticated = authenticated;
       const auth = {
@@ -75,7 +78,7 @@ export const UserStore = defineStore("user", {
         accessTokenExpiredAfter: this.accessTokenExpiredAfter,
         refreshToken: this.refreshToken,
       };
-      localStorage.setItem("auth", JSON.stringify(auth));
+      localStorage.setItem('auth', JSON.stringify(auth));
     },
     getBasicAuthRequestHeader() {
       const basicAuthHash = btoa(`${this.email}:${this.password}`);
@@ -94,17 +97,17 @@ export const UserStore = defineStore("user", {
     },
     async registerNewUser(email, password) {
       try {
-        const j = JSON.stringify({email: email, password: password});
+        const j = JSON.stringify({ email, password });
         const c = {
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
         };
-        let response = await axios.post("/api/user", j, c);
+        const response = await axios.post('/api/user', j, c);
         this.email = email;
         return true;
       } catch (ex) {
-        console.log("New user registration threw an exception");
+        console.log('New user registration threw an exception');
         throw ex;
       }
     },
@@ -117,14 +120,14 @@ export const UserStore = defineStore("user", {
             Authorization: `Basic ${basicAuthHash}`,
           },
         };
-        let response = await axios.post("/api/auth", undefined, config);
+        const response = await axios.post('/api/auth', undefined, config);
         if (response.status === 200) {
           this.setAuthenticated(
             true,
             email,
             response.data.AccessToken,
             response.data.AccessTokenExpiredAfter,
-            response.data.RefreshToken
+            response.data.RefreshToken,
           );
         } else {
           this.setAuthenticated(false);
@@ -132,7 +135,7 @@ export const UserStore = defineStore("user", {
         return true;
       } catch (ex) {
         this.setAuthenticated(false);
-        console.log("Login threw an exception");
+        console.log('Login threw an exception');
         throw ex;
       }
     },
@@ -143,33 +146,42 @@ export const UserStore = defineStore("user", {
       const userStore = UserStore();
       if (userStore.authenticated) {
         const config = userStore.getBearerAuthRequestHeader();
-        const response = await axios.get("/api/user", config);
+        const response = await axios.get('/api/user', config);
         if (response.status === 200) {
           this._users = response.data;
         } else {
           this._users = [];
         }
         return response.status;
-      } else {
-        this._users = [];
-        return 401;
       }
+      this._users = [];
+      return 401;
+    },
+    getUser(id) {
+      let userId = id;
+      if (_.isString(id)) {
+        userId = parseInt(id);
+      }
+      const result = this._users.filter((user) => user.id === userId);
+      if (result.length > 0) {
+        return result[0];
+      }
+      // throw new Error(`Unknown user with id ${id}`);
     },
     async getRoles() {
       const userStore = UserStore();
       if (userStore.authenticated) {
         const config = userStore.getBearerAuthRequestHeader();
-        const response = await axios.get("/api/role", config);
+        const response = await axios.get('/api/role', config);
         if (response.status === 200) {
           this._roles = response.data;
         } else {
           this._roles = [];
         }
         return response.status;
-      } else {
-        this._roles = [];
-        return 401;
       }
+      this._roles = [];
+      return 401;
     },
     getRole(id) {
       if (id === undefined) {
@@ -192,20 +204,42 @@ export const UserStore = defineStore("user", {
           this._permissions = [];
         }
         return response.status;
-      } else {
-        this._permissions = [];
-        return 401;
       }
+      this._permissions = [];
+      return 401;
     },
     async createRoleEmpty(roleName) {
       const userStore = UserStore();
       if (userStore.authenticated) {
         const config = userStore.getBearerAuthRequestHeader();
-        const response = await axios.put("/api/role", {name: roleName}, config);
+        const response = await axios.put('/api/role', { name: roleName }, config);
         return response.status;
-      } else {
-        return 401;
       }
+      return 401;
     },
+    async getRolesOfUser(userId) {
+      const userStore = UserStore();
+      let resultData = [];
+      if (userStore.authenticated) {
+        const config = userStore.getBearerAuthRequestHeader();
+        try {
+          const response = await axios.get(`/api/user/${userId}/roles`, config);
+          if (response.status === 200) {
+            resultData = response.data;
+          }
+          return { status: response.status, data: resultData };
+        } catch (ex) {
+          if (ex.response && ex.response.status) {
+            if (ex.response.status === 401) {
+              userStore.setNotAuthenticated();
+            }
+            return { status: ex.response.status, data: resultData };
+          }
+          return { status: 500, data: resultData };
+        }
+      }
+      return { status: 401, data: resultData };
+    },
+
   },
 });

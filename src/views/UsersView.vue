@@ -1,5 +1,5 @@
 <template>
-  <h1>User list </h1>
+  <h1 class="title">Benutzerliste</h1>
 
   <table class="data-table" v-if="users.length">
     <thead>
@@ -16,7 +16,9 @@
         <td>{{ item.Initials }}</td>
         <td>{{ item.EmailConfirmed }}</td>
         <td>
-          <button class="btn-icon-only" @click="editUser( item.id )" aria-label="Edit"><IconEdit/></button>
+          <router-link :to="{ path:'/userEdit/:userId', name: 'UserEdit', params: { userId: item.id }}">
+            <button class="btn-icon-only" aria-label="Edit"><IconEdit/></button>
+          </router-link>
           <button class="btn-icon-only" @click="deleteUser( item.id )" aria-label="Delete"><IconDelete/></button>
         </td>
       </tr>
@@ -31,12 +33,14 @@ import { UserStore } from "@/stores/user";
 import router from "@/router";
 import IconEdit from "@/components/icons/IconEdit.vue";
 import IconDelete from "@/components/icons/IconDelete.vue";
+import IconAdd from "@/components/icons/IconAdd.vue";
 
 export default {
   name: "UsersView",
-  components: {IconEdit, IconDelete},
+  components: {IconAdd, IconEdit, IconDelete},
   data() {
     return {
+      newUserName: this.newUserName,
       error: this.error,
     };
   },
@@ -47,9 +51,6 @@ export default {
   },
   methods: {
     ...mapActions(UserStore, ["getUsers"]),
-    editUser(id) {
-      alert('test' + id);
-    },
     fillUsers() {
       this.error = "";
       this.getUsers()
@@ -71,6 +72,7 @@ export default {
   },
   mounted() {
     this.error = null;
+    this.newUserName = '';
     this.fillUsers();
   },
 };

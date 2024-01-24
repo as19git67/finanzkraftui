@@ -42,8 +42,7 @@
       <td>{{ DateTime.fromISO(item.valueDate).toLocaleString() }}</td>
       <td
           class="td-text"><div class="td-text-item">{{ item.text }}</div><div
-          class="td-text-item item--is-category">{{ item.categoryName
-        }}</div></td>
+          class="td-text-item item--is-category">{{ item.categoryName }}</div></td>
       <td class="right-aligned nowrap">
         {{ `${new Intl.NumberFormat(undefined, {style: 'currency', currency: item.currencyId}).format(item.amount)}` }}
       </td>

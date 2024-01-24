@@ -1,10 +1,11 @@
 <template>
-  <h1 class="title">
-    Benutzerrollen
-    <button class="btn-icon-only" @click="addRole()" title="Rolle hinzufügen">
-      <IconAdd />
-    </button>
-  </h1>
+  <h1 class="title">Benutzerrollen</h1>
+  <form class="form" v-on:submit.prevent v-on:keyup.enter="addRole">
+    <div class="form-component">
+      <input type="text" autofocus v-model="newRoleName" placeholder="Rollenname">
+      <button @click="addRole" class="btn btn--is-primary">Hinzufügen</button>
+    </div>
+  </form>
 
   <table class="data-table" v-if="roles.length">
     <thead>
@@ -36,7 +37,7 @@
     </tbody>
   </table>
   <p v-else>Keine Rollen vom Server geladen</p>
-  <ModalDialog v-show="isNewRoleModalDialogVisible" @close="closeModalDialog">
+  <ModalDialog v-show="false" @close="closeModalDialog">
     <template v-slot:header>Add a new role</template>
     <template v-slot:body>
       <label
@@ -81,8 +82,7 @@ export default {
   components: { IconAdd, IconEdit, IconDelete, ModalDialog },
   data() {
     return {
-      newRoleName: "",
-      isNewRoleModalDialogVisible: false,
+      newRoleName: this.newRoleName,
       error: this.error,
     };
   },
@@ -94,11 +94,6 @@ export default {
   methods: {
     ...mapActions(UserStore, ["getRoles", "createRoleEmpty"]),
     addRole() {
-      this.newRoleName = "";
-      this.isNewRoleModalDialogVisible = true;
-      setTimeout(() => {
-        this.$refs.roleNameInput.focus();
-      }, 0);
     },
     async createNewRole() {
       this.error = "";
@@ -147,6 +142,9 @@ export default {
         });
     },
   },
+  created() {
+    this.newRoleName = '';
+  },
   mounted() {
     this.error = null;
     this.fillRoles();
@@ -155,11 +153,6 @@ export default {
 </script>
 
 <style scoped>
-.title {
-  display: flex;
-  align-items: center;
-}
-
 th {
   font-weight: bold;
   text-align: start;
@@ -167,4 +160,5 @@ th {
 .data-table td .btn {
   display: inline-flex;
 }
+
 </style>
