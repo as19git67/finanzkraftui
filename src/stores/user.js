@@ -240,6 +240,28 @@ export const UserStore = defineStore('user', {
       }
       return { status: 401, data: resultData };
     },
-
+    async setRoleAssignmentsForUser(userId, roleIds) {
+      const userStore = UserStore();
+      let resultData = [];
+      if (userStore.authenticated) {
+        const config = userStore.getBearerAuthRequestHeader();
+        try {
+          const response = await axios.post(`/api/user/${userId}/roles`, { roleIds }, config);
+          if (response.status === 200) {
+            resultData = response.data;
+          }
+          return { status: response.status, data: resultData };
+        } catch (ex) {
+          if (ex.response && ex.response.status) {
+            if (ex.response.status === 401) {
+              userStore.setNotAuthenticated();
+            }
+            return { status: ex.response.status, data: resultData };
+          }
+          return { status: 500, data: resultData };
+        }
+      }
+      return { status: 401, data: resultData };
+    },
   },
 });

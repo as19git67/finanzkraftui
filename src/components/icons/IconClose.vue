@@ -11,9 +11,3 @@ export default {
   name: "IconClose",
 };
 </script>
-
-<style scoped>
-.metaphor {
-  fill: var(--color-text);
-}
-</style>

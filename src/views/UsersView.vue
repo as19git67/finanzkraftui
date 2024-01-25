@@ -16,7 +16,7 @@
         <td>{{ item.Initials }}</td>
         <td>{{ item.EmailConfirmed }}</td>
         <td>
-          <router-link :to="{ path:'/userEdit/:userId', name: 'UserEdit', params: { userId: item.id }}">
+          <router-link class="action" :to="{ path:'/userEdit/:userId', name: 'UserEdit', params: { userId: item.id }}">
             <button class="btn-icon-only" aria-label="Edit"><IconEdit/></button>
           </router-link>
           <button class="btn-icon-only" @click="deleteUser( item.id )" aria-label="Delete"><IconDelete/></button>
@@ -83,5 +83,11 @@ th {
   font-weight: bold;
   text-align: start;
   border-bottom: 1px solid rebeccapurple;
+}
+td > .action {
+  display: inline-block;
+}
+td > .action .metaphor {
+    fill: green;
 }
 </style>

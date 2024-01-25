@@ -15,9 +15,3 @@ export default {
   name: "IconDelete",
 };
 </script>
-
-<style scoped>
-.metaphor {
-  fill: var(--color-text);
-}
-</style>

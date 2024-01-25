@@ -6,13 +6,15 @@
       <th>Name</th>
       <th>IBAN</th>
       <th>Währung</th>
+      <th>Geschlossen</th>
     </tr>
     </thead>
     <tbody>
-    <tr v-for="(item, index) of accounts" :key="item" :class="{ 'account-closed': !!item.closedAt, 'table-light': index % 2 }">
+    <tr v-for="(item, index) of accounts" :key="item" :class="{ 'account-closed': !!item.closedAt, 'alternate-row-background': index % 2 }">
       <td>{{ item.name }}</td>
       <td>{{ item.iban }}</td>
       <td>{{ item.currencyName }}</td>
+      <td class="right-aligned">{{ item.closedAt !== null ? DateTime.fromISO(item.closedAt).toLocaleString() : '' }}</td>
     </tr>
     </tbody>
   </table>
@@ -20,6 +22,7 @@
 </template>
 
 <script>
+import { DateTime } from "luxon";
 import { mapActions, mapState, mapStores } from "pinia";
 import { UserStore } from "@/stores/user";
 import { AccountStore } from "@/stores/accounts";
@@ -29,6 +32,7 @@ export default {
   name: "Home",
   data() {
     return {
+      DateTime: DateTime,
       error: this.error,
     };
   },
@@ -76,9 +80,6 @@ td {
   font-family: "Verdana";
 }
 .account-closed {
-  color: lavender;
-}
-.table-light {
-  background-color: aliceblue;
+  color: var(--as-color-primary-4);
 }
 </style>

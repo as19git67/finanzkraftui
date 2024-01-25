@@ -16,9 +16,3 @@ export default {
   name: "IconEdit",
 };
 </script>
-
-<style scoped>
-.metaphor {
-  fill: var(--color-text);
-}
-</style>

@@ -12,9 +12,3 @@ export default {
   name: "IconAdd",
 };
 </script>
-
-<style scoped>
-.metaphor {
-  fill: var(--color-text);
-}
-</style>

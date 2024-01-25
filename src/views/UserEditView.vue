@@ -24,8 +24,8 @@
     </tr>
     </thead>
     <tbody>
-    <tr v-for="item of allRoles" :key="item">
-      <td><input type="checkbox" v-model="item.assigned"></td>
+    <tr v-for="(item, index) of allRoles" :key="item">
+      <td><input type="checkbox" v-model="item.assigned" @change="assignmentChanged(index)"></td>
       <td>{{ item.name }}</td>
     </tr>
     </tbody>
@@ -62,7 +62,16 @@ export default {
     ...mapState(UserStore, ["roles"]),
   },
   methods: {
-    ...mapActions(UserStore, ["getUser", "getRoles", "getRolesOfUser"]),
+    ...mapActions(UserStore, ["getUser", "getRoles", "getRolesOfUser", "setRoleAssignmentsForUser"]),
+    assignmentChanged(index) {
+      const roleIds = [];
+      this.allRoles.forEach(role => {
+         if (role.assigned) {
+           roleIds.push(role.id);
+         }
+      })
+      this.setRoleAssignmentsForUser(this.user.id, roleIds);
+    }
   },
   async mounted() {
     this.error = null;

@@ -33,22 +33,21 @@
       <th>Datum</th>
       <th>Text</th>
       <th class="right-aligned">Betrag</th>
-      <th>Notiz</th>
       <th>Konto</th>
     </tr>
     </thead>
     <tbody>
     <tr v-for="(item, index) of transactions" :key="item" :class="{ 'alternate-row-background': index % 2 }">
       <td>{{ DateTime.fromISO(item.valueDate).toLocaleString() }}</td>
-      <td
-          class="td-text"><div class="td-text-item">{{ item.text }}</div><div
-          class="td-text-item item--is-category">{{ item.categoryName }}</div></td>
+      <td class="td-text">
+        <div class="td-text-item">{{ item.text }}</div>
+        <div class="td-text-item item--is-category">{{ item.categoryName }}</div>
+        <div class="td-text-item item--is-notes">{{ item.notes }}</div>
+      </td>
       <td class="right-aligned nowrap">
         {{ `${new Intl.NumberFormat(undefined, {style: 'currency', currency: item.currencyId}).format(item.amount)}` }}
       </td>
-      <td>{{ item.notes }}</td>
-      <td></td>
-      <td>{{ item.accountName }}</td>
+      <td class="nowrap">{{ item.accountName }}</td>
     </tr>
     </tbody>
   </table>
@@ -234,5 +233,14 @@ export default {
 }
 .item--is-category {
   font-size: 0.8em;
+  overflow-x: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.item--is-notes {
+  font-size: 0.8em;
+  overflow-x: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 </style>
