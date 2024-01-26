@@ -7,7 +7,7 @@
     </div>
   </form>
 
-  <table class="data-table" v-if="roles.length">
+  <table class="data-table" v-if="roles && roles.length">
     <thead>
       <tr>
         <th>Name</th>
@@ -15,16 +15,12 @@
       </tr>
     </thead>
     <tbody>
-      <tr v-for="item of roles" :key="item">
+      <tr v-for="item of roles" :key="item.id">
         <td>{{ item.Name }}</td>
         <td>
-          <button
-            class="btn-icon-only"
-            @click="editRole(item.id)"
-            title="Edit role"
-          >
-            <IconEdit />
-          </button>
+          <router-link class="action" :to="{ path:'/roleEdit/:roleId', name: 'RoleEdit', params: { roleId: item.id }}">
+            <button class="btn-icon-only" aria-label="Edit"><IconEdit/></button>
+          </router-link>
           <button
             class="btn-icon-only"
             @click="deleteRole(item.id)"
@@ -92,7 +88,7 @@ export default {
     ...mapState(UserStore, ["roles"]),
   },
   methods: {
-    ...mapActions(UserStore, ["getRoles", "createRoleEmpty"]),
+    ...mapActions(UserStore, ["fillRoles", "createRoleEmpty"]),
     addRole() {
     },
     async createNewRole() {
@@ -101,7 +97,7 @@ export default {
         const result = await this.createRoleEmpty(this.newRoleName);
         switch (result) {
           case 200:
-            await this.fillRoles();
+            await this.fillAllRoles();
             break; // all ok
           case 401:
             router.replace("/login");
@@ -117,15 +113,12 @@ export default {
     closeModalDialog() {
       this.isNewRoleModalDialogVisible = false;
     },
-    editRole(id) {
-      router.push({ name: "RoleEdit", params: { id } });
-    },
     deleteRole(id) {
       alert("test" + id);
     },
-    fillRoles() {
+    fillAllRoles() {
       this.error = "";
-      this.getRoles()
+      this.fillRoles()
         .then((result) => {
           switch (result) {
             case 200:
@@ -147,7 +140,7 @@ export default {
   },
   mounted() {
     this.error = null;
-    this.fillRoles();
+    this.fillAllRoles();
   },
 };
 </script>

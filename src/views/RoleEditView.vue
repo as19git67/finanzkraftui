@@ -1,27 +1,31 @@
 <template>
-  <h1>Edit Role</h1>
   <div v-if="error" class="error">{{ error }}</div>
-  <div v-if="!error && role" class="as-form">
-    <label
-      >Role name:
-      <input
-        type="text"
-        v-model="roleName"
-        placeholder="Role name"
-        ref="roleNameInput"
-      />
-    </label>
-    <table class="data-table" v-if="roles.length">
+  <div v-else>
+    <h1 v-if="role" class="title">Rolle {{ role.Name }} ändern</h1>
+
+    <div class="form form--is-column" v-if="role">
+      <div class="form-component">
+        <label for="email">Rollenname:</label>
+        <input type="text" v-model="role.Name" placeholder="Rollenname" id="roleName">
+      </div>
+    </div>
+
+
+    <table class="data-table" v-if="permissionsOfRole.length">
       <thead>
       <tr>
         <th>Resource</th>
         <th>Permission</th>
+        <th>Bezeichnung</th>
+        <th>Auswahl</th>
       </tr>
       </thead>
       <tbody>
-      <tr v-for="item of permissions" :key="item.id">
+      <tr v-for="item of permissionsOfRole" :key="item.id">
         <td>{{ item.Resource }}</td>
         <td>{{ item.Permission }}</td>
+        <td>{{ item.Description }}</td>
+        <td><input type="checkbox" v-model="item.assigned" @change="assignmentChanged(index)"></td>
       </tr>
       </tbody>
     </table>
@@ -29,55 +33,93 @@
   </div>
 </template>
 
+
+<script setup>
+defineProps({
+  roleId: { type: String },
+});
+</script>
+
 <script>
 import { mapActions, mapState, mapStores } from "pinia";
 import { UserStore } from "@/stores/user";
 import router from "@/router";
+import _ from "lodash";
 
 export default {
   name: "RoleEditView",
   components: {},
   data() {
     return {
-      permissions: this.permissions,
+      role: this.role,
+      permissionsOfRole: this.permissionsOfRole,
       error: this.error,
     };
   },
   computed: {
     ...mapStores(UserStore),
-    ...mapState(UserStore, ["authenticated", "permissions"]),
+    ...mapState(UserStore, ["authenticated", "roles"]),
   },
   methods: {
-    ...mapActions(UserStore, ["getPermissions"]),
-    fillPermissions(idParam) {
-      if (idParam === undefined) {
-        router.replace({ name: "Roles" });
+    ...mapActions(UserStore, ["fillRoles", "getRole", "getPermissionsOfRole"]),
+    assignmentChanged(index) {
+
+    }
+  },
+  created() {
+    this.permissionsOfRole = [];
+  },
+  async mounted() {
+    this.error = null;
+    this.loading = true;
+    if (!this.roles || this.roles.length === 0) {
+      const result = await this.fillRoles();
+      if (result !== 200) {
+        router.replace("roles");
         return;
       }
-      let idRole = idParam;
-      if (typeof idParam === "string" || idParam instanceof String) {
-        idRole = parseInt(idParam);
+    }
+    this.role = this.getRole(this.roleId);
+    if (!this.role) {
+      router.replace("/roles");
+      return;
+    }
+
+    const promises = [];
+    promises.push(this.getPermissionsOfRole(this.roleId));
+    const results = await Promise.all(promises);
+    this.loading = false;
+
+    let mustAuthenticate = false;
+    let not_ok = false;
+    results.forEach((result) => {
+      let status = result;
+      if (_.isObject(result)) {
+        status = result.status;
       }
-      this.error = "";
-      this.getPermissions(idRole).then((result) => {
-        switch (result) {
-          case 200:
-            break; // all ok
-          case 401:
-            router.replace("/login");
-            break;
-          default:
-            this.error = `Fehler beim Abrufen der Berechtigungen: ${result}`;
-        }
-      })
-      .catch((error) => {
-        this.error = error.message;
-      });
-    },
-  },
-  mounted() {
-    this.error = null;
-    this.fillPermissions(this.$route.params.id);
+      switch (status) {
+        case 401:
+          mustAuthenticate = true;
+          break;
+        case 200:
+          break;
+        default:
+          not_ok = true;
+      }
+    });
+    if (mustAuthenticate || not_ok) {
+      this.permissionsOfRole = [];
+    }
+    if (mustAuthenticate) {
+      router.replace("/login");
+      return;
+    }
+    if (not_ok) {
+      router.replace("/roles");
+      return;
+    }
+
+    this.permissionsOfRole = results[0].data;
   },
 };
 </script>

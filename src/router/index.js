@@ -34,8 +34,9 @@ const router = createRouter({
       component: () => import("../views/RolesView.vue"),
     },
     {
-      path: "/roleEdit/:id",
+      path: "/roleEdit/:roleId",
       name: "RoleEdit",
+      props: true,
       component: () => import("../views/RoleEditView.vue"),
     },
     {
