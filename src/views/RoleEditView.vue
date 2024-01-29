@@ -11,7 +11,7 @@
     </div>
 
 
-    <table class="data-table" v-if="permissionsOfRole.length">
+    <table class="data-table" v-if="allPermissionProfiles.length">
       <thead>
       <tr>
         <th>Resource</th>
@@ -21,11 +21,11 @@
       </tr>
       </thead>
       <tbody>
-      <tr v-for="item of permissionsOfRole" :key="item.id">
-        <td>{{ item.Resource }}</td>
-        <td>{{ item.Permission }}</td>
-        <td>{{ item.Description }}</td>
-        <td><input type="checkbox" v-model="item.assigned" @change="assignmentChanged(index)"></td>
+      <tr v-for="item of allPermissionProfiles" :key="item.id">
+        <td>{{ item.resource }}</td>
+        <td>{{ item.permission }}</td>
+        <td>{{ item.description }}</td>
+        <td class="text-h-center"><input type="checkbox" v-model="item.assigned" @change="assignmentChanged(index)"></td>
       </tr>
       </tbody>
     </table>
@@ -52,7 +52,7 @@ export default {
   data() {
     return {
       role: this.role,
-      permissionsOfRole: this.permissionsOfRole,
+      allPermissionProfiles: this.allPermissionProfiles,
       error: this.error,
     };
   },
@@ -61,13 +61,20 @@ export default {
     ...mapState(UserStore, ["authenticated", "roles"]),
   },
   methods: {
-    ...mapActions(UserStore, ["fillRoles", "getRole", "getPermissionsOfRole"]),
+    ...mapActions(UserStore, ["fillRoles", "getRole", "getPermissionProfiless", "getPermissionProfilesOfRole", "setPermissionProfileAssignmentsForRole"]),
     assignmentChanged(index) {
+      const permissionIds = [];
+      this.allPermissionProfiles.forEach(permissionProfile => {
+        if (permissionProfile.assigned) {
+          permissionIds.push(permissionProfile.id);
+        }
+      })
+      this.setPermissionProfileAssignmentsForRole(this.roleId, permissionIds);
 
     }
   },
   created() {
-    this.permissionsOfRole = [];
+    this.allPermissions = [];
   },
   async mounted() {
     this.error = null;
@@ -86,7 +93,8 @@ export default {
     }
 
     const promises = [];
-    promises.push(this.getPermissionsOfRole(this.roleId));
+    promises.push(this.getPermissionProfilesOfRole(this.roleId));
+    promises.push(this.getPermissionProfiles());
     const results = await Promise.all(promises);
     this.loading = false;
 
@@ -119,7 +127,20 @@ export default {
       return;
     }
 
-    this.permissionsOfRole = results[0].data;
+    const permissionProfilesOfRole = {};
+    results[0].data.forEach((permissionProfile) => {
+      permissionProfilesOfRole[permissionProfile.idPermissionProfile] = permissionProfile;
+    });
+
+    this.allPermissionProfiles = results[1].data.map((permissionProfile) => {
+      const assigned = permissionProfilesOfRole[permissionProfile.idPermissionProfile] !== undefined;
+      return {
+        id: permissionProfile.idPermissionProfile,
+        description: permissionProfile.Description,
+        assigned: assigned,
+      };
+    })
+
   },
 };
 </script>

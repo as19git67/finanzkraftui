@@ -36,7 +36,7 @@ export const TransactionStore = defineStore('transaction', {
           );
         }
         try {
-          const response = await axios.get('/api/transactions', config);
+          const response = await axios.get('/api/transaction', config);
           if (response.status === 200) {
             if (_.isArray(response.data)) {
               this._incomplete = response.data.length > this._maxTransactions;

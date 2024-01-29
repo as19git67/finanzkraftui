@@ -214,13 +214,36 @@ export const UserStore = defineStore('user', {
         }
       }
     },
-    async getPermissionsOfRole(idRole) {
+    async getPermissionProfilesOfRole(idRole) {
       const userStore = UserStore();
       let resultData = [];
       if (userStore.authenticated) {
         const config = userStore.getBearerAuthRequestHeader();
         try {
-          const response = await axios.get(`/api/role/${idRole}/permission`, config);
+          const response = await axios.get(`/api/role/${idRole}/permissionprofile`, config);
+          if (response.status === 200) {
+            resultData = response.data;
+          }
+          return { status: response.status, data: resultData };
+        } catch (ex) {
+          if (ex.response && ex.response.status) {
+            if (ex.response.status === 401) {
+              userStore.setNotAuthenticated();
+            }
+            return { status: ex.response.status, data: resultData };
+          }
+          return { status: 500, data: resultData };
+        }
+      }
+      return { status: 401, data: resultData };
+    },
+    async getPermissionProfiles() {
+      const userStore = UserStore();
+      let resultData = [];
+      if (userStore.authenticated) {
+        const config = userStore.getBearerAuthRequestHeader();
+        try {
+          const response = await axios.get('/api/permissionprofile', config);
           if (response.status === 200) {
             resultData = response.data;
           }
@@ -276,6 +299,29 @@ export const UserStore = defineStore('user', {
         const config = userStore.getBearerAuthRequestHeader();
         try {
           const response = await axios.post(`/api/user/${userId}/roles`, { roleIds }, config);
+          if (response.status === 200) {
+            resultData = response.data;
+          }
+          return { status: response.status, data: resultData };
+        } catch (ex) {
+          if (ex.response && ex.response.status) {
+            if (ex.response.status === 401) {
+              userStore.setNotAuthenticated();
+            }
+            return { status: ex.response.status, data: resultData };
+          }
+          return { status: 500, data: resultData };
+        }
+      }
+      return { status: 401, data: resultData };
+    },
+    async setPermissionProfileAssignmentsForRole(roleId, permissionProfileIds) {
+      const userStore = UserStore();
+      let resultData = [];
+      if (userStore.authenticated) {
+        const config = userStore.getBearerAuthRequestHeader();
+        try {
+          const response = await axios.post(`/api/role/${roleId}/permissionprofile`, { permissionProfileIds }, config);
           if (response.status === 200) {
             resultData = response.data;
           }

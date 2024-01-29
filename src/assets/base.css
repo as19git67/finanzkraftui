@@ -261,6 +261,11 @@ td {
   border-left: none;
 }
 
+.data-table th.text-h-center,
+.data-table td.text-h-center {
+  text-align: center;
+}
+
 .data-table tr {
   border-bottom: 1px solid var(--color-border);
 }
