@@ -61,7 +61,7 @@ export default {
     ...mapState(UserStore, ["authenticated", "roles"]),
   },
   methods: {
-    ...mapActions(UserStore, ["fillRoles", "getRole", "getPermissionProfiless", "getPermissionProfilesOfRole", "setPermissionProfileAssignmentsForRole"]),
+    ...mapActions(UserStore, ["fillRoles", "getRole", "getPermissionProfiles", "getPermissionProfilesOfRole", "setPermissionProfileAssignmentsForRole"]),
     assignmentChanged(index) {
       const permissionIds = [];
       this.allPermissionProfiles.forEach(permissionProfile => {
@@ -74,7 +74,7 @@ export default {
     }
   },
   created() {
-    this.allPermissions = [];
+    this.allPermissionProfiles = [];
   },
   async mounted() {
     this.error = null;
