@@ -14,16 +14,12 @@
     <table class="data-table" v-if="allPermissionProfiles.length">
       <thead>
       <tr>
-        <th>Resource</th>
-        <th>Permission</th>
         <th>Bezeichnung</th>
         <th>Auswahl</th>
       </tr>
       </thead>
       <tbody>
       <tr v-for="item of allPermissionProfiles" :key="item.id">
-        <td>{{ item.resource }}</td>
-        <td>{{ item.permission }}</td>
         <td>{{ item.description }}</td>
         <td class="text-h-center"><input type="checkbox" v-model="item.assigned" @change="assignmentChanged(index)"></td>
       </tr>
