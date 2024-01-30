@@ -50,6 +50,7 @@ export const UserStore = defineStore('user', {
       this.token = '';
       this.accessTokenExpiredAfter = '';
       this.refreshToken = '';
+      this.menuPermissions = {};
     },
     setAuthenticated(
       authenticated,
@@ -57,12 +58,17 @@ export const UserStore = defineStore('user', {
       accessToken,
       accessTokenExpiredAfter,
       refreshToken,
+      menuPermissions,
     ) {
+      this.menuPermissions = {};
       if (authenticated) {
         this.email = email;
         this.accessToken = accessToken;
         this.accessTokenExpiredAfter = accessTokenExpiredAfter;
         this.refreshToken = refreshToken;
+        menuPermissions.forEach((mp) => {
+          this.menuPermissions[mp] = mp;
+        });
       } else {
         this.email = '';
         this.accessToken = '';
@@ -77,6 +83,7 @@ export const UserStore = defineStore('user', {
         accessToken: this.accessToken,
         accessTokenExpiredAfter: this.accessTokenExpiredAfter,
         refreshToken: this.refreshToken,
+        menuPermissions: this.menuPermissions,
       };
       localStorage.setItem('auth', JSON.stringify(auth));
     },
@@ -103,7 +110,7 @@ export const UserStore = defineStore('user', {
             'Content-Type': 'application/json',
           },
         };
-        const response = await axios.post('/api/user', j, c);
+        await axios.post('/api/user', j, c);
         this.email = email;
         return true;
       } catch (ex) {
@@ -128,6 +135,7 @@ export const UserStore = defineStore('user', {
             response.data.AccessToken,
             response.data.AccessTokenExpiredAfter,
             response.data.RefreshToken,
+            response.data.MenuPermission,
           );
         } else {
           this.setAuthenticated(false);
