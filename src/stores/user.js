@@ -14,7 +14,7 @@ export const UserStore = defineStore('user', {
         accessToken: auth.accessToken,
         accessTokenExpiredAfter: auth.accessTokenExpiredAfter,
         refreshToken: auth.refreshToken,
-        _menuPermissions: auth.menuPermissions,
+        _menuPermissions: auth.menuPermissions ? auth.menuPermissions : {},
       };
     } else {
       authObj = {
