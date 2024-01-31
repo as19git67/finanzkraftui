@@ -14,6 +14,7 @@ export const UserStore = defineStore('user', {
         accessToken: auth.accessToken,
         accessTokenExpiredAfter: auth.accessTokenExpiredAfter,
         refreshToken: auth.refreshToken,
+        _menuPermissions: auth.menuPermissions,
       };
     } else {
       authObj = {
@@ -22,6 +23,7 @@ export const UserStore = defineStore('user', {
         accessToken: '',
         accessTokenExpiredAfter: '',
         refreshToken: '',
+        _menuPermissions: {},
       };
     }
     return {
@@ -31,6 +33,9 @@ export const UserStore = defineStore('user', {
   getters: {
     isAuthenticated(state) {
       return state.authenticated;
+    },
+    menuPermissions(state) {
+      return state._menuPermissions;
     },
     users(state) {
       return state._users;
@@ -47,10 +52,9 @@ export const UserStore = defineStore('user', {
       this.authenticated = false;
       this.email = '';
       this.accessToken = '';
-      this.token = '';
       this.accessTokenExpiredAfter = '';
       this.refreshToken = '';
-      this.menuPermissions = {};
+      this._menuPermissions = {};
     },
     setAuthenticated(
       authenticated,
@@ -58,21 +62,22 @@ export const UserStore = defineStore('user', {
       accessToken,
       accessTokenExpiredAfter,
       refreshToken,
-      menuPermissions,
+      permissions,
     ) {
-      this.menuPermissions = {};
+      this._menuPermissions = {};
       if (authenticated) {
         this.email = email;
         this.accessToken = accessToken;
         this.accessTokenExpiredAfter = accessTokenExpiredAfter;
         this.refreshToken = refreshToken;
-        menuPermissions.forEach((mp) => {
-          this.menuPermissions[mp] = mp;
-        });
+        if (permissions.menus) {
+          permissions.menus.forEach((mp) => {
+            this._menuPermissions[mp] = mp;
+          });
+        }
       } else {
         this.email = '';
         this.accessToken = '';
-        this.token = '';
         this.accessTokenExpiredAfter = '';
         this.refreshToken = '';
       }
@@ -83,7 +88,7 @@ export const UserStore = defineStore('user', {
         accessToken: this.accessToken,
         accessTokenExpiredAfter: this.accessTokenExpiredAfter,
         refreshToken: this.refreshToken,
-        menuPermissions: this.menuPermissions,
+        _menuPermissions: this._menuPermissions,
       };
       localStorage.setItem('auth', JSON.stringify(auth));
     },
@@ -135,7 +140,7 @@ export const UserStore = defineStore('user', {
             response.data.AccessToken,
             response.data.AccessTokenExpiredAfter,
             response.data.RefreshToken,
-            response.data.MenuPermission,
+            response.data.permissions,
           );
         } else {
           this.setAuthenticated(false);

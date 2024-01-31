@@ -16,10 +16,10 @@
         <td>{{ item.Initials }}</td>
         <td>{{ item.EmailConfirmed }}</td>
         <td>
-          <router-link class="action" :to="{ path:'/userEdit/:userId', name: 'UserEdit', params: { userId: item.id }}">
+          <router-link v-if="menuPermissions['admin.user.edit']" class="action" :to="{ path:'/userEdit/:userId', name: 'UserEdit', params: { userId: item.id }}">
             <button class="btn-icon-only" aria-label="Edit"><IconEdit/></button>
           </router-link>
-          <button class="btn-icon-only" @click="deleteUser( item.id )" aria-label="Delete"><IconDelete/></button>
+          <button v-if="menuPermissions['admin.user.delete']" class="btn-icon-only" @click="deleteUser( item.id )" aria-label="Delete"><IconDelete/></button>
         </td>
       </tr>
     </tbody>
@@ -46,7 +46,7 @@ export default {
   },
   computed: {
     ...mapStores(UserStore),
-    ...mapState(UserStore, ["authenticated"]),
+    ...mapState(UserStore, ["authenticated", "menuPermissions"]),
     ...mapState(UserStore, ["users"]),
   },
   methods: {
