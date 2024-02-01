@@ -2,6 +2,7 @@ import axios from 'axios';
 import _ from 'lodash';
 import { defineStore } from 'pinia';
 
+
 export const UserStore = defineStore('user', {
   state: () => {
     const authData = localStorage.getItem('auth');
@@ -155,6 +156,15 @@ export const UserStore = defineStore('user', {
     logout() {
       this.setAuthenticated(false);
     },
+    handleAxiosException(ex, userStore, emptyResultData) {
+      if (ex.response && ex.response.status) {
+        if (ex.response.status === 401) {
+          userStore.setNotAuthenticated();
+        }
+        return { status: ex.response.status, message: ex.message, data: emptyResultData };
+      }
+      return { status: 500, message: ex.message, data: emptyResultData };
+    },
     async getUsers() {
       const userStore = UserStore();
       if (userStore.authenticated) {
@@ -193,13 +203,7 @@ export const UserStore = defineStore('user', {
           }
           return { status: response.status, data: resultData };
         } catch (ex) {
-          if (ex.response && ex.response.status) {
-            if (ex.response.status === 401) {
-              userStore.setNotAuthenticated();
-            }
-            return { status: ex.response.status, data: resultData };
-          }
-          return { status: 500, data: resultData };
+          return this.handleAxiosException(ex, userStore, resultData);
         }
       }
       return { status: 401, data: resultData };
@@ -227,6 +231,23 @@ export const UserStore = defineStore('user', {
         }
       }
     },
+    async setRoleName(roleId, roleName) {
+      const userStore = UserStore();
+      if (userStore.authenticated) {
+        const config = userStore.getBearerAuthRequestHeader();
+        try {
+          const response = await axios.post(`/api/role/${roleId}`, { name: roleName }, config);
+          const role = this.getRole(roleId);
+          if (role) {
+            role.Name = roleName;
+          }
+          return { status: response.status };
+        } catch (ex) {
+          return this.handleAxiosException(ex, userStore);
+        }
+      }
+      return { status: 401 };
+    },
     async getPermissionProfilesOfRole(idRole) {
       const userStore = UserStore();
       let resultData = [];
@@ -239,13 +260,7 @@ export const UserStore = defineStore('user', {
           }
           return { status: response.status, data: resultData };
         } catch (ex) {
-          if (ex.response && ex.response.status) {
-            if (ex.response.status === 401) {
-              userStore.setNotAuthenticated();
-            }
-            return { status: ex.response.status, data: resultData };
-          }
-          return { status: 500, data: resultData };
+          return this.handleAxiosException(ex, userStore, resultData);
         }
       }
       return { status: 401, data: resultData };
@@ -262,25 +277,27 @@ export const UserStore = defineStore('user', {
           }
           return { status: response.status, data: resultData };
         } catch (ex) {
-          if (ex.response && ex.response.status) {
-            if (ex.response.status === 401) {
-              userStore.setNotAuthenticated();
-            }
-            return { status: ex.response.status, data: resultData };
-          }
-          return { status: 500, data: resultData };
+          return this.handleAxiosException(ex, userStore, resultData);
         }
       }
       return { status: 401, data: resultData };
     },
     async createRoleEmpty(roleName) {
       const userStore = UserStore();
+      let newRoleId;
       if (userStore.authenticated) {
         const config = userStore.getBearerAuthRequestHeader();
-        const response = await axios.put('/api/role', { name: roleName }, config);
-        return response.status;
+        try {
+          const response = await axios.put('/api/role', { name: roleName }, config);
+          if (response.status === 200) {
+            newRoleId = response.data;
+          }
+          return { status: response.status, resultData: newRoleId };
+        } catch (ex) {
+          return this.handleAxiosException(ex, userStore, newRoleId);
+        }
       }
-      return 401;
+      return { status: 401 };
     },
     async getRolesOfUser(userId) {
       const userStore = UserStore();
@@ -294,13 +311,7 @@ export const UserStore = defineStore('user', {
           }
           return { status: response.status, data: resultData };
         } catch (ex) {
-          if (ex.response && ex.response.status) {
-            if (ex.response.status === 401) {
-              userStore.setNotAuthenticated();
-            }
-            return { status: ex.response.status, data: resultData };
-          }
-          return { status: 500, data: resultData };
+          return this.handleAxiosException(ex, userStore, resultData);
         }
       }
       return { status: 401, data: resultData };
@@ -317,13 +328,7 @@ export const UserStore = defineStore('user', {
           }
           return { status: response.status, data: resultData };
         } catch (ex) {
-          if (ex.response && ex.response.status) {
-            if (ex.response.status === 401) {
-              userStore.setNotAuthenticated();
-            }
-            return { status: ex.response.status, data: resultData };
-          }
-          return { status: 500, data: resultData };
+          return this.handleAxiosException(ex, userStore, resultData);
         }
       }
       return { status: 401, data: resultData };
@@ -340,13 +345,7 @@ export const UserStore = defineStore('user', {
           }
           return { status: response.status, data: resultData };
         } catch (ex) {
-          if (ex.response && ex.response.status) {
-            if (ex.response.status === 401) {
-              userStore.setNotAuthenticated();
-            }
-            return { status: ex.response.status, data: resultData };
-          }
-          return { status: 500, data: resultData };
+          return this.handleAxiosException(ex, userStore, resultData);
         }
       }
       return { status: 401, data: resultData };

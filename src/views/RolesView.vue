@@ -89,24 +89,18 @@ export default {
   },
   methods: {
     ...mapActions(UserStore, ["fillRoles", "createRoleEmpty"]),
-    addRole() {
-    },
-    async createNewRole() {
+    async addRole() {
       this.error = "";
-      try {
-        const result = await this.createRoleEmpty(this.newRoleName);
-        switch (result) {
-          case 200:
-            await this.fillAllRoles();
-            break; // all ok
-          case 401:
-            router.replace("/login");
-            break;
-          default:
-            this.error = `Error loading roles from server: ${result}`;
-        }
-      } catch (error) {
-        this.error = error.message;
+      const result = await this.createRoleEmpty(this.newRoleName);
+      switch (result.status) {
+        case 200:
+          await this.fillAllRoles();
+          break; // all ok
+        case 401:
+          router.replace("/login");
+          break;
+        default:
+          this.error = `Error loading roles from server: ${result.message}`;
       }
       this.isNewRoleModalDialogVisible = false;
     },

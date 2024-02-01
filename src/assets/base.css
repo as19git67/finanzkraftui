@@ -20,6 +20,8 @@
   --vt-c-text-dark-1: var(--vt-c-white);
   --vt-c-text-dark-2: rgba(235, 235, 235, 0.64);
 
+  --as-color-error: red;
+
   --as-color-primary-0: #aa6f39; /* Main Primary color */
   --as-color-primary-1: #513b27;
   --as-color-primary-2: #7d5733;
@@ -61,6 +63,7 @@
   --color-heading: var(--as-color-secondary-1-4);
   --color-text: var(--as-color-primary-1);
   --color-text-light: var(--as-color-primary-1);
+  --color-text-error: var(--as-color-error);
 
   --color-button-primary: var(--as-color-primary-4);
   --color-button-primary-text: var(--as-color-primary-1);
@@ -96,6 +99,12 @@ body {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.error {
+  font-weight: bold;
+  color: var(--color-text-error);
+  margin-bottom: 1em;
 }
 
 a {

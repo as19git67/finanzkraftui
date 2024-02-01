@@ -1,15 +1,16 @@
 <template>
   <div v-if="error" class="error">{{ error }}</div>
   <div v-else>
-    <h1 v-if="role" class="title">Rolle {{ role.Name }} ändern</h1>
+    <h1 v-if="role" class="title">Rolle {{ roleName }} ändern</h1>
 
     <div class="form form--is-column" v-if="role">
       <div class="form-component">
-        <label for="email">Rollenname:</label>
+        <label for="roleName">Rollenname:</label>
         <input type="text" v-model="role.Name" placeholder="Rollenname" id="roleName">
       </div>
     </div>
 
+    <p v-if="actionError" class="error">{{ actionError }}</p>
 
     <table class="data-table" v-if="allPermissionProfiles.length">
       <thead>
@@ -50,30 +51,64 @@ export default {
       role: this.role,
       allPermissionProfiles: this.allPermissionProfiles,
       error: this.error,
+      actionError: this.actionError
     };
   },
+  watch: {
+    roleName: async function (val, oldVal) {
+      if (this.inUndoChange) {
+        this.inUndoChange = false;
+        return;
+      }
+      if (oldVal === undefined || this.roleId === undefined) {
+        return;
+      }
+      this.actionError = undefined;
+      const result = await this.setRoleName(this.roleId, val);
+      if (result.status !== 200) {
+        this.inUndoChange = true;
+        this.role.Name = oldVal;
+        this.actionError = result.message;
+      }
+    },
+  },
   computed: {
+    roleName() {
+      return  this.role?.Name;
+    },
     ...mapStores(UserStore),
     ...mapState(UserStore, ["authenticated", "roles"]),
   },
   methods: {
-    ...mapActions(UserStore, ["fillRoles", "getRole", "getPermissionProfiles", "getPermissionProfilesOfRole", "setPermissionProfileAssignmentsForRole"]),
-    assignmentChanged(index) {
+    ...mapActions(UserStore, [
+      "fillRoles",
+      "getRole",
+      "setRoleName",
+      "getPermissionProfiles",
+      "getPermissionProfilesOfRole",
+      "setPermissionProfileAssignmentsForRole",
+    ]),
+    async assignmentChanged(index) {
       const permissionIds = [];
+      this.actionError = undefined;
       this.allPermissionProfiles.forEach(permissionProfile => {
         if (permissionProfile.assigned) {
           permissionIds.push(permissionProfile.id);
         }
       })
-      this.setPermissionProfileAssignmentsForRole(this.roleId, permissionIds);
-
+      const result = await this.setPermissionProfileAssignmentsForRole(this.roleId, permissionIds);
+      if (result.status !== 200) {
+        this.actionError = result.message;
+      }
     }
   },
   created() {
     this.allPermissionProfiles = [];
+    this.role = {};
   },
   async mounted() {
-    this.error = null;
+    this.error = undefined;
+    this.actionError = undefined;
     this.loading = true;
     if (!this.roles || this.roles.length === 0) {
       const result = await this.fillRoles();
