@@ -7,6 +7,8 @@
     </div>
   </form>
 
+  <p v-if="actionError" class="error">{{ actionError }}</p>
+
   <table class="data-table" v-if="roles && roles.length">
     <thead>
       <tr>
@@ -33,35 +35,6 @@
     </tbody>
   </table>
   <p v-else>Keine Rollen vom Server geladen</p>
-  <ModalDialog v-show="false" @close="closeModalDialog">
-    <template v-slot:header>Add a new role</template>
-    <template v-slot:body>
-      <label
-        >Role name:
-        <input
-          type="text"
-          v-model="newRoleName"
-          placeholder="Role name"
-          ref="roleNameInput"
-        />
-      </label>
-    </template>
-    <template v-slot:footer>
-      <div class="btn-group">
-        <button
-          type="button"
-          class="btn btn--is-primary"
-          :disabled="newRoleName.length === 0"
-          @click="createNewRole"
-        >
-          Add role
-        </button>
-        <button type="button" class="btn" @click="closeModalDialog">
-          Cancel
-        </button>
-      </div>
-    </template>
-  </ModalDialog>
 </template>
 
 <script>
@@ -80,6 +53,7 @@ export default {
     return {
       newRoleName: this.newRoleName,
       error: this.error,
+      actionError: this.actionError,
     };
   },
   computed: {
@@ -88,53 +62,66 @@ export default {
     ...mapState(UserStore, ["roles"]),
   },
   methods: {
-    ...mapActions(UserStore, ["fillRoles", "createRoleEmpty"]),
+    ...mapActions(UserStore, ["deleteRoleById", "fillRoles", "createRoleEmpty"]),
+    _handleActionResult: function (result) {
+      let mustAuthenticate = false;
+      let not_ok = false;
+      switch (result.status) {
+        case 401:
+          mustAuthenticate = true;
+          break;
+        case 200:
+          break;
+        default:
+          not_ok = true;
+      }
+      if (mustAuthenticate) {
+        router.replace("/login");
+        return false;
+      }
+      if (not_ok) {
+        if (result.status === 422) {
+          this.actionError = "Die Rolle ist Benutzern zugewiesen und kann deshalb nicht gelöscht werden";
+        } else {
+          this.actionError = result.message;
+        }
+        return false;
+      }
+      return true;
+    },
     async addRole() {
-      this.error = "";
+      this.actionError = "";
       const result = await this.createRoleEmpty(this.newRoleName);
       switch (result.status) {
         case 200:
-          await this.fillAllRoles();
+          if(!await this.fillAllRoles()) {
+            return;
+          }
           break; // all ok
         case 401:
           router.replace("/login");
           break;
         default:
-          this.error = `Error loading roles from server: ${result.message}`;
+          this.actionError = `Error creating role: ${result.message}`;
       }
-      this.isNewRoleModalDialogVisible = false;
     },
-    closeModalDialog() {
-      this.isNewRoleModalDialogVisible = false;
+    async deleteRole(id) {
+      this.actionError = "";
+      if (this._handleActionResult(await this.deleteRoleById(id))) {
+        await this.fillAllRoles();
+      }
     },
-    deleteRole(id) {
-      alert("test" + id);
-    },
-    fillAllRoles() {
-      this.error = "";
-      this.fillRoles()
-        .then((result) => {
-          switch (result) {
-            case 200:
-              break; // all ok
-            case 401:
-              router.replace("/login");
-              break;
-            default:
-              this.error = `Error loading roles from server: ${result}`;
-          }
-        })
-        .catch((error) => {
-          this.error = error.message;
-        });
+    async fillAllRoles() {
+      this.actionError = "";
+      return this._handleActionResult(await this.fillRoles());
     },
   },
   created() {
     this.newRoleName = '';
   },
-  mounted() {
-    this.error = null;
-    this.fillAllRoles();
+  async mounted() {
+    this.actionError = null;
+    await this.fillAllRoles();
   },
 };
 </script>

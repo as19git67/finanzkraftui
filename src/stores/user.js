@@ -89,7 +89,7 @@ export const UserStore = defineStore('user', {
         accessToken: this.accessToken,
         accessTokenExpiredAfter: this.accessTokenExpiredAfter,
         refreshToken: this.refreshToken,
-        _menuPermissions: this._menuPermissions,
+        menuPermissions: this._menuPermissions,
       };
       localStorage.setItem('auth', JSON.stringify(auth));
     },
@@ -209,13 +209,13 @@ export const UserStore = defineStore('user', {
       return { status: 401, data: resultData };
     },
     async fillRoles() {
-      const { status, data } = await this.getRoles();
-      if (status === 200) {
-        this._roles = data;
+      const result = await this.getRoles();
+      if (result.status === 200) {
+        this._roles = result.data;
       } else {
         this._roles = [];
       }
-      return status;
+      return result;
     },
     getRole(id) {
       if (id === undefined) {
@@ -241,6 +241,20 @@ export const UserStore = defineStore('user', {
           if (role) {
             role.Name = roleName;
           }
+          return { status: response.status };
+        } catch (ex) {
+          return this.handleAxiosException(ex, userStore);
+        }
+      }
+      return { status: 401 };
+    },
+    async deleteRoleById(roleId) {
+      const userStore = UserStore();
+      if (userStore.authenticated) {
+        const config = userStore.getBearerAuthRequestHeader();
+        try {
+          const response = await axios.delete(`/api/role/${roleId}`, config);
+
           return { status: response.status };
         } catch (ex) {
           return this.handleAxiosException(ex, userStore);
