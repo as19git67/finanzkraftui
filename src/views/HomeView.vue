@@ -27,28 +27,35 @@
       <button @click="searchTransactions" class="btn btn--is-primary">Suchen</button>
     </div>
   </form>
-  <table v-if="transactions.length">
-    <thead>
-    <tr>
-      <th>Datum</th>
-      <th>Text</th>
-      <th class="right-aligned">Betrag</th>
-      <th>Konto</th>
-    </tr>
-    </thead>
+
+  <table v-if="transactionsByDate.length">
     <tbody>
-    <tr v-for="(item, index) of transactions" :key="item" :class="{ 'alternate-row-background': index % 2 }">
-      <td>{{ DateTime.fromISO(item.valueDate).toLocaleString() }}</td>
-      <td class="td-text">
-        <div class="td-text-item">{{ item.text }}</div>
-        <div class="td-text-item item--is-category">{{ item.categoryName }}</div>
-        <div class="td-text-item item--is-notes">{{ item.notes }}</div>
-      </td>
-      <td class="right-aligned nowrap">
-        {{ `${new Intl.NumberFormat(undefined, {style: 'currency', currency: item.currencyId}).format(item.amount)}` }}
-      </td>
-      <td class="nowrap">{{ item.accountName }}</td>
-    </tr>
+    <template v-for="(trOfDate, index) in transactionsByDate" :key="trOfDate">
+      <tr class="transaction-date">
+        <td>{{ DateTime.fromISO(trOfDate.valueDate).toLocaleString() }}</td>
+      </tr>
+      <tr>
+        <td>
+          <table class="transaction-details-table">
+            <tbody>
+            <tr v-for="(item, index) in trOfDate.transactions" :key="item" :class="{
+              'alternate-row-background': index % 2 }">
+              <td class="transaction-text">
+                  <div>
+                    <div class="td-text-item">{{ item.text }}</div>
+                    <div class="td-text-item item--is-category">{{ item.categoryName }}</div>
+                    <div class="td-text-item item--is-notes">{{ item.notes }}</div>
+                  </div>
+              </td>
+              <td class="transaction-amount">
+                {{ `${new Intl.NumberFormat(undefined, {style: 'currency', currency: item.currencyId}).format(item.amount)}` }}
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </td>
+      </tr>
+    </template>
     </tbody>
   </table>
   <p v-else>Keine Buchungen vom Server geladen</p>
@@ -75,6 +82,7 @@ export default {
       accountFilter: this.accountFilter,
       timespanList: this.timespanList,
       dateFilter: this.dateFilter,
+      transactionsByDate: this.transactionsByDate,
     };
   },
   computed: {
@@ -86,6 +94,9 @@ export default {
     ...mapState(TransactionStore, ["transactions", "incompleteTransactionList", "maxTransactions"]),
     ...mapState(AccountStore, ["accounts"]),
     ...mapState(MasterDataStore, ["timespans"]),
+  },
+  created() {
+    this.transactionsByDate = [];
   },
   methods: {
     ...mapActions(MasterDataStore, ["getTimespans"]),
@@ -174,10 +185,37 @@ export default {
         }
         this._fillAccountList();
         this._fillTimespanList();
+        this._buildTransactionsPerDate();
       } catch (ex) {
         this.error = ex.message;
         this.loading = false;
       }
+    },
+    _buildTransactionsPerDate() {
+      const transactionsOfDate = {};
+      this.transactions.forEach((t) => {
+        const tDate = t.valueDate;
+        if (transactionsOfDate[tDate] === undefined) {
+          transactionsOfDate[tDate] = [];
+        }
+        transactionsOfDate[tDate].push(t);
+      });
+      const transactionDatesSorted = Object.keys(transactionsOfDate).toSorted((a, b) => {
+        const aDate = DateTime.fromISO(a);
+        const bDate = DateTime.fromISO(b);
+        if (aDate > bDate) return -1;
+        if (bDate < aDate) return 1;
+        return 0;
+      });
+      this.transactionsByDate = transactionDatesSorted.map((tDate) => {
+        return {
+          valueDate: tDate,
+          transactions: transactionsOfDate[tDate].toSorted((a, b) => {
+            return b.id - a.id;
+          }),
+        }
+      });
+      console.log(JSON.toString(this.transactionsByDate));
     },
     _fillTimespanList() {
       this.timespanList = this.timespans.map((tsInfo) => {
@@ -227,9 +265,27 @@ export default {
 </script>
 
 <style scoped>
-.td-text {
+.transaction-date {
+  background-color: #1f91a1;
+  color: white;
+}
+.transaction-date td {
+  font-weight: bold;
+}
+.transaction-details-table {
+  width: 100%;
+}
+.transaction-text {
+}
+.transaction-text > div {
   display: flex;
   flex-direction: column;
+  flex: 1 1 100%;
+}
+.transaction-amount {
+  white-space: nowrap;
+  text-align: end;
+  width: auto
 }
 .item--is-category {
   font-size: 0.8em;
