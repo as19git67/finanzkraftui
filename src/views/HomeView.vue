@@ -40,8 +40,9 @@
             <tr v-for="(item, index) in trOfDate.transactions" :key="item" class="transaction-details" :class="{'alternate-row-background': index % 2 }">
               <td class="transaction-text">
                   <div>
-                    <div class="td-text-item" :class="{'tr-not-processed': !item.processed }">{{ item.text ? item.text : item.entryText }}</div>
+                    <div class="td-text-item" :class="{'tr-not-processed': !item.processed }">{{ item.payee ? item.payee : item.textShortened ? item.textShortened : item.entryText }}</div>
                     <div class="td-text-item item--is-category">{{ item.categoryName }}</div>
+                    <div class="td-text-item item--is-text">{{ item.payee ? item.textShortened : '' }}</div>
                     <div class="td-text-item item--is-notes">{{ item.notes }}</div>
                   </div>
               </td>
@@ -302,6 +303,12 @@ table {
   text-overflow: ellipsis;
 }
 .item--is-category {
+  font-size: 0.8em;
+  overflow-x: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.item--is-text {
   font-size: 0.8em;
   overflow-x: hidden;
   white-space: nowrap;

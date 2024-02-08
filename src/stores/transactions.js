@@ -40,23 +40,32 @@ export const TransactionStore = defineStore('transaction', {
           if (response.status === 200) {
             if (_.isArray(response.data)) {
               this._incomplete = response.data.length > this._maxTransactions;
-              this._transactions = _.map(_.take(response.data, this._maxTransactions), (t) => ({
-                account_id: t.account_id,
-                accountName: t.account_name,
-                id: t.t_id,
-                bookingDate: t.t_booking_date,
-                valueDate: t.t_value_date,
-                text: t.t_text,
-                entryText: t.t_entry_text,
-                amount: t.t_amount,
-                notes: t.t_notes,
-                categoryId: t.category_id,
-                categoryName: t.category_name,
-                currencyId: t.currency_id,
-                currencyName: t.currency_name,
-                currencyShort: t.currency_short,
-                processed: t.t_processed,
-              }));
+              this._transactions = _.map(_.take(response.data, this._maxTransactions), (t) => {
+                const res = {
+                  account_id: t.account_id,
+                  accountName: t.account_name,
+                  id: t.t_id,
+                  bookingDate: t.t_booking_date,
+                  valueDate: t.t_value_date,
+                  text: t.t_text,
+                  entryText: t.t_entry_text,
+                  amount: t.t_amount,
+                  notes: t.t_notes,
+                  payee: t.t_payee,
+                  categoryId: t.category_id,
+                  categoryName: t.category_name,
+                  currencyId: t.currency_id,
+                  currencyName: t.currency_name,
+                  currencyShort: t.currency_short,
+                  processed: t.t_processed,
+                };
+                if (t.t_payee && t.t_text && t.t_text.indexOf(t.t_payee) === 0) {
+                  res.textShortened = t.t_text.substring(t.t_payee.length);
+                } else {
+                  res.textShortened = t.t_text;
+                }
+                return res;
+              });
             } else {
               this._transactions = [];
               this._incomplete = false;
