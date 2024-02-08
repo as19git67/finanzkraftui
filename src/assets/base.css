@@ -145,14 +145,17 @@ button:hover svg .metaphor {
   flex-wrap: nowrap;
   align-items: center;
   column-gap: 0.5em;
+  overflow-x: hidden;
 }
 
 .form-component > label {
-  width: 6em;
+  width: 5.5em;
+  min-width: 5.5em;
 }
 
 .form select {
   font-size: 1em;
+  overflow-x: hidden;
 }
 
 .title {

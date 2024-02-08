@@ -47,6 +47,7 @@ export const TransactionStore = defineStore('transaction', {
                 bookingDate: t.t_booking_date,
                 valueDate: t.t_value_date,
                 text: t.t_text,
+                entryText: t.t_entry_text,
                 amount: t.t_amount,
                 notes: t.t_notes,
                 categoryId: t.category_id,
@@ -54,6 +55,7 @@ export const TransactionStore = defineStore('transaction', {
                 currencyId: t.currency_id,
                 currencyName: t.currency_name,
                 currencyShort: t.currency_short,
+                processed: t.t_processed,
               }));
             } else {
               this._transactions = [];

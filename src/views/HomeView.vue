@@ -1,7 +1,6 @@
 <template>
-  <h1>Buchungen
+  <h1><span v-if="!loading">{{transactions.length}}</span> Buchungen
     <span v-if="loading">laden...</span>
-    <span v-if="incompleteTransactionList">(es gibt mehr Ergebnisse als dargestellt)</span>
   </h1>
   <form v-on:submit.prevent v-on:keyup.enter="searchTransactions"
         class="transaction-filter form">
@@ -28,7 +27,7 @@
     </div>
   </form>
 
-  <table v-if="transactionsByDate.length">
+  <table class="all-transactions-table" v-if="transactionsByDate.length">
     <tbody>
     <template v-for="(trOfDate, index) in transactionsByDate" :key="trOfDate">
       <tr class="transaction-date">
@@ -38,11 +37,10 @@
         <td>
           <table class="transaction-details-table">
             <tbody>
-            <tr v-for="(item, index) in trOfDate.transactions" :key="item" :class="{
-              'alternate-row-background': index % 2 }">
+            <tr v-for="(item, index) in trOfDate.transactions" :key="item" class="transaction-details" :class="{'alternate-row-background': index % 2 }">
               <td class="transaction-text">
                   <div>
-                    <div class="td-text-item">{{ item.text }}</div>
+                    <div class="td-text-item" :class="{'tr-not-processed': !item.processed }">{{ item.text ? item.text : item.entryText }}</div>
                     <div class="td-text-item item--is-category">{{ item.categoryName }}</div>
                     <div class="td-text-item item--is-notes">{{ item.notes }}</div>
                   </div>
@@ -59,6 +57,10 @@
     </tbody>
   </table>
   <p v-else>Keine Buchungen vom Server geladen</p>
+  <div v-if="incompleteTransactionList">
+    <hr>
+    <h4>Hinweis: es gibt mehr Ergebnisse als dargestellt</h4>
+  </div>
 </template>
 
 <script>
@@ -265,6 +267,10 @@ export default {
 </script>
 
 <style scoped>
+table {
+  table-layout: fixed;
+}
+
 .transaction-date {
   background-color: #1f91a1;
   color: white;
@@ -275,17 +281,25 @@ export default {
 .transaction-details-table {
   width: 100%;
 }
-.transaction-text {
+.tr-not-processed {
+  font-weight: bold;
 }
 .transaction-text > div {
   display: flex;
   flex-direction: column;
   flex: 1 1 100%;
 }
+.transaction-text .td-text-item {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow-x: hidden;
+}
 .transaction-amount {
   white-space: nowrap;
   text-align: end;
-  width: auto
+  width: 8em;
+  overflow-x: hidden;
+  text-overflow: ellipsis;
 }
 .item--is-category {
   font-size: 0.8em;
