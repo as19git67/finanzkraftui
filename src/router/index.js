@@ -19,6 +19,12 @@ const router = createRouter({
       component: () => import("../views/LogoutView.vue"),
     },
     {
+      path: "/transactionDetail/:transactionId",
+      name: "TransactionDetail",
+      props: true,
+      component: () => import("../views/TransactionDetailView.vue"),
+    },
+    {
       path: "/accounts",
       name: "Accounts",
       component: () => import("../views/AccountsView.vue"),

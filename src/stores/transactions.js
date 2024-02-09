@@ -21,6 +21,33 @@ export const TransactionStore = defineStore('transaction', {
     },
   },
   actions: {
+    buildTransactionFromResponse(transactionData) {
+      const res = {
+        account_id: transactionData.account_id,
+        accountName: transactionData.account_name,
+        id: transactionData.t_id,
+        bookingDate: transactionData.t_booking_date,
+        valueDate: transactionData.t_value_date,
+        text: transactionData.t_text,
+        entryText: transactionData.t_entry_text,
+        amount: transactionData.t_amount,
+        notes: transactionData.t_notes,
+        payee: transactionData.t_payee,
+        categoryId: transactionData.category_id,
+        categoryName: transactionData.category_name,
+        currencyId: transactionData.currency_id,
+        currencyName: transactionData.currency_name,
+        currencyShort: transactionData.currency_short,
+        processed: transactionData.t_processed,
+      };
+      if (transactionData.t_payee && transactionData.t_text
+        && transactionData.t_text.indexOf(transactionData.t_payee) === 0) {
+        res.textShortened = transactionData.t_text.substring(transactionData.t_payee.length);
+      } else {
+        res.textShortened = transactionData.t_text;
+      }
+      return res;
+    },
     async getTransactions(options) {
       const userStore = UserStore();
       if (userStore.authenticated) {
@@ -41,30 +68,7 @@ export const TransactionStore = defineStore('transaction', {
             if (_.isArray(response.data)) {
               this._incomplete = response.data.length > this._maxTransactions;
               this._transactions = _.map(_.take(response.data, this._maxTransactions), (t) => {
-                const res = {
-                  account_id: t.account_id,
-                  accountName: t.account_name,
-                  id: t.t_id,
-                  bookingDate: t.t_booking_date,
-                  valueDate: t.t_value_date,
-                  text: t.t_text,
-                  entryText: t.t_entry_text,
-                  amount: t.t_amount,
-                  notes: t.t_notes,
-                  payee: t.t_payee,
-                  categoryId: t.category_id,
-                  categoryName: t.category_name,
-                  currencyId: t.currency_id,
-                  currencyName: t.currency_name,
-                  currencyShort: t.currency_short,
-                  processed: t.t_processed,
-                };
-                if (t.t_payee && t.t_text && t.t_text.indexOf(t.t_payee) === 0) {
-                  res.textShortened = t.t_text.substring(t.t_payee.length);
-                } else {
-                  res.textShortened = t.t_text;
-                }
-                return res;
+                return this.buildTransactionFromResponse(t);
               });
             } else {
               this._transactions = [];
@@ -91,6 +95,28 @@ export const TransactionStore = defineStore('transaction', {
         this._incomplete = false;
         return 401;
       }
+    },
+    async getTransaction(id) {
+      let resultData = {};
+      const userStore = UserStore();
+      if (userStore.authenticated) {
+        const config = userStore.getBearerAuthRequestHeader();
+        if (id === undefined) {
+          throw new Error('Transaction id missing in getTransaction call');
+        }
+        try {
+          const response = await axios.get(`/api/transaction/${id}`, config);
+          if (response.status === 200) {
+            resultData = response.data;
+          }
+          return { status: response.status, data: resultData };
+        } catch (ex) {
+          return userStore.handleAxiosException(ex, userStore, resultData);
+        }
+      }
+      return { status: 401, data: resultData };
+    },
+    async updateTransaction(updateData) {
     },
   },
 });

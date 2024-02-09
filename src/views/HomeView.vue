@@ -37,19 +37,23 @@
         <td>
           <table class="transaction-details-table">
             <tbody>
-            <tr v-for="(item, index) in trOfDate.transactions" :key="item" class="transaction-details" :class="{'alternate-row-background': index % 2 }">
-              <td class="transaction-text">
-                  <div>
-                    <div class="td-text-item" :class="{'tr-not-processed': !item.processed }">{{ item.payee ? item.payee : item.textShortened ? item.textShortened : item.entryText }}</div>
-                    <div class="td-text-item item--is-category">{{ item.categoryName }}</div>
-                    <div class="td-text-item item--is-text">{{ item.payee ? item.textShortened : '' }}</div>
-                    <div class="td-text-item item--is-notes">{{ item.notes }}</div>
-                  </div>
-              </td>
-              <td class="transaction-amount">
-                {{ `${new Intl.NumberFormat(undefined, {style: 'currency', currency: item.currencyId}).format(item.amount)}` }}
-              </td>
-            </tr>
+              <tr v-for="(item, index) in trOfDate.transactions" :key="item" class="transaction-details" :class="{'alternate-row-background': index % 2 }">
+                  <td class="transaction-text">
+                    <router-link class="action" :to="{ path:'/transaction/:transactionId', name: 'TransactionDetail', params: { transactionId: item.id }}">
+                      <div>
+                        <div class="td-text-item" :class="{'tr-not-processed': !item.processed }">{{ item.payee ? item.payee : item.textShortened ? item.textShortened : item.entryText }}</div>
+                        <div class="td-text-item item--is-category">{{ item.categoryName }}</div>
+                        <div class="td-text-item item--is-text">{{ item.payee ? item.textShortened : '' }}</div>
+                        <div class="td-text-item item--is-notes">{{ item.notes }}</div>
+                      </div>
+                    </router-link>
+                  </td>
+                  <td class="transaction-amount">
+                    <router-link class="action" :to="{ path:'/transaction/:transactionId', name: 'TransactionDetail', params: { transactionId: item.id }}">
+                      {{ `${new Intl.NumberFormat(undefined, {style: 'currency', currency: item.currencyId}).format(item.amount)}` }}
+                    </router-link>
+                  </td>
+              </tr>
             </tbody>
           </table>
         </td>
@@ -72,9 +76,11 @@ import {MasterDataStore} from "@/stores/masterdata";
 import {TransactionStore} from "@/stores/transactions";
 import router from "@/router";
 import {AccountStore} from "@/stores/accounts";
+import IconEdit from "@/components/icons/IconEdit.vue";
 
 export default {
   name: "Home",
+  components: {IconEdit},
   data() {
     return {
       DateTime: DateTime,
@@ -289,6 +295,9 @@ table {
   display: flex;
   flex-direction: column;
   flex: 1 1 100%;
+}
+.transaction-text > .action {
+  display: block;
 }
 .transaction-text .td-text-item {
   white-space: nowrap;
