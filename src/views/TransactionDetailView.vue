@@ -2,9 +2,12 @@
   <div v-if="error" class="error">{{ error }}</div>
   <div v-else>
     <div class="top-links">
-    <router-link class="action" :to="{ path:'/', name: 'home'}">
-      < Zurück
-    </router-link>
+      <router-link v-if="!dirty" class="action" :to="{ path:'/', name: 'home'}">
+        < Zurück
+      </router-link>
+      <router-link v-else class="action action--is-disabled" :to="{}">
+        < Zurück
+      </router-link>
     <router-link class="action" :to="{ path:'/', name: 'home'}">
       Bearbeiten
     </router-link>
@@ -13,7 +16,7 @@
     <div v-if="transaction" class="transaction-details all">
       <div class="transaction-details title">
         <div class="transaction-details payee">
-          {{transaction.t_payee}}
+          {{transaction.t_payee ? transaction.t_payee : transaction.t_entry_text}}
         </div>
         <div v-if="transaction.category_name" class="transaction-details category">
           <span>{{transaction.category_name}}</span>
@@ -24,20 +27,33 @@
       </div>
       <div v-if="transaction.currency_id" class="transaction-details details">
         <div class="transaction-details details-row">
-          <div class="details-row-left">Betrag</div>
+          <div class="details-row-left">Betrag:</div>
           <div class="details-row-right">{{`${new Intl.NumberFormat(undefined, {style: 'currency', currency: transaction.currency_id}).format(transaction.t_amount)}`}}</div>
         </div>
         <div v-if="transaction.t_value_date" class="transaction-details details-row">
-          <div class="details-row-left">Datum</div>
+          <div class="details-row-left">Datum:</div>
           <div class="details-row-right">{{ DateTime.fromISO(transaction.t_value_date).toLocaleString(DateTime.DATE_HUGE) }}</div>
         </div>
         <div v-if="transaction.t_text" class="transaction-details details-row">
-          <div class="details-row-left">Text</div>
+          <div class="details-row-left">Text:</div>
           <div class="details-row-right">{{ transaction.t_text }}</div>
         </div>
         <div class="transaction-details details-row details-row-single-column">
-          <div class="">Notiz</div>
-          <textarea></textarea>
+          <div class="">Notiz:</div>
+          <textarea v-model="transaction.t_notes"></textarea>
+        </div>
+        <br>
+        <div class="transaction-details details-column">
+          <div class="details-row-left">Konto:</div>
+          <div class="details-row-right">{{ transaction.account_name }}</div>
+        </div>
+        <div v-if="transaction.t_payeePayerAcctNo" class="transaction-details details-column">
+          <div class="details-row-left">Zahlungsempfänger:</div>
+          <div class="details-row-right">{{ transaction.t_payeePayerAcctNo }}</div>
+        </div>
+        <div class="transaction-details details-column">
+          <div class="details-row-left">Buchungsart:</div>
+          <div class="details-row-right">{{ transaction.t_entry_text ? transaction.t_entry_text : 'Nicht angegeben' }}</div>
         </div>
         <div v-if="transaction" class="transaction-details details-row detail-links">
           <router-link class="action" :to="{ path:'/', name: 'home'}">
@@ -54,7 +70,6 @@
 
       </div>
     </div>
-
 
     <p v-if="actionError" class="error">{{ actionError }}</p>
   </div>
@@ -82,21 +97,52 @@ export default {
   components: {},
   data() {
     return {
+      dataChanged: _.debounce(this.handleDataChanged, 2000),
       transaction: this.transaction,
       error: this.error,
-      actionError: this.actionError
+      actionError: this.actionError,
+      updateData: this.updateData,
     };
   },
   watch: {
+    notes: async function (val, oldVal) {
+      if (this.inUndoChange) {
+        this.inUndoChange = false;
+        return;
+      }
+      if (oldVal === undefined || this.transaction === undefined) {
+        return;
+      }
+      this.updateData.t_notes = val;
+      this.updateData.t_processed = true;
+      this.dataChanged();
+    },
   },
   computed: {
+    notes() {
+      return  this.transaction?.t_notes;
+    },
+    dirty() {
+      return Object.keys(this.updateData).length > 0;
+    },
     ...mapStores(UserStore),
     ...mapState(UserStore, ["authenticated"]),
   },
   methods: {
     ...mapActions(TransactionStore, [ "getTransaction", "updateTransaction" ]),
+    async handleDataChanged() {
+      this.actionError = undefined;
+      this.updateData.id = this.transactionId;
+      const result = await this.updateTransaction(this.updateData);
+      if (result.status === 200) {
+        this.updateData = {};
+      } else {
+        this.actionError = result.message;
+      }
+    },
   },
   created() {
+    this.updateData = {};
     this.transaction = {};
   },
   async mounted() {
@@ -176,10 +222,17 @@ export default {
   padding-bottom: 0.5em;
 }
 
+.action.action--is-disabled {
+  color: var(--as-color-complement-5);
+}
+
 .transaction-details {
   display: flex;
   flex-direction: column;
+  flex: 1 1 100%;
+  width: 100%;
   align-items: flex-start;
+  margin-top: 0.5em;
 }
 
 .transaction-details.all {
@@ -212,13 +265,22 @@ export default {
 }
 
 .transaction-details.details-row {
-  display: flex;
   flex-direction: row;
   align-content: space-between;
-  flex: 1 1 100%;
-  width: 100%;
   column-gap: 1em;
-  margin-top: 0.5em;
+}
+
+.transaction-details.details-column {
+  flex-direction: column;
+}
+
+.transaction-details.details-column > .details-row-left {
+  justify-content: flex-start;
+  font-weight: bold;
+}
+
+.transaction-details.details-column > .details-row-right {
+
 }
 
 .transaction-details.details-row.details-row-single-column {
@@ -226,13 +288,16 @@ export default {
 }
 
 .transaction-details.details-row > div {
-  display: flex;
-  flex: 1 1 auto;
+  display: block;
+  overflow-x: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .transaction-details.details-row > .details-row-left {
   justify-content: flex-start;
-  flex: 0 1 4em;
+  flex: 1 0 4em;
+  font-weight: bold;
 }
 
 .transaction-details.details-row > .details-row-right {

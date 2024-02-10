@@ -117,6 +117,21 @@ export const TransactionStore = defineStore('transaction', {
       return { status: 401, data: resultData };
     },
     async updateTransaction(updateData) {
+      const resultData = {};
+      const userStore = UserStore();
+      if (userStore.authenticated) {
+        const config = userStore.getBearerAuthRequestHeader();
+        if (updateData.id === undefined) {
+          throw new Error('Transaction id missing in updateTransaction call');
+        }
+        try {
+          const response = await axios.post(`/api/transaction/${updateData.id}`, updateData, config);
+          return { status: response.status, data: resultData };
+        } catch (ex) {
+          return userStore.handleAxiosException(ex, userStore, resultData);
+        }
+      }
+      return { status: 401, data: resultData };
     },
   },
 });
