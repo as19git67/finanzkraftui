@@ -2,10 +2,7 @@
   <div v-if="error" class="error">{{ error }}</div>
   <div v-else>
     <div class="top-links">
-      <router-link v-if="!dirty" class="action" :to="{ path:'/', name: 'home'}">
-        < Zurück
-      </router-link>
-      <router-link v-else class="action action--is-disabled" :to="{}">
+      <router-link class="action" :to="{ path:'/', name: 'home'}" >
         < Zurück
       </router-link>
     <router-link class="action" :to="{ path:'/', name: 'home'}">
@@ -16,7 +13,12 @@
     <div v-if="transaction" class="transaction-details all">
       <div class="transaction-details title">
         <div class="transaction-details payee">
-          {{transaction.t_payee ? transaction.t_payee : transaction.t_entry_text}}
+          <div>
+            {{transaction.t_payee ? transaction.t_payee : transaction.t_entry_text}}
+          </div>
+          <button v-if="transaction.t_processed" class="btn-icon-only" aria-label="Markiere ungesehen" @click="markUnprocessed()">
+            <IconEyes class="icon-seen"/>
+          </button>
         </div>
         <div v-if="transaction.category_name" class="transaction-details category">
           <span>{{transaction.category_name}}</span>
@@ -78,6 +80,7 @@
 
 <script setup>
 import IconEdit from "@/components/icons/IconEdit.vue";
+import IconEyes from "@/components/icons/IconEyes.vue";
 
 defineProps({
   transactionId: { type: String },
@@ -98,6 +101,7 @@ export default {
   data() {
     return {
       dataChanged: _.debounce(this.handleDataChanged, 2000),
+      processed: this.processed,
       transaction: this.transaction,
       error: this.error,
       actionError: this.actionError,
@@ -122,8 +126,15 @@ export default {
     notes() {
       return  this.transaction?.t_notes;
     },
+    processed() {
+      return  this.transaction?.t_processed;
+    },
     dirty() {
-      return Object.keys(this.updateData).length > 0;
+      const keyCount = Object.keys(this.updateData).length;
+      if (keyCount === 1 && this.updateData.t_processed) {
+        return false;
+      }
+      return keyCount > 0;
     },
     ...mapStores(UserStore),
     ...mapState(UserStore, ["authenticated"]),
@@ -135,11 +146,17 @@ export default {
       this.updateData.id = this.transactionId;
       const result = await this.updateTransaction(this.updateData);
       if (result.status === 200) {
+        this.transaction = _.extend(this.transaction, this.updateData);
         this.updateData = {};
       } else {
         this.actionError = result.message;
       }
     },
+    markUnprocessed() {
+      this.updateData.t_processed = false;
+      this.dataChanged();
+      this.dataChanged.flush();
+    }
   },
   created() {
     this.updateData = {};
@@ -149,6 +166,21 @@ export default {
     this.error = undefined;
     this.actionError = undefined;
     this.loading = true;
+
+    router.beforeEach(async (to, from, next) => {
+      if (from.name === 'TransactionDetail') {
+        if (to.name === 'home') {
+          const keyCount = Object.keys(this.updateData).length;
+          if (keyCount === 1 && this.updateData.t_processed) {
+            this.dataChanged.cancel();
+          } else {
+            this.dataChanged();
+            this.dataChanged.flush();
+          }
+        }
+      }
+      next();
+    });
 
     if (!this.transactionId) {
       router.replace("/");
@@ -190,6 +222,10 @@ export default {
     }
 
     this.transaction = {...(results[0].data)};
+    if (!this.updateData.t_processed) {
+      this.updateData.t_processed = true;
+      this.dataChanged();
+    }
   },
 };
 </script>
@@ -253,9 +289,16 @@ export default {
 
 .transaction-details.payee {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   font-size: 16px;
   font-weight: bold;
+  align-items: center;
+}
+
+.transaction-details.payee .icon-seen {
+  margin-left: 0.5em;
+  width: 14px;
+  height: 14px;
 }
 
 .transaction-details.category {
