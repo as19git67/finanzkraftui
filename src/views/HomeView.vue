@@ -41,7 +41,7 @@
                   <td class="transaction-text">
                     <router-link class="action" :to="{ path:'/transaction/:transactionId', name: 'TransactionDetail', params: { transactionId: item.id }}">
                       <div>
-                        <div class="td-text-item" :class="{'tr-not-processed': !item.processed }">{{ item.payee ? item.payee : item.textShortened ? item.textShortened : item.entryText }}</div>
+                        <div class="td-text-item" :class="{'tr-not-confirmed': !item.confirmed }">{{ item.payee ? item.payee : item.textShortened ? item.textShortened : item.entryText }}</div>
                         <div class="td-text-item item--is-category">{{ item.categoryName }}</div>
                         <div class="td-text-item item--is-text">{{ item.payee ? item.textShortened : '' }}</div>
                         <div class="td-text-item item--is-notes">{{ item.notes }}</div>
@@ -288,7 +288,7 @@ table {
 .transaction-details-table {
   width: 100%;
 }
-.tr-not-processed {
+.tr-not-confirmed {
   font-weight: bold;
 }
 .transaction-text > div {

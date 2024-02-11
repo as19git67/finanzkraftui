@@ -38,7 +38,7 @@ export const TransactionStore = defineStore('transaction', {
         currencyId: transactionData.currency_id,
         currencyName: transactionData.currency_name,
         currencyShort: transactionData.currency_short,
-        processed: transactionData.t_processed,
+        confirmed: transactionData.confirmed,
       };
       if (transactionData.t_payee && transactionData.t_text
         && transactionData.t_text.indexOf(transactionData.t_payee) === 0) {

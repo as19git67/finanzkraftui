@@ -16,7 +16,7 @@
           <div>
             {{transaction.t_payee ? transaction.t_payee : transaction.t_entry_text}}
           </div>
-          <button v-if="transaction.t_processed" class="btn-icon-only" aria-label="Markiere ungesehen" @click="markUnprocessed()">
+          <button v-if="transaction.confirmed" class="btn-icon-only" aria-label="Markiere ungesehen" @click="markUnconfirmed()">
             <IconEyes class="icon-seen"/>
           </button>
         </div>
@@ -101,7 +101,6 @@ export default {
   data() {
     return {
       dataChanged: _.debounce(this.handleDataChanged, 2000),
-      processed: this.processed,
       transaction: this.transaction,
       error: this.error,
       actionError: this.actionError,
@@ -118,7 +117,7 @@ export default {
         return;
       }
       this.updateData.t_notes = val;
-      this.updateData.t_processed = true;
+      this.updateData.confirmed = true;
       this.dataChanged();
     },
   },
@@ -126,12 +125,12 @@ export default {
     notes() {
       return  this.transaction?.t_notes;
     },
-    processed() {
-      return  this.transaction?.t_processed;
+    confirmed() {
+      return  this.transaction?.confirmed;
     },
     dirty() {
       const keyCount = Object.keys(this.updateData).length;
-      if (keyCount === 1 && this.updateData.t_processed) {
+      if (keyCount === 1 && this.updateData.confirmed) {
         return false;
       }
       return keyCount > 0;
@@ -152,8 +151,8 @@ export default {
         this.actionError = result.message;
       }
     },
-    markUnprocessed() {
-      this.updateData.t_processed = false;
+    markUnconfirmed() {
+      this.updateData.confirmed = false;
       this.dataChanged();
       this.dataChanged.flush();
     }
@@ -171,7 +170,7 @@ export default {
       if (from.name === 'TransactionDetail') {
         if (to.name === 'home') {
           const keyCount = Object.keys(this.updateData).length;
-          if (keyCount === 1 && this.updateData.t_processed) {
+          if (keyCount === 1 && this.updateData.confirmed) {
             this.dataChanged.cancel();
           } else {
             this.dataChanged();
@@ -222,8 +221,8 @@ export default {
     }
 
     this.transaction = {...(results[0].data)};
-    if (!this.updateData.t_processed) {
-      this.updateData.t_processed = true;
+    if (!this.updateData.confirmed) {
+      this.updateData.confirmed = true;
       this.dataChanged();
     }
   },
