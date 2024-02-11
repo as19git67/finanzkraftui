@@ -1,5 +1,5 @@
 <template>
-  <h1>Konten</h1>
+  <h1 class="page-title">Konten</h1>
   <table v-if="accounts.length">
     <thead>
     <tr>

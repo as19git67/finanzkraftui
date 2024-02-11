@@ -1,5 +1,5 @@
 <template>
-  <h1><span v-if="!loading">{{transactions.length}}</span> Buchungen
+  <h1 class="page-title"><span v-if="!loading">{{transactions.length}}</span> Buchungen
     <span v-if="loading">laden...</span>
   </h1>
   <form v-on:submit.prevent v-on:keyup.enter="searchTransactions"
@@ -279,7 +279,7 @@ table {
 }
 
 .transaction-date {
-  background-color: #1f91a1;
+  background-color: var(--as-color-complement-4);
   color: white;
 }
 .transaction-date td {

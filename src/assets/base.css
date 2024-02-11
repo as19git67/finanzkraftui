@@ -129,6 +129,8 @@ button:hover svg .metaphor {
   row-gap: 0.5em;
   flex-wrap: wrap;
   margin-bottom: 1em;
+  margin-left: 0.5em;
+  margin-right: 0.5em;
 }
 
 .form.form--is-right {
@@ -146,6 +148,7 @@ button:hover svg .metaphor {
   align-items: center;
   column-gap: 0.5em;
   overflow-x: hidden;
+  flex: 1 1 auto;
 }
 
 .form-component > label {
@@ -153,14 +156,35 @@ button:hover svg .metaphor {
   min-width: 5.5em;
 }
 
+.form-component > input {
+  flex: 1 1 auto;
+}
+
 .form select {
+  display: flex;
   font-size: 1em;
   overflow-x: hidden;
+  width: 100%;
 }
 
 .title {
   display: flex;
   align-items: center;
+}
+
+.page-title {
+  display: flex;
+  justify-content: center;
+  background-color: var(--as-color-complement-0);
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+  gap: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+.page-title span {
+  font-weight: bold;
 }
 
 .title .btn-icon-only {
