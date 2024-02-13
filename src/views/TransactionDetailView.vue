@@ -38,7 +38,7 @@
         </div>
         <div v-if="transaction.t_text" class="transaction-details details-row">
           <div class="details-row-left">Text:</div>
-          <div class="details-row-right">{{ transaction.t_text }}</div>
+          <div class="details-row-right transaction-details-text">{{ transaction.t_text }}</div>
         </div>
         <div class="transaction-details details-row details-row-single-column">
           <div class="">Notiz:</div>
@@ -321,10 +321,6 @@ export default {
   font-weight: bold;
 }
 
-.transaction-details.details-column > .details-row-right {
-
-}
-
 .transaction-details.details-row.details-row-single-column {
   flex-direction: column;
 }
@@ -344,6 +340,11 @@ export default {
 
 .transaction-details.details-row > .details-row-right {
   justify-content: flex-end;
+}
+
+.transaction-details.details-row > .details-row-right.transaction-details-text {
+  white-space: normal;
+  text-align: end;
 }
 
 .transaction-details.details-row > textarea {
