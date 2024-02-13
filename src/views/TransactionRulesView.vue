@@ -1,13 +1,18 @@
 <template>
   <div v-if="error" class="error">{{ error }}</div>
   <div v-else>
+    <h1 class="page-title">Regelset</h1>
     <div class="top-links">
-      <router-link class="action" :to="{ path:'/', name: 'home'}" >
+      <router-link class="action" :to="{ name: 'TransactionDetail'}" >
         < Zurück
       </router-link>
-    <router-link class="action" :to="{ path:'/', name: 'home'}">
-      Bearbeiten
-    </router-link>
+    </div>
+
+    <div class="form form--is-column" v-if="role">
+      <div class="form-component">
+        <label for="ruleSetName">Rollenname:</label>
+        <input type="text" v-model="ruleSet.name" placeholder="Name Regelset" id="ruleSetName">
+      </div>
     </div>
 
     <div v-if="transaction" class="transaction-details all">
@@ -16,60 +21,7 @@
           <div>
             {{transaction.t_payee ? transaction.t_payee : transaction.t_entry_text}}
           </div>
-          <button v-if="transaction.confirmed" class="btn-icon-only" aria-label="Markiere ungesehen" @click="markUnconfirmed()">
-            <IconEyes class="icon-seen"/>
-          </button>
         </div>
-        <div v-if="transaction.category_name" class="transaction-details category">
-          <span>{{transaction.category_name}}</span>
-          <router-link class="action" :to="{ path:'/', name: 'home'}">
-            <button class="btn-icon-only" aria-label="Edit"><IconEdit/></button>
-          </router-link>
-        </div>
-      </div>
-      <div v-if="transaction.currency_id" class="transaction-details details">
-        <div class="transaction-details details-row">
-          <div class="details-row-left">Betrag:</div>
-          <div class="details-row-right">{{`${new Intl.NumberFormat(undefined, {style: 'currency', currency: transaction.currency_id}).format(transaction.t_amount)}`}}</div>
-        </div>
-        <div v-if="transaction.t_value_date" class="transaction-details details-row">
-          <div class="details-row-left">Datum:</div>
-          <div class="details-row-right">{{ DateTime.fromISO(transaction.t_value_date).toLocaleString(DateTime.DATE_HUGE) }}</div>
-        </div>
-        <div v-if="transaction.t_text" class="transaction-details details-row">
-          <div class="details-row-left">Text:</div>
-          <div class="details-row-right transaction-details-text">{{ transaction.t_text }}</div>
-        </div>
-        <div class="transaction-details details-row details-row-single-column">
-          <div class="">Notiz:</div>
-          <textarea v-model="transaction.t_notes"></textarea>
-        </div>
-        <br>
-        <div class="transaction-details details-column">
-          <div class="details-row-left">Konto:</div>
-          <div class="details-row-right">{{ transaction.account_name }}</div>
-        </div>
-        <div v-if="transaction.t_payeePayerAcctNo" class="transaction-details details-column">
-          <div class="details-row-left">Zahlungsempfänger:</div>
-          <div class="details-row-right">{{ transaction.t_payeePayerAcctNo }}</div>
-        </div>
-        <div class="transaction-details details-column">
-          <div class="details-row-left">Buchungsart:</div>
-          <div class="details-row-right">{{ transaction.t_entry_text ? transaction.t_entry_text : 'Nicht angegeben' }}</div>
-        </div>
-        <div v-if="transaction" class="transaction-details details-row detail-links">
-          <router-link class="action" :to="{ path:'/', name: 'home'}">
-            Tags bearbeiten
-          </router-link>
-        </div>
-        <div v-if="transaction" class="transaction-details details-row detail-links">
-          <router-link class="action" :to="{ name: 'TransactionRules' }">
-            Regeln
-          </router-link>
-        </div>
-      </div>
-      <div class="transaction-details history">
-
       </div>
     </div>
 
@@ -96,10 +48,11 @@ import {DateTime} from "luxon";
 import {TransactionStore} from "@/stores/transactions";
 
 export default {
-  name: "TransactionDetailView",
+  name: "TransactionRulesView",
   components: {},
   data() {
     return {
+      ruleSet: this.ruleSet,
       transaction: this.transaction,
       error: this.error,
       actionError: this.actionError,
@@ -134,11 +87,11 @@ export default {
     ...mapState(UserStore, ["authenticated"]),
   },
   methods: {
-    ...mapActions(TransactionStore, [ "getTransaction", "updateTransaction" ]),
+    ...mapActions(TransactionStore, [ "getTransaction" ]),
     async handleDataChanged() {
       this.actionError = undefined;
       this.updateData.id = this.transactionId;
-      const result = await this.updateTransaction(this.updateData);
+      const result = await this.createOrUpdateRule(this.updateData);
       if (result.status === 200) {
         this.transaction = _.extend(this.transaction, this.updateData);
         this.updateData = {};
@@ -156,6 +109,7 @@ export default {
     this.dataChanged = _.debounce(this.handleDataChanged, 2000);
     this.updateData = {};
     this.transaction = {};
+    this.ruleSet = {};
   },
   async mounted() {
     this.error = undefined;
@@ -289,7 +243,6 @@ export default {
   font-size: 16px;
   font-weight: bold;
   align-items: center;
-  word-wrap: anywhere;
 }
 
 .transaction-details.payee .icon-seen {

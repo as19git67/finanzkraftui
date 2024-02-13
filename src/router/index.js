@@ -3,6 +3,7 @@ import HomeView from '../views/HomeView.vue';
 import LoginView from '../views/LoginView.vue';
 import LogoutView from '../views/LogoutView.vue';
 import TransactionDetailView from '../views/TransactionDetailView.vue';
+import TransactionRulesView from '../views/TransactionRulesView.vue';
 import AccountsView from '../views/AccountsView.vue';
 import UsersView from '../views/UsersView.vue';
 import RolesView from '../views/RolesView.vue';
@@ -34,6 +35,12 @@ const router = createRouter({
       name: 'TransactionDetail',
       props: true,
       component: TransactionDetailView,
+    },
+    {
+      path: '/transactionRules/:transactionId',
+      name: 'TransactionRules',
+      props: true,
+      component: TransactionRulesView,
     },
     {
       path: '/accounts',
