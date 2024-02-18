@@ -11,6 +11,68 @@ a {
   padding: 0.25em 0.5em 0.25em 0.5em;
 }
 
+table {
+  table-layout: fixed;
+}
+
+.transaction-date {
+  background-color: var(--as-color-complement-4);
+  color: white;
+}
+.transaction-date td {
+  font-weight: bold;
+}
+.transaction-details-table {
+  width: 100%;
+}
+.tr-not-confirmed {
+  font-weight: bold;
+}
+.transaction-text > div {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 100%;
+}
+.transaction-text > .transaction-data {
+  display: block;
+}
+.transaction-text .td-text-item {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow-x: hidden;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+.transaction-amount {
+  white-space: nowrap;
+  text-align: end;
+  width: 8em;
+  overflow-x: hidden;
+  text-overflow: ellipsis;
+}
+.item--is-category {
+  font-size: 0.8em;
+  overflow-x: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+.item--is-text {
+  font-size: 0.8em;
+  overflow-x: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+.item--is-notes {
+  font-size: 0.8em;
+  overflow-x: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
 @media (hover: hover) {
 }
 

@@ -39,13 +39,11 @@
             <tbody>
               <tr v-for="(item, index) in trOfDate.transactions" :key="item" class="transaction-details" :class="{'alternate-row-background': index % 2 }">
                   <td class="transaction-text">
-                    <router-link class="action" :to="{ path:'/transaction/:transactionId', name: 'TransactionDetail', params: { transactionId: item.id }}">
-                      <div>
-                        <div class="td-text-item" :class="{'tr-not-confirmed': !item.confirmed }">{{ item.payee ? item.payee : item.textShortened ? item.textShortened : item.entryText }}</div>
-                        <div class="td-text-item item--is-category">{{ item.categoryName }}</div>
-                        <div class="td-text-item item--is-text">{{ item.payee ? item.textShortened : '' }}</div>
-                        <div class="td-text-item item--is-notes">{{ item.notes }}</div>
-                      </div>
+                    <router-link class="transaction-data action" :to="{ path:'/transaction/:transactionId', name: 'TransactionDetail', params: { transactionId: item.id }}">
+                      <div class="td-text-item" :class="{'tr-not-confirmed': !item.confirmed }">{{ item.payee ? item.payee : item.textShortened ? item.textShortened : item.entryText }}</div>
+                      <div class="td-text-item item--is-category">{{ item.categoryName }}</div>
+                      <div class="td-text-item item--is-text">{{ item.payee ? item.textShortened : '' }}</div>
+                      <div class="td-text-item item--is-notes">{{ item.notes }}</div>
                     </router-link>
                   </td>
                   <td class="transaction-amount">
@@ -61,7 +59,7 @@
     </template>
     </tbody>
   </table>
-  <p v-else>Keine Buchungen vom Server geladen</p>
+  <p v-else><span v-if="!loading">Keine Buchungen vom Server geladen</span></p>
   <div v-if="incompleteTransactionList">
     <hr>
     <h4>Hinweis: es gibt mehr Ergebnisse als dargestellt</h4>
@@ -224,7 +222,7 @@ export default {
           }),
         }
       });
-      console.log(JSON.toString(this.transactionsByDate));
+      //console.log(JSON.toString(this.transactionsByDate));
     },
     _fillTimespanList() {
       this.timespanList = this.timespans.map((tsInfo) => {
@@ -274,59 +272,4 @@ export default {
 </script>
 
 <style scoped>
-table {
-  table-layout: fixed;
-}
-
-.transaction-date {
-  background-color: var(--as-color-complement-4);
-  color: white;
-}
-.transaction-date td {
-  font-weight: bold;
-}
-.transaction-details-table {
-  width: 100%;
-}
-.tr-not-confirmed {
-  font-weight: bold;
-}
-.transaction-text > div {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 100%;
-}
-.transaction-text > .action {
-  display: block;
-}
-.transaction-text .td-text-item {
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow-x: hidden;
-}
-.transaction-amount {
-  white-space: nowrap;
-  text-align: end;
-  width: 8em;
-  overflow-x: hidden;
-  text-overflow: ellipsis;
-}
-.item--is-category {
-  font-size: 0.8em;
-  overflow-x: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-.item--is-text {
-  font-size: 0.8em;
-  overflow-x: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-.item--is-notes {
-  font-size: 0.8em;
-  overflow-x: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
 </style>

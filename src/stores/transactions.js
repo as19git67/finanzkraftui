@@ -33,6 +33,7 @@ export const TransactionStore = defineStore('transaction', {
         amount: transactionData.t_amount,
         notes: transactionData.t_notes,
         payee: transactionData.t_payee,
+        payeePayerAcctNo: transactionData.t_payeePayerAcctNo,
         categoryId: transactionData.category_id,
         categoryName: transactionData.category_name,
         currencyId: transactionData.currency_id,
@@ -96,6 +97,41 @@ export const TransactionStore = defineStore('transaction', {
         return 401;
       }
     },
+    async getMatchingTransactions(options) {
+      const resultData = {
+        incomplete: false,
+        transactions: [],
+      };
+      const userStore = UserStore();
+      if (userStore.authenticated) {
+        const config = userStore.getBearerAuthRequestHeader();
+        if (options) {
+          config.params = _.pick(
+            options,
+            'maxItems',
+            'accountsWhereIn',
+            'dateFilterFrom',
+            'dateFilterTo',
+            'textToken',
+          );
+        }
+        try {
+          const response = await axios.get('/api/transaction', config);
+          if (response.status === 200) {
+            if (_.isArray(response.data)) {
+              resultData.incomplete = response.data.length > options.maxItems;
+              // eslint-disable-next-line max-len
+              resultData.transactions = response.data.map((t) => this.buildTransactionFromResponse(t));
+            }
+          }
+          return { status: response.status, data: resultData };
+        } catch (ex) {
+          return userStore.handleAxiosException(ex, userStore, resultData);
+        }
+      } else {
+        return { status: 401, data: resultData };
+      }
+    },
     async getTransaction(id) {
       let resultData = {};
       const userStore = UserStore();
@@ -107,7 +143,7 @@ export const TransactionStore = defineStore('transaction', {
         try {
           const response = await axios.get(`/api/transaction/${id}`, config);
           if (response.status === 200) {
-            resultData = response.data;
+            resultData = this.buildTransactionFromResponse(response.data);
           }
           return { status: response.status, data: resultData };
         } catch (ex) {

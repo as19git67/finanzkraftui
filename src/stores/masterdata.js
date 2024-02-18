@@ -6,10 +6,15 @@ import { UserStore } from '@/stores/user';
 export const MasterDataStore = defineStore('masterdata', {
   state: () => ({
     _timespans: [],
+    _categories: [],
+    _categoriesById: {},
   }),
   getters: {
     timespans(state) {
       return state._timespans;
+    },
+    categories(state) {
+      return state._categories;
     },
   },
   actions: {
@@ -54,6 +59,33 @@ export const MasterDataStore = defineStore('masterdata', {
       } else {
         return 200; // status ok
       }
+    },
+    async getCategories() {
+      this._categories = [];
+      this._categoriesById = {};
+      const userStore = UserStore();
+      if (userStore.authenticated) {
+        const config = userStore.getBearerAuthRequestHeader();
+        try {
+          const response = await axios.get('/api/category', config);
+          if (response.status === 200) {
+            if (_.isArray(response.data)) {
+              this._categories = response.data;
+              this._categories.forEach((category) => {
+                this._categoriesById[category.id] = category;
+              });
+            }
+          }
+          return { status: response.status };
+        } catch (ex) {
+          return userStore.handleAxiosException(ex, userStore, []);
+        }
+      } else {
+        // return { status: 401, data: resultData };
+      }
+    },
+    getCategoryById(id) {
+      return this._categoriesById[id];
     },
   },
 });

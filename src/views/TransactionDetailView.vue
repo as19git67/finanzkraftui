@@ -14,48 +14,48 @@
       <div class="transaction-details title">
         <div class="transaction-details payee">
           <div>
-            {{transaction.t_payee ? transaction.t_payee : transaction.t_entry_text}}
+            {{transaction.payee ? transaction.payee : transaction.entryText}}
           </div>
           <button v-if="transaction.confirmed" class="btn-icon-only" aria-label="Markiere ungesehen" @click="markUnconfirmed()">
             <IconEyes class="icon-seen"/>
           </button>
         </div>
-        <div v-if="transaction.category_name" class="transaction-details category">
-          <span>{{transaction.category_name}}</span>
+        <div v-if="transaction.categoryName" class="transaction-details category">
+          <span>{{transaction.categoryName}}</span>
           <router-link class="action" :to="{ path:'/', name: 'home'}">
             <button class="btn-icon-only" aria-label="Edit"><IconEdit/></button>
           </router-link>
         </div>
       </div>
-      <div v-if="transaction.currency_id" class="transaction-details details">
+      <div v-if="transaction.currencyId" class="transaction-details details">
         <div class="transaction-details details-row">
           <div class="details-row-left">Betrag:</div>
-          <div class="details-row-right">{{`${new Intl.NumberFormat(undefined, {style: 'currency', currency: transaction.currency_id}).format(transaction.t_amount)}`}}</div>
+          <div class="details-row-right">{{`${new Intl.NumberFormat(undefined, {style: 'currency', currency: transaction.currencyId}).format(transaction.amount)}`}}</div>
         </div>
-        <div v-if="transaction.t_value_date" class="transaction-details details-row">
+        <div v-if="transaction.valueDate" class="transaction-details details-row">
           <div class="details-row-left">Datum:</div>
-          <div class="details-row-right">{{ DateTime.fromISO(transaction.t_value_date).toLocaleString(DateTime.DATE_HUGE) }}</div>
+          <div class="details-row-right">{{ DateTime.fromISO(transaction.valueDate).toLocaleString(DateTime.DATE_HUGE) }}</div>
         </div>
-        <div v-if="transaction.t_text" class="transaction-details details-row">
+        <div v-if="transaction.text" class="transaction-details details-row">
           <div class="details-row-left">Text:</div>
-          <div class="details-row-right transaction-details-text">{{ transaction.t_text }}</div>
+          <div class="details-row-right transaction-details-text">{{ transaction.text }}</div>
         </div>
         <div class="transaction-details details-row details-row-single-column">
           <div class="">Notiz:</div>
-          <textarea v-model="transaction.t_notes"></textarea>
+          <textarea v-model="transaction.notes"></textarea>
         </div>
         <br>
         <div class="transaction-details details-column">
           <div class="details-row-left">Konto:</div>
-          <div class="details-row-right">{{ transaction.account_name }}</div>
+          <div class="details-row-right">{{ transaction.accountName }}</div>
         </div>
         <div v-if="transaction.t_payeePayerAcctNo" class="transaction-details details-column">
           <div class="details-row-left">Zahlungsempfänger:</div>
-          <div class="details-row-right">{{ transaction.t_payeePayerAcctNo }}</div>
+          <div class="details-row-right">{{ transaction.payeePayerAcctNo }}</div>
         </div>
         <div class="transaction-details details-column">
           <div class="details-row-left">Buchungsart:</div>
-          <div class="details-row-right">{{ transaction.t_entry_text ? transaction.t_entry_text : 'Nicht angegeben' }}</div>
+          <div class="details-row-right">{{ transaction.entryText ? transaction.entryText : 'Nicht angegeben' }}</div>
         </div>
         <div v-if="transaction" class="transaction-details details-row detail-links">
           <router-link class="action" :to="{ path:'/', name: 'home'}">
