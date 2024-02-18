@@ -250,7 +250,7 @@ export default {
       await this._setMatchingTransactionsForTextToken(selectedTextToken);
       if (!this.manuallyChangedMinMaxAmount) {
         this.minAmount = Number.MAX_VALUE;
-        this.maxAmount = Number.MIN_VALUE;
+        this.maxAmount = -Number.MAX_VALUE;
         this.matchingTransactions.forEach(t => {
           const amount = t.amount;
           if (amount < this.minAmount) {
