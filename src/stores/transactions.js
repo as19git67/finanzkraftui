@@ -169,5 +169,23 @@ export const TransactionStore = defineStore('transaction', {
       }
       return { status: 401, data: resultData };
     },
+    async setRules(ruleInfo) {
+      const resultData = {};
+      const userStore = UserStore();
+      if (userStore.authenticated) {
+        const config = userStore.getBearerAuthRequestHeader();
+        if (!ruleInfo.name) {
+          throw new Error('setRules requires ruleInfo.name');
+        }
+        try {
+          const response = await axios.put('/api/rules/', ruleInfo, config);
+          return { status: response.status, data: resultData };
+        } catch (ex) {
+          return userStore.handleAxiosException(ex, userStore, resultData);
+        }
+      }
+      return { status: 401, data: resultData };
+    },
+
   },
 });

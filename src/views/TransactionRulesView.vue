@@ -1,121 +1,131 @@
 <template>
-  <div v-if="error" class="error">{{ error }}</div>
-  <div v-else>
-    <h1 class="page-title">Regelset</h1>
-    <div class="top-links">
-      <router-link class="action" :to="{ name: 'TransactionDetail'}" >
-        < Zurück
-      </router-link>
-      <button @click="saveRuleSet" class="action btn btn--is-primary">Regel speichern</button>
-    </div>
-
-    <p class="label-buchung">Buchung</p>
-    <table class="transaction-details-table">
-      <tbody>
-      <tr class="transaction-details">
-        <td class="transaction-text">
-          <div class="transaction-data">
-            <div class="td-text-item">
-              {{ transaction.payee ? transaction.payee : transaction.textShortened ? transaction.textShortened : transaction.entryText }}
-            </div>
-            <div class="td-text-item item--is-category">{{ transaction.categoryName }}</div>
-            <div class="td-text-item item--is-text" :title="transaction.payee ? transaction.textShortened : ''">{{ transaction.payee ? transaction.textShortened : '' }}</div>
-            <div class="td-text-item item--is-notes">{{ transaction.t_notes }}</div>
-          </div>
-        </td>
-        <td class="transaction-amount"><span v-if="transaction.currencyId">
-          {{
-            `${new Intl.NumberFormat(undefined, {style: 'currency', currency: transaction.currencyId}).format(transaction.amount)}`
-          }}
-        </span></td>
-      </tr>
-      </tbody>
-    </table>
-
-    <p class="label-ruleset">Regel</p>
-    <div class="form form--is-column">
-      <div class="form-component">
-        <label for="ruleSetName">Name:</label>
-        <input type="text" v-model="ruleSet.name" placeholder="Name Regelset" id="ruleSetName">
-      </div>
-      <div v-if="matchingTransactions.length > 0" class="form-component">
-        <label>Betrag:</label>
-      </div>
-      <div v-if="matchingTransactions.length > 0" class="form-component">
-        <input type="checkbox" v-model="useMinAmount">
-        <label for="minAmount">kleinster:</label>
-        <input type="text" v-model="minAmount" placeholder="kleinster Betrag" id="minAmount">
-        {{transaction.currencyShort}}
-      </div>
-      <div v-if="matchingTransactions.length > 0" class="form-component">
-        <input type="checkbox" v-model="useMaxAmount">
-        <label for="maxAmountInput">größter:</label>
-        <input type="text" v-model="maxAmount" placeholder="größter Betrag" id="maxAmountInput">
-        {{transaction.currencyShort}}
-      </div>
-    </div>
-    <p class="label-token">Wähle eine Kategorie</p>
-    <div class="form-component">
-      <input type="search" autofocus v-model="categorySearch" placeholder="Kategorie suchen">
-    </div>
-
-    <table>
-      <tbody>
-      <tr v-for="(item) in filteredCategories" :key="item.id">
-        <td class="text-h-center"><input type="radio" v-model="item.selected" name="ruleCategory"></td>
-        <td>{{item.full_name}}</td>
-      </tr>
-      </tbody>
-    </table>
-
-    <p class="label-token">Textabschnitte vom Verwendungszweck - markiere diejenigen, die Teil der Regel sein sollen</p>
-    <table>
-      <tbody>
-      <tr v-for="(item) in textToken" :key="item.text">
-        <td class="text-h-center"><input type="checkbox" v-model="item.selected" @change="tokenSelected(item.text)"></td>
-        <td>{{item.text}}</td>
-      </tr>
-      </tbody>
-    </table>
-
-    <p class="label-matching-transactions">{{matchingTransactions.length}} Buchungen, die mit den ausgewählten Textabschnitten gefunden werden:</p>
-    <table class="all-transactions-table" v-if="matchingTransactionsByDate.length">
-      <tbody>
-      <template v-for="(trOfDate) in matchingTransactionsByDate" :key="trOfDate">
-        <tr class="transaction-date">
-          <td>{{ DateTime.fromISO(trOfDate.valueDate).toLocaleString() }}</td>
-        </tr>
-        <tr>
-          <td>
-            <table class="transaction-details-table">
-              <tbody>
-              <tr v-for="(item, index) in trOfDate.transactions" :key="item" class="transaction-details"
-                  :class="{'alternate-row-background': index % 2 }">
-                <td class="transaction-text">
-                  <div class="transaction-data">
-                    <div class="td-text-item">
-                      {{ item.payee ? item.payee : item.textShortened ? item.textShortened : item.entryText }}
-                    </div>
-                    <div class="td-text-item item--is-category">{{ item.categoryName }}</div>
-                    <div class="td-text-item item--is-text">{{ item.payee ? item.textShortened : '' }}</div>
-                    <div class="td-text-item item--is-notes">{{ item.notes }}</div>
-                  </div>
-                </td>
-                <td class="transaction-amount">
-                  {{`${new Intl.NumberFormat(undefined, {style: 'currency', currency: item.currencyId}).format(item.amount)}`}}
-                </td>
-              </tr>
-              </tbody>
-            </table>
-          </td>
-        </tr>
-      </template>
-      </tbody>
-    </table>
-
+  <h1 class="page-title">Regelset</h1>
+  <div class="top-links">
+    <router-link class="action" :to="{ name: 'TransactionDetail'}">
+      < Zurück
+    </router-link>
+    <button @click="saveRuleSet" :disabled="!canSave" class="action btn btn--is-primary">Regel speichern</button>
   </div>
-</template>
+  <div v-if="error" class="error">{{ error }}</div>
 
+  <p class="label-buchung">Buchung</p>
+  <table class="transaction-details-table">
+    <tbody>
+    <tr class="transaction-details">
+      <td class="transaction-text">
+        <div class="transaction-data">
+          <div class="td-text-item">
+            {{
+              transaction.payee ? transaction.payee : transaction.textShortened ? transaction.textShortened : transaction.entryText
+            }}
+          </div>
+          <div class="td-text-item item--is-category">{{ transaction.categoryName }}</div>
+          <div class="td-text-item item--is-text" :title="transaction.payee ? transaction.textShortened : ''">
+            {{ transaction.payee ? transaction.textShortened : '' }}
+          </div>
+          <div class="td-text-item item--is-notes">{{ transaction.t_notes }}</div>
+        </div>
+      </td>
+      <td class="transaction-amount"><span v-if="transaction.currencyId">
+          {{
+          `${new Intl.NumberFormat(undefined, {
+            style: 'currency',
+            currency: transaction.currencyId
+          }).format(transaction.amount)}`
+        }}
+        </span></td>
+    </tr>
+    </tbody>
+  </table>
+
+  <p class="label-ruleset">Regel</p>
+  <div class="form form--is-column">
+    <div class="form-component">
+      <label for="ruleSetName">Name:</label>
+      <input type="text" v-model="ruleSet.name" placeholder="Name Regelset" id="ruleSetName">
+    </div>
+    <div v-if="matchingTransactions.length > 0" class="form-component">
+      <label>Betrag:</label>
+    </div>
+    <div v-if="matchingTransactions.length > 0" class="form-component">
+      <input type="checkbox" v-model="useMinAmount">
+      <label for="minAmount">kleinster:</label>
+      <input type="text" v-model="minAmount" placeholder="kleinster Betrag" id="minAmount">
+      {{ transaction.currencyShort }}
+    </div>
+    <div v-if="matchingTransactions.length > 0" class="form-component">
+      <input type="checkbox" v-model="useMaxAmount">
+      <label for="maxAmountInput">größter:</label>
+      <input type="text" v-model="maxAmount" placeholder="größter Betrag" id="maxAmountInput">
+      {{ transaction.currencyShort }}
+    </div>
+  </div>
+  <p class="label-token">Wähle eine Kategorie</p>
+  <div class="form-component">
+    <input type="search" autofocus v-model="categorySearch" placeholder="Kategorie suchen">
+  </div>
+
+  <table>
+    <tbody>
+    <tr v-for="(item) in filteredCategories" :key="item.id">
+      <td class="text-h-center"><input type="radio" v-model="selectedCategory" :value="item.id" name="ruleCategory">
+      </td>
+      <td>{{ item.full_name }}</td>
+    </tr>
+    </tbody>
+  </table>
+
+  <p class="label-token">Textabschnitte vom Verwendungszweck - markiere diejenigen, die Teil der Regel sein sollen</p>
+  <table>
+    <tbody>
+    <tr v-for="(item) in textToken" :key="item.text">
+      <td class="text-h-center"><input type="checkbox" v-model="item.selected" @change="tokenSelected(item.text)"></td>
+      <td>{{ item.text }}</td>
+    </tr>
+    </tbody>
+  </table>
+
+  <p class="label-matching-transactions">{{ matchingTransactions.length }} Buchungen, die mit den ausgewählten
+    Textabschnitten gefunden werden:</p>
+  <table class="all-transactions-table" v-if="matchingTransactionsByDate.length">
+    <tbody>
+    <template v-for="(trOfDate) in matchingTransactionsByDate" :key="trOfDate">
+      <tr class="transaction-date">
+        <td>{{ DateTime.fromISO(trOfDate.valueDate).toLocaleString() }}</td>
+      </tr>
+      <tr>
+        <td>
+          <table class="transaction-details-table">
+            <tbody>
+            <tr v-for="(item, index) in trOfDate.transactions" :key="item" class="transaction-details"
+                :class="{'alternate-row-background': index % 2 }">
+              <td class="transaction-text">
+                <div class="transaction-data">
+                  <div class="td-text-item">
+                    {{ item.payee ? item.payee : item.textShortened ? item.textShortened : item.entryText }}
+                  </div>
+                  <div class="td-text-item item--is-category">{{ item.categoryName }}</div>
+                  <div class="td-text-item item--is-text">{{ item.payee ? item.textShortened : '' }}</div>
+                  <div class="td-text-item item--is-notes">{{ item.notes }}</div>
+                </div>
+              </td>
+              <td class="transaction-amount">
+                {{
+                  `${new Intl.NumberFormat(undefined, {
+                    style: 'currency',
+                    currency: item.currencyId
+                  }).format(item.amount)}`
+                }}
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </td>
+      </tr>
+    </template>
+    </tbody>
+  </table>
+</template>
 
 <script setup>
 import IconEdit from "@/components/icons/IconEdit.vue";
@@ -144,6 +154,7 @@ export default {
       matchingTransactions: this.matchingTransactions,
       ruleSet: this.ruleSet,
       filteredCategories: this.filteredCategories,
+      selectedCategory: this.selectedCategory,
       transaction: this.transaction,
       matchingTransactionsByDate: this.matchingTransactionsByDate,
       minAmount: this.minAmount,
@@ -151,8 +162,6 @@ export default {
       useMinAmount: this.useMinAmount,
       useMaxAmount: this.useMaxAmount,
       error: this.error,
-      actionError: this.actionError,
-      updateData: this.updateData,
       categorySearch: this.categorySearch,
     };
   },
@@ -167,12 +176,8 @@ export default {
     },
   },
   computed: {
-    dirty() {
-      const keyCount = Object.keys(this.updateData).length;
-      if (keyCount === 1 && this.updateData.confirmed) {
-        return false;
-      }
-      return keyCount > 0;
+    canSave() {
+      return this.ruleSet.name && this.selectedCategory;
     },
     ...mapStores(UserStore),
     ...mapState(UserStore, ["authenticated"]),
@@ -180,9 +185,40 @@ export default {
   },
   methods: {
     ...mapActions(MasterDataStore, [ "getCategories" ]),
-    ...mapActions(TransactionStore, [ "getTransaction", "getMatchingTransactions" ]),
+    ...mapActions(TransactionStore, [ "getTransaction", "getMatchingTransactions", "setRules" ]),
     saveRuleSet() {
-
+      if (this.ruleSet.name) {
+        const ruleInfo = {
+          name: this.ruleSet.name,
+          idSetCategory: this.selectedCategory,
+          textRules: this._getSelectedTextToken(),
+        };
+        this.setRules(ruleInfo).then(resultData => {
+          let mustAuthenticate = false;
+          let not_ok = false;
+          let status = resultData.status;
+          switch (status) {
+            case 401:
+              mustAuthenticate = true;
+              break;
+            case 200:
+              break;
+            default:
+              not_ok = true;
+          }
+          if (mustAuthenticate) {
+            this.error = 'Keine Berechtigung';
+            return;
+          }
+          if (not_ok) {
+            this.error = resultData.message;
+            return;
+          }
+          console.log('RuleSet saved.');
+        }).catch(reason => {
+          this.error = reason.message;
+        })
+      }
     },
     tokenSelected() {
       this._runRules();
@@ -264,17 +300,6 @@ export default {
         this.maxAmount = this._decimalFormatter.format(this.maxAmount);
       }
     },
-    async handleDataChanged() {
-      this.actionError = undefined;
-      this.updateData.id = this.transactionId;
-      // const result = await this.createOrUpdateRule(this.updateData);
-      // if (result.status === 200) {
-      //   this.transaction = _.extend(this.transaction, this.updateData);
-      //   this.updateData = {};
-      // } else {
-      //   this.actionError = result.message;
-      // }
-    },
     _buildTransactionsPerDate(transactions) {
       const transactionsOfDate = {};
       transactions.forEach((t) => {
@@ -304,8 +329,6 @@ export default {
   },
   created() {
     this._decimalFormatter = new Intl.NumberFormat(undefined, {style: 'decimal', minimumFractionDigits: 2, maximumFractionDigits: 2});
-    this.dataChanged = _.debounce(this.handleDataChanged, 2000);
-    this.updateData = {};
     this.transaction = {};
     this.ruleSet = {name: ''};
     this.textToken = {};
@@ -322,22 +345,6 @@ export default {
   async mounted() {
     this.error = undefined;
     this.loading = true;
-
-    // cancel the debounced dataChanged function in case of leaving before save
-    router.beforeEach(async (to, from, next) => {
-      if (from.name === 'TransactionDetail') {
-        if (to.name === 'home') {
-          const keyCount = Object.keys(this.updateData).length;
-          if (keyCount === 1 && this.updateData.confirmed) {
-            this.dataChanged.cancel();
-          } else {
-            this.dataChanged();
-            this.dataChanged.flush();
-          }
-        }
-      }
-      next();
-    });
 
     if (!this.transactionId) {
       router.replace("/");
