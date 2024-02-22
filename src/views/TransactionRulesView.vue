@@ -214,7 +214,7 @@ export default {
             this.error = resultData.message;
             return;
           }
-          console.log('RuleSet saved.');
+          router.back();
         }).catch(reason => {
           this.error = reason.message;
         })
