@@ -44,16 +44,16 @@
       <label for="ruleSetName">Name:</label>
       <input type="text" v-model="ruleSet.name" placeholder="Name Regelset" id="ruleSetName">
     </div>
-    <div v-if="matchingTransactions.length > 0" class="form-component">
+    <div class="form-component">
       <label>Betrag:</label>
     </div>
-    <div v-if="matchingTransactions.length > 0" class="form-component">
+    <div class="form-component">
       <input type="checkbox" v-model="useMinAmount">
       <label for="minAmount">kleinster:</label>
       <input type="text" v-model="minAmount" placeholder="kleinster Betrag" id="minAmount">
       {{ transaction.currencyShort }}
     </div>
-    <div v-if="matchingTransactions.length > 0" class="form-component">
+    <div class="form-component">
       <input type="checkbox" v-model="useMaxAmount">
       <label for="maxAmountInput">größter:</label>
       <input type="text" v-model="maxAmount" placeholder="größter Betrag" id="maxAmountInput">
@@ -68,9 +68,8 @@
   <table>
     <tbody>
     <tr v-for="(item) in filteredCategories" :key="item.id">
-      <td class="text-h-center"><input type="radio" v-model="selectedCategory" :value="item.id" name="ruleCategory">
+      <td class="text-h-center"><label><input type="radio" v-model="selectedCategory" :value="item.id" :checked="item.selected" name="ruleCategory">{{ item.full_name }}</label>
       </td>
-      <td>{{ item.full_name }}</td>
     </tr>
     </tbody>
   </table>
@@ -168,11 +167,7 @@ export default {
   watch: {
     categorySearch: function (val, oldVal) {
       const searchTerm = val.trim().toLowerCase();
-      this.filteredCategories = this.unfilteredCategories
-      .filter((category) => {
-        const lowerCaseCategory = category.full_name.toLowerCase();
-        return category.selected || (searchTerm && lowerCaseCategory.indexOf(searchTerm) >= 0);
-      });
+      this._filterCategories(searchTerm);
     },
   },
   computed: {
@@ -185,7 +180,14 @@ export default {
   },
   methods: {
     ...mapActions(MasterDataStore, [ "getCategories" ]),
-    ...mapActions(TransactionStore, [ "getTransaction", "getMatchingTransactions", "setRules" ]),
+    ...mapActions(TransactionStore, [ "getTransaction", "getMatchingTransactions", "getRuleSet", "setRules" ]),
+    _filterCategories: function (searchTerm) {
+      this.filteredCategories = this.unfilteredCategories
+      .filter((category) => {
+        const lowerCaseCategory = category.full_name.toLowerCase();
+        return category.selected || (searchTerm && lowerCaseCategory.indexOf(searchTerm) >= 0);
+      });
+    },
     saveRuleSet() {
       if (this.ruleSet.name) {
         const ruleInfo = {
@@ -285,19 +287,24 @@ export default {
       const selectedTextToken = this._getSelectedTextToken();
       await this._setMatchingTransactionsForTextToken(selectedTextToken);
       if (!this.manuallyChangedMinMaxAmount) {
-        this.minAmount = Number.MAX_VALUE;
-        this.maxAmount = -Number.MAX_VALUE;
-        this.matchingTransactions.forEach(t => {
-          const amount = t.amount;
-          if (amount < this.minAmount) {
-            this.minAmount = amount;
-          }
-          if (amount > this.maxAmount) {
-            this.maxAmount = amount;
-          }
-        });
-        this.minAmount = this._decimalFormatter.format(this.minAmount);
-        this.maxAmount = this._decimalFormatter.format(this.maxAmount);
+        if (this.matchingTransactions.length > 0) {
+          this.minAmount = Number.MAX_VALUE;
+          this.maxAmount = -Number.MAX_VALUE;
+          this.matchingTransactions.forEach(t => {
+            const amount = t.amount;
+            if (amount < this.minAmount) {
+              this.minAmount = amount;
+            }
+            if (amount > this.maxAmount) {
+              this.maxAmount = amount;
+            }
+          });
+          this.minAmount = this._decimalFormatter.format(this.minAmount);
+          this.maxAmount = this._decimalFormatter.format(this.maxAmount);
+        } else {
+          this.minAmount = '';
+          this.maxAmount = '';
+        }
       }
     },
     _buildTransactionsPerDate(transactions) {
@@ -341,6 +348,7 @@ export default {
     this.useMaxAmount = true;
     this.filteredCategories = [];
     this.unfilteredCategories = [];
+    this.ruleSetId = 0;
   },
   async mounted() {
     this.error = undefined;
@@ -354,6 +362,10 @@ export default {
     const promises = [];
     promises.push(this.getTransaction(this.transactionId));
     promises.push(this.getCategories());
+    if (router.options.history.state.ruleSetId) {
+      this.ruleSetId = router.options.history.state.ruleSetId;
+      promises.push(this.getRuleSet(this.ruleSetId));
+    }
     const results = await Promise.all(promises);
     this.loading = false;
 
@@ -389,22 +401,63 @@ export default {
       return;
     }
 
+    const xxRuleSet = {
+      "id": 9,
+      "name": "O2 Mobilfunk",
+      "set_note": null,
+      "idSetCategory": 226,
+      "textRules": [
+        {
+          "idRuleSet": 9,
+          "text": "97374111,"
+        },
+        {
+          "idRuleSet": 9,
+          "text": "T0010002B000000097374111"
+        },
+        {
+          "idRuleSet": 9,
+          "text": "TARIFRECHNUNG"
+        }
+      ],
+      "accountRules": []
+    };
+    if (this.ruleSetId && results[2].data.length > 0) {
+      this.loadedRuleSet = results[2].data[0];
+    } else {
+      this.loadedRuleSet = {
+        textRules: [],
+        accountRules: [],
+      }
+    }
+
     this.transaction = {...(results[0].data)};
+
     this.unfilteredCategories = this.categories.map(category => {
       const c = {...category};
-      c.selected = false;
+      c.selected = (this.loadedRuleSet.idSetCategory === c.id);
       return c;
     });
+    if (this.loadedRuleSet.idSetCategory) {
+      this._filterCategories();
+    }
 
+    this.ruleSet.name = this.loadedRuleSet.name;
     if (!this.ruleSet.name && this.transaction.payee) {
       this.ruleSet.name = this.transaction.payee;
     }
 
     this.textToken = {};
+    this.loadedRuleSet.textRules.forEach(savedToken => {
+      this.textToken[savedToken.text] = {
+        text: savedToken.text,
+        selected: true,
+      };
+    });
     if (this.transaction.text) {
       this.transaction.text.split(' ').forEach(token => {
         const to = token.trim();
-        if (to.length > 1) {
+        if (to.length > 1 && !this.textToken[to]) {
           this.textToken[to] = {
             text: to,
             selected: false,
@@ -459,5 +512,9 @@ export default {
   font-weight: bold;
   background-color: #1f91a1;
   color: white;
+}
+
+label > input[type="radio"] {
+  margin-right: 0.5em;
 }
 </style>

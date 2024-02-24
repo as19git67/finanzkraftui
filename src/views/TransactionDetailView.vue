@@ -63,8 +63,8 @@
           </router-link>
         </div>
         <div v-if="transaction" class="transaction-details details-row detail-links">
-          <router-link class="action" :to="{ name: 'TransactionRules' }">
-            Regeln
+          <router-link class="action" :to="{ name: 'TransactionRules', state: { ruleSetId: transaction.ruleSetId }, meta: { ruleSetId: transaction.ruleSetId } }">
+            Regeln <span v-if="transaction.ruleSetId">({{transaction.ruleSetName}})</span>
           </router-link>
         </div>
       </div>

@@ -39,6 +39,8 @@ export const TransactionStore = defineStore('transaction', {
         currencyId: transactionData.currency_id,
         currencyName: transactionData.currency_name,
         currencyShort: transactionData.currency_short,
+        ruleSetId: transactionData.rule_set_id,
+        ruleSetName: transactionData.rule_set_name,
         confirmed: transactionData.confirmed,
       };
       if (transactionData.t_payee && transactionData.t_text
@@ -144,6 +146,26 @@ export const TransactionStore = defineStore('transaction', {
           const response = await axios.get(`/api/transaction/${id}`, config);
           if (response.status === 200) {
             resultData = this.buildTransactionFromResponse(response.data);
+          }
+          return { status: response.status, data: resultData };
+        } catch (ex) {
+          return userStore.handleAxiosException(ex, userStore, resultData);
+        }
+      }
+      return { status: 401, data: resultData };
+    },
+    async getRuleSet(id) {
+      let resultData = {};
+      const userStore = UserStore();
+      if (userStore.authenticated) {
+        const config = userStore.getBearerAuthRequestHeader();
+        if (id === undefined) {
+          throw new Error('Transaction id missing in getTransaction call');
+        }
+        try {
+          const response = await axios.get(`/api/rules/${id}`, config);
+          if (response.status === 200) {
+            resultData = response.data;
           }
           return { status: response.status, data: resultData };
         } catch (ex) {
