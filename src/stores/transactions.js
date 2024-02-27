@@ -8,6 +8,7 @@ export const TransactionStore = defineStore('transaction', {
     _maxTransactions: 500,
     _transactions: [],
     _incomplete: false, // true if more transactions would exists but limited to max transactions
+    _ruleSets: [],
   }),
   getters: {
     transactions(state) {
@@ -19,6 +20,9 @@ export const TransactionStore = defineStore('transaction', {
     incompleteTransactionList(state) {
       return state._incomplete;
     },
+    ruleSets(state) {
+      return state._ruleSets;
+    }
   },
   actions: {
     buildTransactionFromResponse(transactionData) {
@@ -160,7 +164,7 @@ export const TransactionStore = defineStore('transaction', {
       if (userStore.authenticated) {
         const config = userStore.getBearerAuthRequestHeader();
         if (id === undefined) {
-          throw new Error('Transaction id missing in getTransaction call');
+          throw new Error('id of rule set missing in getRuleSet call');
         }
         try {
           const response = await axios.get(`/api/rules/${id}`, config);
@@ -190,6 +194,28 @@ export const TransactionStore = defineStore('transaction', {
         }
       }
       return { status: 401, data: resultData };
+    },
+    async getRuleSets() {
+      let resultData = [];
+      const userStore = UserStore();
+      if (userStore.authenticated) {
+        const config = userStore.getBearerAuthRequestHeader();
+        try {
+          const response = await axios.get('/api/rules', config);
+          if (response.status === 200) {
+            resultData = response.data;
+            this._ruleSets = resultData;
+          } else {
+            this._ruleSets = [];
+          }
+          return { status: response.status };
+        } catch (ex) {
+          this._ruleSets = [];
+          return userStore.handleAxiosException(ex, userStore);
+        }
+      }
+      this._ruleSets = [];
+      return { status: 401 };
     },
     async setRules(ruleInfo) {
       const resultData = {};

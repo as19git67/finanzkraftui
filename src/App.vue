@@ -9,6 +9,7 @@ import { UserStore } from "@/stores/user";
     <div class="wrapper">
       <nav>
         <RouterLink to="/" v-if="authenticated">Home</RouterLink>
+        <RouterLink to="/RuleSets" v-if="authenticated && menuPermissions['admin.rules']">Regeln</RouterLink>
         <RouterLink to="/Accounts" v-if="authenticated && menuPermissions['admin.accounts']">Konten</RouterLink>
         <RouterLink to="/Users" v-if="authenticated && menuPermissions['admin.users']">User</RouterLink>
         <RouterLink to="/Roles" v-if="authenticated && menuPermissions['admin.roles']">Rollen</RouterLink>

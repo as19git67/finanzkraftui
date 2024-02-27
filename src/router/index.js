@@ -5,6 +5,7 @@ import LogoutView from '../views/LogoutView.vue';
 import TransactionDetailView from '../views/TransactionDetailView.vue';
 import TransactionRulesView from '../views/TransactionRulesView.vue';
 import AccountsView from '../views/AccountsView.vue';
+import RuleSetsView from '../views/RuleSetsView.vue';
 import UsersView from '../views/UsersView.vue';
 import RolesView from '../views/RolesView.vue';
 import RoleEditView from '../views/RoleEditView.vue';
@@ -41,6 +42,11 @@ const router = createRouter({
       name: 'TransactionRules',
       props: true,
       component: TransactionRulesView,
+    },
+    {
+      path: '/ruleSets',
+      name: 'RuleSets',
+      component: RuleSetsView,
     },
     {
       path: '/accounts',

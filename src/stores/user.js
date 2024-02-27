@@ -157,13 +157,21 @@ export const UserStore = defineStore('user', {
       this.setAuthenticated(false);
     },
     handleAxiosException(ex, userStore, emptyResultData) {
+      const result = {};
+      if (emptyResultData) {
+        result.data = emptyResultData;
+      }
       if (ex.response && ex.response.status) {
         if (ex.response.status === 401) {
           userStore.setNotAuthenticated();
         }
-        return { status: ex.response.status, message: ex.message, data: emptyResultData };
+        result.status = ex.response.status;
+        result.message = ex.message;
+        return result;
       }
-      return { status: 500, message: ex.message, data: emptyResultData };
+      result.status = 500;
+      result.message = ex.message;
+      return result;
     },
     async getUsers() {
       const userStore = UserStore();
