@@ -39,16 +39,16 @@
             <tbody>
               <tr v-for="(item, index) in trOfDate.transactions" :key="item" class="transaction-details" :class="{'alternate-row-background': index % 2 }">
                   <td class="transaction-text">
-                    <router-link class="transaction-data action" :to="{ path:'/transaction/:transactionId', name: 'TransactionDetail', params: { transactionId: item.id }}">
-                      <div class="td-text-item" :class="{'tr-not-confirmed': !item.confirmed }">{{ item.payee ? item.payee : item.textShortened ? item.textShortened : item.entryText }}</div>
-                      <div class="td-text-item item--is-category">{{ item.categoryName }}</div>
-                      <div class="td-text-item item--is-text">{{ item.payee ? item.textShortened : '' }}</div>
-                      <div class="td-text-item item--is-notes">{{ item.notes }}</div>
+                    <router-link class="transaction-data action" :to="{ path:'/transaction/:transactionId', name: 'TransactionDetail', params: { transactionId: item.t_id }}">
+                      <div class="td-text-item" :class="{'tr-not-confirmed': !item.confirmed }">{{ item.t_payee ? item.t_payee : item.textShortened ? item.textShortened : item.t_entry_text }}</div>
+                      <div class="td-text-item item--is-category">{{ item.currency_name }}</div>
+                      <div class="td-text-item item--is-text">{{ item.t_payee ? item.textShortened : '' }}</div>
+                      <div class="td-text-item item--is-notes">{{ item.t_notes }}</div>
                     </router-link>
                   </td>
                   <td class="transaction-amount">
-                    <router-link class="action" :to="{ path:'/transaction/:transactionId', name: 'TransactionDetail', params: { transactionId: item.id }}">
-                      {{ `${new Intl.NumberFormat(undefined, {style: 'currency', currency: item.currencyId}).format(item.amount)}` }}
+                    <router-link class="action" :to="{ path:'/transaction/:transactionId', name: 'TransactionDetail', params: { transactionId: item.t_id }}">
+                      {{ `${new Intl.NumberFormat(undefined, {style: 'currency', currency: item.currency_id}).format(item.t_amount)}` }}
                     </router-link>
                   </td>
               </tr>
@@ -201,7 +201,7 @@ export default {
     _buildTransactionsPerDate() {
       const transactionsOfDate = {};
       this.transactions.forEach((t) => {
-        const tDate = t.valueDate;
+        const tDate = t.t_value_date;
         if (transactionsOfDate[tDate] === undefined) {
           transactionsOfDate[tDate] = [];
         }
@@ -218,7 +218,7 @@ export default {
         return {
           valueDate: tDate,
           transactions: transactionsOfDate[tDate].toSorted((a, b) => {
-            return b.id - a.id;
+            return b.t_id - a.t_id;
           }),
         }
       });

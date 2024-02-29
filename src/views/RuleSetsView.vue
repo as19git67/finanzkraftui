@@ -18,7 +18,11 @@
     </thead>
     <tbody>
       <tr v-for="item of ruleSets" :key="item.id">
-        <td>{{ item.name }}</td>
+        <td>
+          <router-link class="action" :to="{ path:'/ruleSetEdit/:ruleSetId', name: 'RuleSetEdit', params: { ruleSetId: item.id }}">
+            {{ item.name }}
+          </router-link>
+        </td>
         <td>
           <router-link class="action" :to="{ path:'/ruleSetEdit/:ruleSetId', name: 'RuleSetEdit', params: { ruleSetId: item.id }}">
             <button class="btn-icon-only" aria-label="Edit"><IconEdit/></button>

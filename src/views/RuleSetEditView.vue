@@ -1,10 +1,8 @@
 <template>
   <div class="top-links">
-    <router-link class="action" :to="{ path:'/', name: 'home'}" >
+    <router-link
+        :to="{ path: router.options.history.state.back }">
       < Zurück
-    </router-link>
-    <router-link class="action" :to="{ path:'/', name: 'home'}">
-      Bearbeiten
     </router-link>
   </div>
   <div v-if="error" class="error">{{ error }}</div>

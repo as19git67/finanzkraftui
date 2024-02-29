@@ -5,57 +5,55 @@
       <router-link class="action" :to="{ path:'/', name: 'home'}" >
         < Zurück
       </router-link>
-    <router-link class="action" :to="{ path:'/', name: 'home'}">
-      Bearbeiten
-    </router-link>
+      <button @click="saveTransaction" :disabled="!dirty" class="action btn btn--is-primary">Speichern</button>
     </div>
 
     <div v-if="transaction" class="transaction-details all">
       <div class="transaction-details title">
         <div class="transaction-details payee">
           <div>
-            {{transaction.payee ? transaction.payee : transaction.entryText}}
+            {{transaction.t_payee ? transaction.t_payee : transaction.t_entry_text}}
           </div>
           <button v-if="transaction.confirmed" class="btn-icon-only" aria-label="Markiere ungesehen" @click="markUnconfirmed()">
             <IconEyes class="icon-seen"/>
           </button>
         </div>
-        <div v-if="transaction.categoryName" class="transaction-details category">
-          <span>{{transaction.categoryName}}</span>
+        <div v-if="transaction.category_name" class="transaction-details category">
+          <span>{{transaction.category_name}}</span>
           <router-link class="action" :to="{ path:'/', name: 'home'}">
             <button class="btn-icon-only" aria-label="Edit"><IconEdit/></button>
           </router-link>
         </div>
       </div>
-      <div v-if="transaction.currencyId" class="transaction-details details">
+      <div v-if="transaction.currency_id" class="transaction-details details">
         <div class="transaction-details details-row">
           <div class="details-row-left">Betrag:</div>
-          <div class="details-row-right">{{`${new Intl.NumberFormat(undefined, {style: 'currency', currency: transaction.currencyId}).format(transaction.amount)}`}}</div>
+          <div class="details-row-right">{{`${new Intl.NumberFormat(undefined, {style: 'currency', currency: transaction.currency_id}).format(transaction.t_amount)}`}}</div>
         </div>
-        <div v-if="transaction.valueDate" class="transaction-details details-row">
+        <div v-if="transaction.t_value_date" class="transaction-details details-row">
           <div class="details-row-left">Datum:</div>
-          <div class="details-row-right">{{ DateTime.fromISO(transaction.valueDate).toLocaleString(DateTime.DATE_HUGE) }}</div>
+          <div class="details-row-right">{{ DateTime.fromISO(transaction.t_value_date).toLocaleString(DateTime.DATE_HUGE) }}</div>
         </div>
-        <div v-if="transaction.text" class="transaction-details details-row">
+        <div v-if="transaction.t_text" class="transaction-details details-row">
           <div class="details-row-left">Text:</div>
-          <div class="details-row-right transaction-details-text">{{ transaction.text }}</div>
+          <div class="details-row-right transaction-details-text">{{ transaction.t_text }}</div>
         </div>
         <div class="transaction-details details-row details-row-single-column">
           <div class="">Notiz:</div>
-          <textarea v-model="transaction.notes"></textarea>
+          <textarea v-model="transactionNotes"></textarea>
         </div>
         <br>
         <div class="transaction-details details-column">
           <div class="details-row-left">Konto:</div>
-          <div class="details-row-right">{{ transaction.accountName }}</div>
+          <div class="details-row-right">{{ transaction.account_name }}</div>
         </div>
         <div v-if="transaction.t_payeePayerAcctNo" class="transaction-details details-column">
           <div class="details-row-left">Zahlungsempfänger:</div>
-          <div class="details-row-right">{{ transaction.payeePayerAcctNo }}</div>
+          <div class="details-row-right">{{ transaction.t_payeePayerAcctNo }}</div>
         </div>
         <div class="transaction-details details-column">
           <div class="details-row-left">Buchungsart:</div>
-          <div class="details-row-right">{{ transaction.entryText ? transaction.entryText : 'Nicht angegeben' }}</div>
+          <div class="details-row-right">{{ transaction.t_entry_text ? transaction.t_entry_text : 'Nicht angegeben' }}</div>
         </div>
         <div v-if="transaction" class="transaction-details details-row detail-links">
           <router-link class="action" :to="{ path:'/', name: 'home'}">
@@ -63,8 +61,8 @@
           </router-link>
         </div>
         <div v-if="transaction" class="transaction-details details-row detail-links">
-          <router-link class="action" :to="{ name: 'TransactionRules', state: { ruleSetId: transaction.ruleSetId }, meta: { ruleSetId: transaction.ruleSetId } }">
-            Regeln <span v-if="transaction.ruleSetId">({{transaction.ruleSetName}})</span>
+          <router-link class="action" :to="{ name: 'TransactionRules', state: { ruleSetId: transaction.rule_set_id }, meta: { ruleSetId: transaction.rule_set_id } }">
+            Regeln <span v-if="transaction.rule_set_id">({{transaction.rule_set_name}})</span>
           </router-link>
         </div>
       </div>
@@ -100,6 +98,7 @@ export default {
   components: {},
   data() {
     return {
+      transactionNotes: this.transactionNotes,
       transaction: this.transaction,
       error: this.error,
       actionError: this.actionError,
@@ -107,19 +106,15 @@ export default {
     };
   },
   watch: {
-    notes: async function (val, oldVal) {
+    transactionNotes: async function (val, oldVal) {
       if (oldVal === undefined || this.transaction === undefined) {
         return;
       }
       this.updateData.t_notes = val;
-      this.updateData.confirmed = true;
-      this.dataChanged();
+      this.transaction.t_notes = val;
     },
   },
   computed: {
-    notes() {
-      return  this.transaction?.t_notes;
-    },
     confirmed() {
       return  this.transaction?.confirmed;
     },
@@ -135,6 +130,12 @@ export default {
   },
   methods: {
     ...mapActions(TransactionStore, [ "getTransaction", "updateTransaction" ]),
+    async saveTransaction() {
+      this.updateData.confirmed = true;
+      if (await this.handleDataChanged()) {
+        router.back();
+      }
+    },
     async handleDataChanged() {
       this.actionError = undefined;
       this.updateData.id = this.transactionId;
@@ -142,8 +143,10 @@ export default {
       if (result.status === 200) {
         this.transaction = _.extend(this.transaction, this.updateData);
         this.updateData = {};
+        return true;
       } else {
         this.actionError = result.message;
+        return false;
       }
     },
     markUnconfirmed() {
@@ -218,6 +221,7 @@ export default {
     }
 
     this.transaction = {...(results[0].data)};
+    this.transactionNotes = this.transaction.t_notes;
     if (!this.updateData.confirmed) {
       this.updateData.confirmed = true;
       this.dataChanged();

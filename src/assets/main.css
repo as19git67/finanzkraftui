@@ -7,6 +7,9 @@
 
 a {
   text-decoration: none;
+}
+
+nav a {
   transition: 0.4s;
   padding: 0.25em 0.5em 0.25em 0.5em;
 }

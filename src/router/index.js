@@ -50,7 +50,7 @@ const router = createRouter({
       component: RuleSetsView,
     },
     {
-      path: '/ruleSetEdit',
+      path: '/ruleSetEdit/:ruleSetId',
       name: 'RuleSetEdit',
       props: true,
       component: RuleSetEditView,
