@@ -204,7 +204,15 @@ export const TransactionStore = defineStore('transaction', {
           const response = await axios.get('/api/rules', config);
           if (response.status === 200) {
             resultData = response.data;
-            this._ruleSets = resultData;
+            this._ruleSets = resultData.toSorted((a, b) => {
+              if (a.name < b.name) {
+                return -1;
+              }
+              if (a.name > b.name) {
+                return 1;
+              }
+              return 0;
+            });
           } else {
             this._ruleSets = [];
           }
