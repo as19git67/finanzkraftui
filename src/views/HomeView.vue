@@ -41,7 +41,7 @@
                   <td class="transaction-text">
                     <router-link class="transaction-data action" :to="{ path:'/transaction/:transactionId', name: 'TransactionDetail', params: { transactionId: item.t_id }}">
                       <div class="td-text-item" :class="{'tr-not-confirmed': !item.confirmed }">{{ item.t_payee ? item.t_payee : item.textShortened ? item.textShortened : item.t_entry_text }}</div>
-                      <div class="td-text-item item--is-category">{{ item.currency_name }}</div>
+                      <div class="td-text-item item--is-category">{{ item.category_name }}</div>
                       <div class="td-text-item item--is-text">{{ item.t_payee ? item.textShortened : '' }}</div>
                       <div class="td-text-item item--is-notes">{{ item.t_notes }}</div>
                     </router-link>

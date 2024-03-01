@@ -68,7 +68,7 @@
   <table>
     <tbody>
     <tr v-for="(item) in filteredCategories" :key="item.id">
-      <td class="text-h-center"><label><input type="radio" v-model="selectedCategory" :value="item.id" :checked="item.selected" name="ruleCategory">{{ item.full_name }}</label>
+      <td class="text-h-center"><label><input class="selectionInput" type="radio" v-model="selectedCategory" :value="item.id" :checked="item.selected" name="ruleCategory">{{ item.full_name }}</label>
       </td>
     </tr>
     </tbody>
@@ -78,8 +78,7 @@
   <table>
     <tbody>
     <tr v-for="(item) in textToken" :key="item.text">
-      <td class="text-h-center"><input type="checkbox" v-model="item.selected" @change="tokenSelected(item.text)"></td>
-      <td>{{ item.text }}</td>
+      <td class="text-h-center"><label><input class="selectionInput" type="checkbox" v-model="item.selected" @change="tokenSelected(item.text)">{{ item.text }}</label></td>
     </tr>
     </tbody>
   </table>
@@ -96,24 +95,24 @@
         <td>
           <table class="transaction-details-table">
             <tbody>
-            <tr v-for="(item, index) in trOfDate.transactions" :key="item" class="transaction-details"
+            <tr v-for="(item, index) in trOfDate.transactions" :key="item.t_id" class="transaction-details"
                 :class="{'alternate-row-background': index % 2 }">
               <td class="transaction-text">
                 <div class="transaction-data">
                   <div class="td-text-item">
-                    {{ item.payee ? item.payee : item.textShortened ? item.textShortened : item.entryText }}
+                    {{ item.t_payee ? item.t_payee : item.textShortened ? item.textShortened : item.t_entry_text }}
                   </div>
-                  <div class="td-text-item item--is-category">{{ item.categoryName }}</div>
-                  <div class="td-text-item item--is-text">{{ item.payee ? item.textShortened : '' }}</div>
-                  <div class="td-text-item item--is-notes">{{ item.notes }}</div>
+                  <div class="td-text-item item--is-category">{{ item.category_name }}</div>
+                  <div class="td-text-item item--is-text">{{ item.t_payee ? item.textShortened : '' }}</div>
+                  <div class="td-text-item item--is-notes">{{ item.t_notes }}</div>
                 </div>
               </td>
               <td class="transaction-amount">
                 {{
                   `${new Intl.NumberFormat(undefined, {
                     style: 'currency',
-                    currency: item.currencyId
-                  }).format(item.amount)}`
+                    currency: item.currency_id,
+                  }).format(item.t_amount)}`
                 }}
               </td>
             </tr>
@@ -166,13 +165,35 @@ export default {
   },
   watch: {
     categorySearch: function (val, oldVal) {
-      const searchTerm = val.trim().toLowerCase();
-      this._filterCategories(searchTerm);
+      if (_.isString(val)) {
+        const searchTerm = val.trim().toLowerCase();
+        this._filterCategories(searchTerm);
+      }
     },
   },
   computed: {
     canSave() {
-      return this.ruleSet.name && this.selectedCategory;
+      if (!this.ruleSet.name) {
+        return false;
+      }
+      if (!this.selectedCategory) {
+        return false;
+      }
+      if (this.loadedRuleSet) {
+        if (this.ruleSet.name !== this.loadedRuleSet.name) {
+          return true;
+        }
+        if (this.selectedCategory !== this.loadedRuleSet.idSetCategory) {
+          return true;
+        }
+        const textToken = this._getSelectedTextToken();
+        const textTokenHash = textToken.join(',');
+        if (textTokenHash !== this.loadedTextTokenHash) {
+          return true;
+        }
+        return false;
+      }
+      return true;
     },
     ...mapStores(UserStore),
     ...mapState(UserStore, ["authenticated"]),
@@ -189,9 +210,10 @@ export default {
       });
     },
     saveRuleSet() {
-      if (this.ruleSet.name) {
+      const name = this.ruleSet.name.trim();
+      if (name) {
         const ruleInfo = {
-          name: this.ruleSet.name,
+          name: name,
           idSetCategory: this.selectedCategory,
           textRules: this._getSelectedTextToken(),
         };
@@ -291,7 +313,7 @@ export default {
           this.minAmount = Number.MAX_VALUE;
           this.maxAmount = -Number.MAX_VALUE;
           this.matchingTransactions.forEach(t => {
-            const amount = t.amount;
+            const amount = t.t_amount;
             if (amount < this.minAmount) {
               this.minAmount = amount;
             }
@@ -310,7 +332,7 @@ export default {
     _buildTransactionsPerDate(transactions) {
       const transactionsOfDate = {};
       transactions.forEach((t) => {
-        const tDate = t.valueDate;
+        const tDate = t.t_value_date;
         if (transactionsOfDate[tDate] === undefined) {
           transactionsOfDate[tDate] = [];
         }
@@ -327,7 +349,7 @@ export default {
         return {
           valueDate: tDate,
           transactions: transactionsOfDate[tDate].toSorted((a, b) => {
-            return b.id - a.id;
+            return b.t_id - a.t_id;
           }),
         }
       });
@@ -349,6 +371,7 @@ export default {
     this.filteredCategories = [];
     this.unfilteredCategories = [];
     this.ruleSetId = 0;
+    this.loadedTextTokenHash = '';
   },
   async mounted() {
     this.error = undefined;
@@ -439,23 +462,27 @@ export default {
       return c;
     });
     if (this.loadedRuleSet.idSetCategory) {
+      this.selectedCategory = this.loadedRuleSet.idSetCategory;
       this._filterCategories();
     }
 
     this.ruleSet.name = this.loadedRuleSet.name;
-    if (!this.ruleSet.name && this.transaction.payee) {
-      this.ruleSet.name = this.transaction.payee;
+    if (!this.ruleSet.name && this.transaction.t_payee) {
+      this.ruleSet.name = this.transaction.t_payee;
     }
 
     this.textToken = {};
+    const tokenList = [];
     this.loadedRuleSet.textRules.forEach(savedToken => {
       this.textToken[savedToken.text] = {
         text: savedToken.text,
         selected: true,
       };
+      tokenList.push(savedToken.text);
     });
-    if (this.transaction.text) {
-      this.transaction.text.split(' ').forEach(token => {
+    this.loadedTextTokenHash = tokenList.join(',');
+    if (this.transaction.t_text) {
+      this.transaction.t_text.split(' ').forEach(token => {
         const to = token.trim();
         if (to.length > 1 && !this.textToken[to]) {
           this.textToken[to] = {
@@ -514,7 +541,7 @@ export default {
   color: white;
 }
 
-label > input[type="radio"] {
+label > .selectionInput {
   margin-right: 0.5em;
 }
 </style>
