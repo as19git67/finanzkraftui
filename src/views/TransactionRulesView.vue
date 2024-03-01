@@ -217,6 +217,9 @@ export default {
           idSetCategory: this.selectedCategory,
           textRules: this._getSelectedTextToken(),
         };
+        if (this.loadedRuleSet) {
+          ruleInfo.id = this.loadedRuleSet.id;
+        }
         this.setRules(ruleInfo).then(resultData => {
           let mustAuthenticate = false;
           let not_ok = false;

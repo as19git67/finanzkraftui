@@ -234,7 +234,9 @@ export const TransactionStore = defineStore('transaction', {
           throw new Error('setRules requires ruleInfo.name');
         }
         try {
-          const response = await axios.put('/api/rules/', ruleInfo, config);
+          const response = ruleInfo.id
+            ? await axios.post(`/api/rules/${ruleInfo.id}`, ruleInfo, config)
+            : await axios.put('/api/rules/', ruleInfo, config);
           return { status: response.status, data: resultData };
         } catch (ex) {
           return userStore.handleAxiosException(ex, userStore, resultData);
