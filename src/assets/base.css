@@ -228,6 +228,11 @@ button:hover svg .metaphor {
   background: var(--color-button-primary);
 }
 
+.btn--is-danger {
+  background: var(--color-button-danger);
+  color: var(--color-button-danger-text);
+}
+
 input[type=search] {
   -moz-appearance: none; /* older firefox */
   -webkit-appearance: none; /* safari, chrome, edge and ie mobile */

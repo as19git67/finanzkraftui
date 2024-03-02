@@ -11,7 +11,7 @@
       <label><input type="checkbox" v-model="includeProcessed" >Buchungen aktualisiere</label>
     </div>
     <div class="form-component">
-      <button @click="deleteRuleSet" :disabled="!loadedRuleSet.id" class="action btn">Regel löschen</button>
+      <button @click="deleteRuleSet" :disabled="!loadedRuleSet.id" class="action btn btn--is-danger">Regel löschen</button>
     </div>
   </div>
   <div v-if="error" class="error">{{ error }}</div>
