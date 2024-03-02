@@ -2,10 +2,8 @@
   <div v-if="error" class="error">{{ error }}</div>
   <div v-else>
     <div class="top-links">
-      <router-link class="action" :to="{ path:'/', name: 'home'}" >
-        < Zurück
-      </router-link>
-      <button @click="saveTransaction" :disabled="!dirty" class="action btn btn--is-primary">Speichern</button>
+      <button :disabled="dirty" @click="cancelChanges" class="action btn btn--is-secondary">Zurück</button>
+      <button :disabled="!dirty" @click="saveTransaction" class="action btn btn--is-primary">Speichern</button>
     </div>
 
     <div v-if="transaction" class="transaction-details all">
@@ -112,6 +110,7 @@ export default {
       }
       this.updateData.t_notes = val;
       this.transaction.t_notes = val;
+      this.dataChanged();
     },
   },
   computed: {
@@ -130,6 +129,9 @@ export default {
   },
   methods: {
     ...mapActions(TransactionStore, [ "getTransaction", "updateTransaction" ]),
+    cancelChanges() {
+      router.back();
+    },
     async saveTransaction() {
       this.updateData.confirmed = true;
       if (await this.handleDataChanged()) {
@@ -222,7 +224,8 @@ export default {
 
     this.transaction = {...(results[0].data)};
     this.transactionNotes = this.transaction.t_notes;
-    if (!this.updateData.confirmed) {
+    if (!this.transaction.confirmed) {
+      this.transaction.confirmed = true;
       this.updateData.confirmed = true;
       this.dataChanged();
     }

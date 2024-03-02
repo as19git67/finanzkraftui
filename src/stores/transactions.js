@@ -248,7 +248,7 @@ export const TransactionStore = defineStore('transaction', {
       if (userStore.authenticated) {
         const config = userStore.getBearerAuthRequestHeader();
         try {
-          const response = await axios.delete(`/api/rules/${ruleSetId}`, { }, config);
+          const response = await axios.delete(`/api/rules/${ruleSetId}`, config);
           return { status: response.status, data: resultData };
         } catch (ex) {
           return userStore.handleAxiosException(ex, userStore, resultData);
