@@ -69,6 +69,8 @@
   --color-button-primary-text: var(--as-color-primary-1);
   --color-button-secondary: var(--as-color-primary-3);
   --color-button-secondary-text: var(--as-color-primary-1);
+  --color-button-danger: var(--as-color-secondary-2-4);
+  --color-button-danger-text: var(--as-color-primary-6);
 
   --section-gap: 160px;
 }
@@ -151,7 +153,7 @@ button:hover svg .metaphor {
   flex: 1 1 auto;
 }
 
-.form-component > label {
+.form-component > .form-label {
   width: 5.5em;
   min-width: 5.5em;
 }

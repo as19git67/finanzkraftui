@@ -22,7 +22,7 @@ export const TransactionStore = defineStore('transaction', {
     },
     ruleSets(state) {
       return state._ruleSets;
-    }
+    },
   },
   actions: {
     buildTransactionFromResponse(transactionData) {
@@ -74,9 +74,7 @@ export const TransactionStore = defineStore('transaction', {
           if (response.status === 200) {
             if (_.isArray(response.data)) {
               this._incomplete = response.data.length > this._maxTransactions;
-              this._transactions = _.map(_.take(response.data, this._maxTransactions), (t) => {
-                return this.buildTransactionFromResponse(t);
-              });
+              this._transactions = _.map(_.take(response.data, this._maxTransactions), (t) => this.buildTransactionFromResponse(t));
             } else {
               this._transactions = [];
               this._incomplete = false;
@@ -225,7 +223,7 @@ export const TransactionStore = defineStore('transaction', {
       this._ruleSets = [];
       return { status: 401 };
     },
-    async setRules(ruleInfo) {
+    async setRules(ruleInfo, includeProcessed) {
       const resultData = {};
       const userStore = UserStore();
       if (userStore.authenticated) {
@@ -235,8 +233,22 @@ export const TransactionStore = defineStore('transaction', {
         }
         try {
           const response = ruleInfo.id
-            ? await axios.post(`/api/rules/${ruleInfo.id}`, ruleInfo, config)
+            ? await axios.post(`/api/rules/${ruleInfo.id}`, { ruleInfo, includeProcessed }, config)
             : await axios.put('/api/rules/', ruleInfo, config);
+          return { status: response.status, data: resultData };
+        } catch (ex) {
+          return userStore.handleAxiosException(ex, userStore, resultData);
+        }
+      }
+      return { status: 401, data: resultData };
+    },
+    async deleteRules(ruleSetId) {
+      const resultData = {};
+      const userStore = UserStore();
+      if (userStore.authenticated) {
+        const config = userStore.getBearerAuthRequestHeader();
+        try {
+          const response = await axios.delete(`/api/rules/${ruleSetId}`, { }, config);
           return { status: response.status, data: resultData };
         } catch (ex) {
           return userStore.handleAxiosException(ex, userStore, resultData);

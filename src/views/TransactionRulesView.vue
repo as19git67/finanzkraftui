@@ -6,6 +6,14 @@
     </router-link>
     <button @click="saveRuleSet" :disabled="!canSave" class="action btn btn--is-primary">Regel speichern</button>
   </div>
+  <div class="form">
+    <div class="form-component" v-if="loadedRuleSet.id">
+      <label><input type="checkbox" v-model="includeProcessed" >Buchungen aktualisiere</label>
+    </div>
+    <div class="form-component">
+      <button @click="deleteRuleSet" :disabled="!loadedRuleSet.id" class="action btn">Regel löschen</button>
+    </div>
+  </div>
   <div v-if="error" class="error">{{ error }}</div>
 
   <p class="label-buchung">Buchung</p>
@@ -16,22 +24,22 @@
         <div class="transaction-data">
           <div class="td-text-item">
             {{
-              transaction.payee ? transaction.payee : transaction.textShortened ? transaction.textShortened : transaction.entryText
+              transaction.t_payee ? transaction.t_payee : transaction.textShortened ? transaction.textShortened : transaction.t_entry_ext
             }}
           </div>
-          <div class="td-text-item item--is-category">{{ transaction.categoryName }}</div>
-          <div class="td-text-item item--is-text" :title="transaction.payee ? transaction.textShortened : ''">
-            {{ transaction.payee ? transaction.textShortened : '' }}
+          <div class="td-text-item item--is-category">{{ transaction.category_name }}</div>
+          <div class="td-text-item item--is-text" :title="transaction.t_payee ? transaction.textShortened : ''">
+            {{ transaction.t_payee ? transaction.textShortened : '' }}
           </div>
           <div class="td-text-item item--is-notes">{{ transaction.t_notes }}</div>
         </div>
       </td>
-      <td class="transaction-amount"><span v-if="transaction.currencyId">
+      <td class="transaction-amount"><span v-if="transaction.currency_id">
           {{
           `${new Intl.NumberFormat(undefined, {
             style: 'currency',
-            currency: transaction.currencyId
-          }).format(transaction.amount)}`
+            currency: transaction.currency_id
+          }).format(transaction.t_amount)}`
         }}
         </span></td>
     </tr>
@@ -41,7 +49,7 @@
   <p class="label-ruleset">Regel</p>
   <div class="form form--is-column">
     <div class="form-component">
-      <label for="ruleSetName">Name:</label>
+      <label class="form-label" for="ruleSetName">Name:</label>
       <input type="text" v-model="ruleSet.name" placeholder="Name Regelset" id="ruleSetName">
     </div>
     <div class="form-component">
@@ -49,13 +57,13 @@
     </div>
     <div class="form-component">
       <input type="checkbox" v-model="useMinAmount">
-      <label for="minAmount">kleinster:</label>
+      <label class="form-label" for="minAmount">kleinster:</label>
       <input type="text" v-model="minAmount" placeholder="kleinster Betrag" id="minAmount">
       {{ transaction.currencyShort }}
     </div>
     <div class="form-component">
       <input type="checkbox" v-model="useMaxAmount">
-      <label for="maxAmountInput">größter:</label>
+      <label class="form-label" for="maxAmountInput">größter:</label>
       <input type="text" v-model="maxAmount" placeholder="größter Betrag" id="maxAmountInput">
       {{ transaction.currencyShort }}
     </div>
@@ -161,6 +169,8 @@ export default {
       useMaxAmount: this.useMaxAmount,
       error: this.error,
       categorySearch: this.categorySearch,
+      includeProcessed: this.includeProcessed,
+      loadedRuleSet: this.loadedRuleSet,
     };
   },
   watch: {
@@ -180,15 +190,18 @@ export default {
         return false;
       }
       if (this.loadedRuleSet) {
-        if (this.ruleSet.name !== this.loadedRuleSet.name) {
+        if (this.includeProcessed) {
           return true;
         }
-        if (this.selectedCategory !== this.loadedRuleSet.idSetCategory) {
+        if (this.ruleSet.name && this.ruleSet.name !== this.loadedRuleSet.name) {
+          return true;
+        }
+        if (this.selectedCategory && this.selectedCategory !== this.loadedRuleSet.idSetCategory) {
           return true;
         }
         const textToken = this._getSelectedTextToken();
-        const textTokenHash = textToken.join(',');
-        if (textTokenHash !== this.loadedTextTokenHash) {
+        const textTokenHash = textToken.toSorted().join(',');
+        if (this.loadedTextTokenHash && textTokenHash !== this.loadedTextTokenHash) {
           return true;
         }
         return false;
@@ -201,13 +214,44 @@ export default {
   },
   methods: {
     ...mapActions(MasterDataStore, [ "getCategories" ]),
-    ...mapActions(TransactionStore, [ "getTransaction", "getMatchingTransactions", "getRuleSet", "setRules" ]),
+    ...mapActions(TransactionStore, [ "getTransaction", "getMatchingTransactions", "getRuleSet", "setRules", "deleteRules" ]),
     _filterCategories: function (searchTerm) {
       this.filteredCategories = this.unfilteredCategories
       .filter((category) => {
         const lowerCaseCategory = category.full_name.toLowerCase();
         return category.selected || (searchTerm && lowerCaseCategory.indexOf(searchTerm) >= 0);
       });
+    },
+    deleteRuleSet() {
+      if (!this.loadedRuleSet.id) {
+        return;
+      }
+      this.deleteRules(this.loadedRuleSet.id).then(resultData => {
+        let mustAuthenticate = false;
+        let not_ok = false;
+        let status = resultData.status;
+        switch (status) {
+          case 401:
+            mustAuthenticate = true;
+            break;
+          case 200:
+            break;
+          default:
+            not_ok = true;
+        }
+        if (mustAuthenticate) {
+          this.error = 'Keine Berechtigung';
+          return;
+        }
+        if (not_ok) {
+          this.error = resultData.message;
+          return;
+        }
+        router.back();
+      }).catch(reason => {
+        this.error = reason.message;
+      })
+
     },
     saveRuleSet() {
       const name = this.ruleSet.name.trim();
@@ -217,10 +261,10 @@ export default {
           idSetCategory: this.selectedCategory,
           textRules: this._getSelectedTextToken(),
         };
-        if (this.loadedRuleSet) {
+        if (this.loadedRuleSet.id) {
           ruleInfo.id = this.loadedRuleSet.id;
         }
-        this.setRules(ruleInfo).then(resultData => {
+        this.setRules(ruleInfo, this.includeProcessed).then(resultData => {
           let mustAuthenticate = false;
           let not_ok = false;
           let status = resultData.status;
@@ -374,7 +418,9 @@ export default {
     this.filteredCategories = [];
     this.unfilteredCategories = [];
     this.ruleSetId = 0;
+    this.loadedRuleSet = {};
     this.loadedTextTokenHash = '';
+    this.includeProcessed = false;
   },
   async mounted() {
     this.error = undefined;
@@ -483,7 +529,7 @@ export default {
       };
       tokenList.push(savedToken.text);
     });
-    this.loadedTextTokenHash = tokenList.join(',');
+    this.loadedTextTokenHash = tokenList.toSorted().join(',');
     if (this.transaction.t_text) {
       this.transaction.t_text.split(' ').forEach(token => {
         const to = token.trim();
@@ -511,6 +557,12 @@ export default {
 }
 .form-component input[type=checkbox] {
   flex: 0 0 auto;
+}
+
+.form-component label {
+  display: flex;
+  gap: 0.5em;
+  align-items: center;
 }
 
 .top-links {
