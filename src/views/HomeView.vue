@@ -37,7 +37,7 @@
         <td>
           <table class="transaction-details-table">
             <tbody>
-              <tr v-for="(item, index) in trOfDate.transactions" :key="item" class="transaction-details" :class="{'alternate-row-background': index % 2 }">
+              <tr v-for="(item, index) in trOfDate.transactions" :key="item.t_id" :id="'transaction-' + item.t_id" class="transaction-details" :class="{'alternate-row-background': index % 2 }">
                   <td class="transaction-text">
                     <router-link class="transaction-data action" :to="{ path:'/transaction/:transactionId', name: 'TransactionDetail', params: { transactionId: item.t_id }}">
                       <div class="td-text-item" :class="{'tr-not-confirmed': !item.confirmed }">{{ item.t_payee ? item.t_payee : item.textShortened ? item.textShortened : item.t_entry_text }}</div>
