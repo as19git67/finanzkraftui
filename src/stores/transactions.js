@@ -7,6 +7,7 @@ export const TransactionStore = defineStore('transaction', {
   state: () => ({
     _maxTransactions: 500,
     _transactions: [],
+    _currentTransactionId: 0,
     _incomplete: false, // true if more transactions would exists but limited to max transactions
     _ruleSets: [],
   }),
@@ -19,6 +20,9 @@ export const TransactionStore = defineStore('transaction', {
     },
     incompleteTransactionList(state) {
       return state._incomplete;
+    },
+    currentTransactionId(state) {
+      return state._currentTransactionId;
     },
     ruleSets(state) {
       return state._ruleSets;
@@ -155,6 +159,9 @@ export const TransactionStore = defineStore('transaction', {
         }
       }
       return { status: 401, data: resultData };
+    },
+    setCurrentTransactionId(id) {
+      this._currentTransactionId = id;
     },
     async getRuleSet(id) {
       let resultData = {};

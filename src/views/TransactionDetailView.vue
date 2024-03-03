@@ -141,7 +141,7 @@ export default {
     ...mapState(UserStore, ["authenticated"]),
   },
   methods: {
-    ...mapActions(TransactionStore, [ "getTransaction", "updateTransaction" ]),
+    ...mapActions(TransactionStore, [ "getTransaction", "updateTransaction", "setCurrentTransactionId" ]),
     goToTransactionList() {
       router.replace('/');
     },
@@ -219,6 +219,8 @@ export default {
       router.replace("/");
       return;
     }
+
+    this.setCurrentTransactionId(this.transactionId);
 
     const promises = [];
     promises.push(this.getTransaction(this.transactionId));

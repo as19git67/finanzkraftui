@@ -98,22 +98,40 @@ export default {
     ...mapStores(TransactionStore),
     ...mapStores(MasterDataStore),
     ...mapState(UserStore, ["authenticated"]),
-    ...mapState(TransactionStore, ["transactions", "incompleteTransactionList", "maxTransactions"]),
+    ...mapState(TransactionStore, ["transactions", "incompleteTransactionList", "maxTransactions", "currentTransactionId"]),
     ...mapState(AccountStore, ["accounts"]),
     ...mapState(MasterDataStore, ["timespans"]),
   },
   created() {
     this.transactionsByDate = [];
+    this.error = null;
+    this.loading = false;
+    this.searchTerm = '';
+    this.accountList = [];
+    this.accountFilter = 'g1';
+    this.accountsWhereIn = [];
+    this.dateFilterFrom = undefined;
+    this.dateFilterTo = undefined;
+  },
+  mounted() {
+    if (this.transactions.length) {
+      this.prepareDataForList();
+    } else {
+      this.loadDataFromServer();
+    }
+    if (this.currentTransactionId) {
+
+    }
   },
   methods: {
     ...mapActions(MasterDataStore, ["getTimespans"]),
     ...mapActions(TransactionStore, ["getTransactions"]),
     ...mapActions(AccountStore, ["getAccounts"]),
     searchTransactions() {
-      this.fillTransactions();
+      this.loadDataFromServer();
     },
     accountChanged() {
-      this.fillTransactions();
+      this.loadDataFromServer();
     },
     dateFilterChanged() {
       const tsInfos = this.timespans.filter((item) => {
@@ -155,9 +173,9 @@ export default {
         this.dateFilterFrom = undefined;
         this.dateFilterTo = undefined;
       }
-      this.fillTransactions();
+      this.loadDataFromServer();
     },
-    async fillTransactions() {
+    async loadDataFromServer() {
       this.error = "";
       this.loading = true;
       try {
@@ -190,13 +208,16 @@ export default {
           router.replace("/login");
           return;
         }
-        this._fillAccountList();
-        this._fillTimespanList();
-        this._buildTransactionsPerDate();
+        await this.prepareDataForList();
       } catch (ex) {
         this.error = ex.message;
         this.loading = false;
       }
+    },
+    async prepareDataForList() {
+      this._fillAccountList();
+      this._fillTimespanList();
+      this._buildTransactionsPerDate();
     },
     _buildTransactionsPerDate() {
       const transactionsOfDate = {};
@@ -256,17 +277,6 @@ export default {
         }
       }
     },
-  },
-  mounted() {
-    this.error = null;
-    this.loading = false;
-    this.searchTerm = '';
-    this.accountList = [];
-    this.accountFilter = 'g1';
-    this.accountsWhereIn = [];
-    this.dateFilterFrom = undefined;
-    this.dateFilterTo = undefined;
-    this.fillTransactions();
   },
 };
 </script>
