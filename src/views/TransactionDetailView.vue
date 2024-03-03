@@ -166,7 +166,7 @@ export default {
     async saveTransaction() {
       this.updateData.confirmed = true;
       if (await this.handleDataChanged()) {
-        router.back();
+        this.goToTransactionList();
       }
     },
     async handleDataChanged() {
