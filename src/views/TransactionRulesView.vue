@@ -8,7 +8,7 @@
   </div>
   <div class="form">
     <div class="form-component" v-if="loadedRuleSet.id">
-      <label><input type="checkbox" v-model="includeProcessed" >Buchungen aktualisiere</label>
+      <label><input type="checkbox" v-model="includeProcessed" >Buchungen aktualisieren</label>
     </div>
     <div class="form-component">
       <button @click="deleteRuleSet" :disabled="!loadedRuleSet.id" class="action btn btn--is-danger">Regel löschen</button>

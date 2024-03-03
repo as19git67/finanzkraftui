@@ -2,7 +2,8 @@
   <div v-if="error" class="error">{{ error }}</div>
   <div v-else>
     <div class="top-links">
-      <button :disabled="dirty" @click="cancelChanges" class="action btn btn--is-secondary">Zurück</button>
+      <button v-if="!dirty" @click="goToTransactionList" class="action btn btn--is-secondary">Zurück</button>
+      <button v-if="dirty" @click="cancelChanges" class="action btn btn--is-secondary">Abbrechen</button>
       <button :disabled="!dirty" @click="saveTransaction" class="action btn btn--is-primary">Speichern</button>
     </div>
 
@@ -71,6 +72,17 @@
 
     <p v-if="actionError" class="error">{{ actionError }}</p>
   </div>
+  <div v-if="showConfirmDialog" class="confirm">
+    <div class="confirm-backdrop"></div>
+    <div class="confirm-dialog confirm--yes-no">
+      <span class="confirm-text">{{ confirmText }}</span>
+      <div class="btn-group">
+        <button class="btn btn-confirm" @click="confirmDialogButtonClicked('yes')">Ja</button>
+        <button class="btn btn-confirm btn--is-primary" autofocus @click="confirmDialogButtonClicked('no')">Nein
+        </button>
+      </div>
+    </div>
+  </div>
 </template>
 
 
@@ -101,6 +113,8 @@ export default {
       error: this.error,
       actionError: this.actionError,
       updateData: this.updateData,
+      showConfirmDialog: false,
+      confirmText: '',
     };
   },
   watch: {
@@ -110,7 +124,6 @@ export default {
       }
       this.updateData.t_notes = val;
       this.transaction.t_notes = val;
-      this.dataChanged();
     },
   },
   computed: {
@@ -129,8 +142,26 @@ export default {
   },
   methods: {
     ...mapActions(TransactionStore, [ "getTransaction", "updateTransaction" ]),
-    cancelChanges() {
-      router.back();
+    goToTransactionList() {
+      router.replace('/');
+    },
+    async cancelChanges() {
+      this.confirmText = 'Änderungen verwerfen und zurück zur Liste?';
+      this.showConfirmDialog = true;
+      const res = await new Promise((resolve, reject) => {
+        this.dialogResolve = resolve;
+      });
+      switch(res) {
+        case 'yes':
+          this.goToTransactionList();
+          break;
+        case 'no':
+          break;
+      }
+    },
+    confirmDialogButtonClicked(btnId) {
+      this.showConfirmDialog = false;
+      this.dialogResolve(btnId);
     },
     async saveTransaction() {
       this.updateData.confirmed = true;
@@ -151,10 +182,9 @@ export default {
         return false;
       }
     },
-    markUnconfirmed() {
+    async markUnconfirmed() {
       this.updateData.confirmed = false;
-      this.dataChanged();
-      this.dataChanged.flush();
+      await this.handleDataChanged();
     }
   },
   created() {
@@ -168,6 +198,7 @@ export default {
     this.loading = true;
 
     // cancel the debounced dataChanged function in case of leaving before save
+/*
     router.beforeEach(async (to, from, next) => {
       if (from.name === 'TransactionDetail') {
         if (to.name === 'home') {
@@ -182,6 +213,7 @@ export default {
       }
       next();
     });
+*/
 
     if (!this.transactionId) {
       router.replace("/");
@@ -234,6 +266,49 @@ export default {
 </script>
 
 <style scoped>
+.confirm {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+}
+.confirm .confirm-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  opacity: 0.5;
+  background-color: var(--as-color-complement-0);
+  z-index: 100;
+}
+.confirm .confirm-dialog {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--as-color-secondary-1-4);
+  display: flex;
+  align-items: center;
+  justify-items: center;
+  padding: 1em;
+  z-index: 200;
+}
+.confirm-dialog.confirm--yes-no {
+  flex-direction: column;
+}
+.confirm-dialog .confirm-text {
+  margin-bottom: 1em;
+}
+.confirm-dialog .btn-group {
+  display: flex;
+  gap: 1em;
+  flex-direction: row;
+  width: 100%;
+  justify-content: flex-end;
+}
+
 .form-component {
   width: 100%;
 }
