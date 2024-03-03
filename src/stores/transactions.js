@@ -8,6 +8,7 @@ export const TransactionStore = defineStore('transaction', {
     _maxTransactions: 500,
     _transactions: [],
     _currentTransactionId: 0,
+    _lastScrollTop: 0,
     _incomplete: false, // true if more transactions would exists but limited to max transactions
     _ruleSets: [],
   }),
@@ -23,6 +24,9 @@ export const TransactionStore = defineStore('transaction', {
     },
     currentTransactionId(state) {
       return state._currentTransactionId;
+    },
+    lastScrollTop(state) {
+      return state._lastScrollTop;
     },
     ruleSets(state) {
       return state._ruleSets;
@@ -163,6 +167,9 @@ export const TransactionStore = defineStore('transaction', {
     setCurrentTransactionId(id) {
       this._currentTransactionId = id;
     },
+    setLastScrollTop(top) {
+      this._lastScrollTop = top;
+    },
     async getRuleSet(id) {
       let resultData = {};
       const userStore = UserStore();
@@ -193,6 +200,13 @@ export const TransactionStore = defineStore('transaction', {
         }
         try {
           const response = await axios.post(`/api/transaction/${updateData.id}`, updateData, config);
+          if (response.status === 200) {
+            const id = parseInt(updateData.id, 10);
+            const t = this._transactions.filter((tr) => {
+              return tr.t_id === id;
+            });
+            _.assignIn(t[0], updateData);
+          }
           return { status: response.status, data: resultData };
         } catch (ex) {
           return userStore.handleAxiosException(ex, userStore, resultData);

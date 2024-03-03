@@ -1,5 +1,5 @@
 <template>
-  <h1 class="page-title"><span v-if="!loading">{{transactions.length}}</span> Buchungen
+  <h1 class="page-title"><span v-if="!loading">{{ transactions.length }}</span> Buchungen
     <span v-if="loading">laden...</span>
   </h1>
   <form v-on:submit.prevent v-on:keyup.enter="searchTransactions"
@@ -26,43 +26,55 @@
       <button @click="searchTransactions" class="btn btn--is-primary">Suchen</button>
     </div>
   </form>
-
-  <table class="all-transactions-table" v-if="transactionsByDate.length">
-    <tbody>
-    <template v-for="(trOfDate, index) in transactionsByDate" :key="trOfDate">
-      <tr class="transaction-date">
-        <td>{{ DateTime.fromISO(trOfDate.valueDate).toLocaleString() }}</td>
-      </tr>
-      <tr>
-        <td>
-          <table class="transaction-details-table">
-            <tbody>
-              <tr v-for="(item, index) in trOfDate.transactions" :key="item.t_id" :id="'transaction-' + item.t_id" class="transaction-details" :class="{'alternate-row-background': index % 2 }">
-                  <td class="transaction-text">
-                    <router-link class="transaction-data action" :to="{ path:'/transaction/:transactionId', name: 'TransactionDetail', params: { transactionId: item.t_id }}">
-                      <div class="td-text-item" :class="{'tr-not-confirmed': !item.confirmed }">{{ item.t_payee ? item.t_payee : item.textShortened ? item.textShortened : item.t_entry_text }}</div>
-                      <div class="td-text-item item--is-category">{{ item.category_name }}</div>
-                      <div class="td-text-item item--is-text">{{ item.t_payee ? item.textShortened : '' }}</div>
-                      <div class="td-text-item item--is-notes">{{ item.t_notes }}</div>
-                    </router-link>
-                  </td>
-                  <td class="transaction-amount">
-                    <router-link class="action" :to="{ path:'/transaction/:transactionId', name: 'TransactionDetail', params: { transactionId: item.t_id }}">
-                      {{ `${new Intl.NumberFormat(undefined, {style: 'currency', currency: item.currency_id}).format(item.t_amount)}` }}
-                    </router-link>
-                  </td>
+  <div class="transaction-list" @scroll="tableScroll">
+    <table class="all-transactions-table" v-if="transactionsByDate.length">
+      <tbody>
+      <template v-for="(trOfDate, index) in transactionsByDate" :key="trOfDate">
+        <tr class="transaction-date">
+          <td>{{ DateTime.fromISO(trOfDate.valueDate).toLocaleString() }}</td>
+        </tr>
+        <tr>
+          <td>
+            <table class="transaction-details-table">
+              <tbody>
+              <tr v-for="(item, index) in trOfDate.transactions" :key="item.t_id" :id="'transaction-' + item.t_id"
+                  class="transaction-details" :class="{'alternate-row-background': index % 2 }">
+                <td class="transaction-text">
+                  <router-link class="transaction-data action"
+                               :to="{ path:'/transaction/:transactionId', name: 'TransactionDetail', params: { transactionId: item.t_id }}">
+                    <div class="td-text-item" :class="{'tr-not-confirmed': !item.confirmed }">
+                      {{ item.t_payee ? item.t_payee : item.textShortened ? item.textShortened : item.t_entry_text }}
+                    </div>
+                    <div class="td-text-item item--is-category">{{ item.category_name }}</div>
+                    <div class="td-text-item item--is-text">{{ item.t_payee ? item.textShortened : '' }}</div>
+                    <div class="td-text-item item--is-notes">{{ item.t_notes }}</div>
+                  </router-link>
+                </td>
+                <td class="transaction-amount">
+                  <router-link class="action"
+                               :to="{ path:'/transaction/:transactionId', name: 'TransactionDetail', params: { transactionId: item.t_id }}">
+                    {{
+                      `${new Intl.NumberFormat(undefined, {
+                        style: 'currency',
+                        currency: item.currency_id
+                      }).format(item.t_amount)}`
+                    }}
+                  </router-link>
+                </td>
               </tr>
-            </tbody>
-          </table>
-        </td>
-      </tr>
-    </template>
-    </tbody>
-  </table>
-  <p v-else><span v-if="!loading">Keine Buchungen vom Server geladen</span></p>
-  <div v-if="incompleteTransactionList">
-    <hr>
-    <h4>Hinweis: es gibt mehr Ergebnisse als dargestellt</h4>
+              </tbody>
+            </table>
+          </td>
+        </tr>
+      </template>
+      </tbody>
+    </table>
+
+    <p v-else><span v-if="!loading">Keine Buchungen vom Server geladen</span></p>
+    <div v-if="incompleteTransactionList">
+      <hr>
+      <h4>Hinweis: es gibt mehr Ergebnisse als dargestellt</h4>
+    </div>
   </div>
 </template>
 
@@ -98,7 +110,7 @@ export default {
     ...mapStores(TransactionStore),
     ...mapStores(MasterDataStore),
     ...mapState(UserStore, ["authenticated"]),
-    ...mapState(TransactionStore, ["transactions", "incompleteTransactionList", "maxTransactions", "currentTransactionId"]),
+    ...mapState(TransactionStore, ["transactions", "incompleteTransactionList", "maxTransactions", "lastScrollTop"]),
     ...mapState(AccountStore, ["accounts"]),
     ...mapState(MasterDataStore, ["timespans"]),
   },
@@ -113,20 +125,24 @@ export default {
     this.dateFilterFrom = undefined;
     this.dateFilterTo = undefined;
   },
-  mounted() {
+  async mounted() {
     if (this.transactions.length) {
-      this.prepareDataForList();
+      await this.prepareDataForList();
     } else {
-      this.loadDataFromServer();
+      await this.loadDataFromServer();
     }
-    if (this.currentTransactionId) {
-
+    if (this.lastScrollTop) {
+      const list = document.querySelector('.transaction-list');
+      list.scrollTop = this.lastScrollTop;
     }
   },
   methods: {
     ...mapActions(MasterDataStore, ["getTimespans"]),
-    ...mapActions(TransactionStore, ["getTransactions"]),
+    ...mapActions(TransactionStore, ["getTransactions", "setLastScrollTop"]),
     ...mapActions(AccountStore, ["getAccounts"]),
+    tableScroll(ev) {
+      this.setLastScrollTop(ev.srcElement.scrollTop);
+    },
     searchTransactions() {
       this.loadDataFromServer();
     },
@@ -282,4 +298,8 @@ export default {
 </script>
 
 <style scoped>
+.transaction-list {
+  overflow-y:scroll;
+  height: calc(100vh - 70px);
+}
 </style>
