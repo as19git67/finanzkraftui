@@ -33,24 +33,23 @@
           <div class="details-row-left">Datum:</div>
           <div class="details-row-right">{{ DateTime.fromISO(transaction.t_value_date).toLocaleString(DateTime.DATE_HUGE) }}</div>
         </div>
-        <div v-if="transaction.t_text" class="transaction-details details-row">
+        <div v-if="transaction.t_text" class="transaction-details details-column">
           <div class="details-row-left">Text:</div>
           <div class="details-row-right transaction-details-text">{{ transaction.t_text }}</div>
         </div>
-        <div class="transaction-details details-row details-row-single-column">
-          <div class="">Notiz:</div>
-          <textarea v-model="transactionNotes"></textarea>
-        </div>
-        <br>
         <div class="transaction-details details-column">
+          <div class="details-row-left">Notiz:</div>
+          <textarea class="details-row-right " v-model="transactionNotes"></textarea>
+        </div>
+        <div class="transaction-details details-row">
           <div class="details-row-left">Konto:</div>
           <div class="details-row-right">{{ transaction.account_name }}</div>
         </div>
-        <div v-if="transaction.t_payeePayerAcctNo" class="transaction-details details-column">
+        <div v-if="transaction.t_payeePayerAcctNo" class="transaction-details details-row">
           <div class="details-row-left">Zahlungsempfänger:</div>
           <div class="details-row-right">{{ transaction.t_payeePayerAcctNo }}</div>
         </div>
-        <div class="transaction-details details-column">
+        <div class="transaction-details details-row">
           <div class="details-row-left">Buchungsart:</div>
           <div class="details-row-right">{{ transaction.t_entry_text ? transaction.t_entry_text : 'Nicht angegeben' }}</div>
         </div>
@@ -403,6 +402,20 @@ export default {
   font-weight: bold;
 }
 
+.transaction-details.details-column > .details-row-right {
+  justify-content: flex-start;
+}
+
+.transaction-details.details-column > .details-row-right.transaction-details-text {
+  white-space: normal;
+  text-align: start;
+}
+
+.transaction-details.details-column > textarea {
+  display: flex;
+  width: 100%;
+}
+
 .transaction-details.details-row.details-row-single-column {
   flex-direction: column;
 }
@@ -427,10 +440,5 @@ export default {
 .transaction-details.details-row > .details-row-right.transaction-details-text {
   white-space: normal;
   text-align: end;
-}
-
-.transaction-details.details-row > textarea {
-  display: flex;
-  width: 100%;
 }
 </style>
