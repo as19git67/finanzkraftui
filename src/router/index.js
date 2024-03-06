@@ -4,6 +4,7 @@ import LoginView from '../views/LoginView.vue';
 import LogoutView from '../views/LogoutView.vue';
 import TransactionDetailView from '../views/TransactionDetailView.vue';
 import TransactionRulesView from '../views/TransactionRulesView.vue';
+import CategorySelectionView from '../views/CategorySelectionView.vue';
 import AccountsView from '../views/AccountsView.vue';
 import RuleSetsView from '../views/RuleSetsView.vue';
 import RuleSetEditView from '../views/RuleSetEditView.vue';
@@ -54,6 +55,11 @@ const router = createRouter({
       name: 'RuleSetEdit',
       props: true,
       component: RuleSetEditView,
+    },
+    {
+      path: '/categorySelection',
+      name: 'CategorySelection',
+      component: CategorySelectionView,
     },
     {
       path: '/accounts',

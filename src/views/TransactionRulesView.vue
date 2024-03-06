@@ -159,6 +159,7 @@ export default {
       textToken: this.textToken,
       matchingTransactions: this.matchingTransactions,
       ruleSet: this.ruleSet,
+      categorySearch: this.categorySearch,
       filteredCategories: this.filteredCategories,
       selectedCategory: this.selectedCategory,
       transaction: this.transaction,
@@ -168,7 +169,6 @@ export default {
       useMinAmount: this.useMinAmount,
       useMaxAmount: this.useMaxAmount,
       error: this.error,
-      categorySearch: this.categorySearch,
       includeProcessed: this.includeProcessed,
       loadedRuleSet: this.loadedRuleSet,
     };

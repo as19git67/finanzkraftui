@@ -13,13 +13,15 @@
           <div>
             {{transaction.t_payee ? transaction.t_payee : transaction.t_entry_text}}
           </div>
-          <button v-if="transaction.confirmed" class="btn-icon-only" aria-label="Markiere ungesehen" @click="markUnconfirmed()">
+          <button v-if="transaction.confirmed" class="btn-icon-only"
+                  aria-label="markiere ungesehen" @click="markUnconfirmed()">
             <IconEyes class="icon-seen"/>
           </button>
         </div>
-        <div v-if="transaction.category_name" class="transaction-details category">
-          <span>{{transaction.category_name}}</span>
-          <router-link class="action" :to="{ path:'/', name: 'home'}">
+        <div class="transaction-details category">
+          <span v-if="transaction.category_name">{{transaction.category_name}}</span>
+          <span v-if="!transaction.category_name">Kategorie wählen</span>
+          <router-link class="action" :to="{ name: 'CategorySelection'}">
             <button class="btn-icon-only" aria-label="Edit"><IconEdit/></button>
           </router-link>
         </div>
