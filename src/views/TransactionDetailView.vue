@@ -10,12 +10,17 @@
     <div v-if="transaction" class="transaction-details all">
       <div class="transaction-details title">
         <div class="transaction-details payee">
-          <div>
-            {{transaction.t_payee ? transaction.t_payee : transaction.t_entry_text}}
+          <div v-if="editName" class="detail-wrapper">
+            <input class="detail-value" type="text" v-model="transactionPayee" placeholder="Name">
+            <button @click="switchOffEditName" class="btn-icon-only" aria-label="Edit"><IconTick/></button>
           </div>
-          <button v-if="transaction.confirmed" class="btn-icon-only"
-                  aria-label="markiere ungesehen" @click="markUnconfirmed()">
-            <IconEyes class="icon-seen"/>
+          <div class="detail-value" v-else >
+            {{transaction.t_payee ? transaction.t_payee : transaction.t_entry_text}}
+            <button v-if="!transaction.t_entry_text" @click="switchToEditName" class="btn-icon-only"
+                     aria-label="Edit"><IconEdit/></button>
+          </div>
+          <button v-if="transaction.confirmed" class="btn-icon-only" aria-label="markiere ungesehen" @click="markUnconfirmed()">
+            <IconEyeOK class="icon-seen"/>
           </button>
         </div>
         <div class="transaction-details category">
@@ -89,7 +94,8 @@
 
 <script setup>
 import IconEdit from "@/components/icons/IconEdit.vue";
-import IconEyes from "@/components/icons/IconEyes.vue";
+import IconTick from "@/components/icons/IconTick.vue";
+import IconEyeOK from "@/components/icons/IconEyeOK.vue";
 
 defineProps({
   transactionId: { type: String },
@@ -103,6 +109,7 @@ import router from "@/router";
 import _ from "lodash";
 import {DateTime} from "luxon";
 import {TransactionStore} from "@/stores/transactions";
+import { MasterDataStore } from "@/stores/masterdata";
 
 export default {
   name: "TransactionDetailView",
@@ -110,22 +117,49 @@ export default {
   data() {
     return {
       transactionNotes: this.transactionNotes,
+      transactionPayee: this.transactionPayee,
+      categoryId: this.categoryId,
       transaction: this.transaction,
       error: this.error,
       actionError: this.actionError,
       updateData: this.updateData,
       showConfirmDialog: false,
       confirmText: '',
+      editName: false,
     };
   },
   watch: {
-    transactionNotes: async function (val, oldVal) {
+    transactionNotes: function (val, oldVal) {
       if (oldVal === undefined || this.transaction === undefined) {
         return;
       }
       this.updateData.t_notes = val;
       this.transaction.t_notes = val;
     },
+    categoryId: function (val, oldVal) {
+      if (oldVal === undefined || this.transaction === undefined) {
+        return;
+      }
+      if (this.transaction.category_id === val) {
+        return;
+      }
+      this.updateData.category_id = val;
+      this.transaction.category_id = val;
+      if (val && this.categories.length > 0) {
+        this.transaction.category_name = this.getCategoryById(val).full_name;
+      } else {
+        this.transaction.category_name = '';
+      }
+    },
+    transactionPayee: function (val, oldVal) {
+      if (oldVal === undefined || this.transaction === undefined) {
+        return;
+      }
+      if (this.transaction.t_payee === val) {
+        return;
+      }
+      this.updateData.t_payee = val;
+    }
   },
   computed: {
     confirmed() {
@@ -138,11 +172,19 @@ export default {
       }
       return keyCount > 0;
     },
-    ...mapStores(UserStore),
+    ...mapStores(UserStore, MasterDataStore),
     ...mapState(UserStore, ["authenticated"]),
+    ...mapState(MasterDataStore, ["currentlySelectedCategoryId", "categories"]),
   },
   methods: {
     ...mapActions(TransactionStore, [ "getTransaction", "updateTransaction", "setCurrentTransactionId" ]),
+    ...mapActions(MasterDataStore, [ "setCurrentlySelectedCategoryId", "getCategoryById", "getCategories" ]),
+    switchToEditName() {
+      this.editName = true;
+    },
+    switchOffEditName() {
+      this.editName = false;
+    },
     goToTransactionList() {
       router.replace('/');
     },
@@ -192,6 +234,7 @@ export default {
     this.dataChanged = _.debounce(this.handleDataChanged, 2000);
     this.updateData = {};
     this.transaction = {};
+    this.categoryId = 0;
   },
   async mounted() {
     this.error = undefined;
@@ -225,6 +268,7 @@ export default {
 
     const promises = [];
     promises.push(this.getTransaction(this.transactionId));
+    promises.push(this.getCategories());
     const results = await Promise.all(promises);
     this.loading = false;
 
@@ -258,7 +302,16 @@ export default {
     }
 
     this.transaction = {...(results[0].data)};
+    const lastPage = router.options.history.state.forward;
+    if (lastPage === '/categorySelection') {
+      // back from category selection
+        this.categoryId = this.currentlySelectedCategoryId;
+    } else {
+      this.setCurrentlySelectedCategoryId(this.transaction.category_id);
+      this.categoryId = this.transaction.category_id;
+    }
     this.transactionNotes = this.transaction.t_notes;
+    this.transactionPayee = this.transaction.t_payee;
     if (!this.transaction.confirmed) {
       this.transaction.confirmed = true;
       this.updateData.confirmed = true;
@@ -377,10 +430,16 @@ export default {
   word-wrap: anywhere;
 }
 
-.transaction-details.payee .icon-seen {
-  margin-left: 0.5em;
-  width: 14px;
-  height: 14px;
+.transaction-details .detail-wrapper {
+  display: flex;
+  flex: 1 1 auto;
+}
+
+.transaction-details .detail-value {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
 }
 
 .transaction-details.category {

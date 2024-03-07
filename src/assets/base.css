@@ -191,7 +191,7 @@ button:hover svg .metaphor {
 
 .title .btn-icon-only {
   display: flex;
-  margin-left: 0.5em;
+  margin-left: 0.25em;
 }
 
 .btn-icon-only {
@@ -199,7 +199,11 @@ button:hover svg .metaphor {
   background-color: transparent;
   cursor: pointer;
   padding: 2px;
-}
+  display: flex;
+  flex: 0 0 auto;
+  font-size: 18px;
+  align-items: center;
+ }
 
 .btn {
   background: var(--color-button-secondary);

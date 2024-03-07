@@ -85,7 +85,7 @@ export const MasterDataStore = defineStore('masterdata', {
           return userStore.handleAxiosException(ex, userStore, []);
         }
       } else {
-        // return { status: 401, data: resultData };
+        return { status: 401, data: resultData };
       }
     },
     getCategoryById(id) {

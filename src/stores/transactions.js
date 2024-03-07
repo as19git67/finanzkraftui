@@ -7,12 +7,16 @@ export const TransactionStore = defineStore('transaction', {
   state: () => ({
     _maxTransactions: 500,
     _transactions: [],
+    _transaction: {},
     _currentTransactionId: 0,
     _lastScrollTop: 0,
     _incomplete: false, // true if more transactions would exists but limited to max transactions
     _ruleSets: [],
   }),
   getters: {
+    transaction(state) {
+      return state._transaction;
+    },
     transactions(state) {
       return state._transactions;
     },
@@ -145,7 +149,7 @@ export const TransactionStore = defineStore('transaction', {
       }
     },
     async getTransaction(id) {
-      let resultData = {};
+      this._transaction = {};
       const userStore = UserStore();
       if (userStore.authenticated) {
         const config = userStore.getBearerAuthRequestHeader();
@@ -155,14 +159,14 @@ export const TransactionStore = defineStore('transaction', {
         try {
           const response = await axios.get(`/api/transaction/${id}`, config);
           if (response.status === 200) {
-            resultData = this.buildTransactionFromResponse(response.data);
+            this._transaction = this.buildTransactionFromResponse(response.data);
           }
-          return { status: response.status, data: resultData };
+          return { status: response.status, data: this._transaction };
         } catch (ex) {
-          return userStore.handleAxiosException(ex, userStore, resultData);
+          return userStore.handleAxiosException(ex, userStore, this._transaction);
         }
       }
-      return { status: 401, data: resultData };
+      return { status: 401, data: this._transaction };
     },
     setCurrentTransactionId(id) {
       this._currentTransactionId = id;

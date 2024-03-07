@@ -6,10 +6,48 @@
     </button>
   </div>
   <div v-if="error" class="error">{{ error }}</div>
+
+  <div v-if="transaction">
+    <p class="label-buchung">Buchung
+      <span v-if="transaction.t_value_date">({{DateTime.fromISO(transaction.t_value_date).toLocaleString(DateTime.DATE_HUGE) }})</span>
+    </p>
+    <table class="transaction-details-table">
+      <tbody>
+      <tr class="transaction-details">
+        <td class="transaction-text">
+          <div class="transaction-data">
+            <div class="td-text-item">
+              {{
+                transaction.t_payee ? transaction.t_payee :
+                transaction.textShortened ? transaction.textShortened : transaction.t_entry_ext
+              }}
+            </div>
+            <div class="td-text-item item--is-category">{{ transaction.category_name }}</div>
+            <div class="td-text-item item--is-text"
+                 :title="transaction.t_payee ? transaction.textShortened : ''">
+              {{ transaction.t_payee ? transaction.textShortened : '' }}
+            </div>
+            <div class="td-text-item item--is-notes">{{ transaction.t_notes }}</div>
+          </div>
+        </td>
+        <td class="transaction-amount"><span v-if="transaction.currency_id">
+          {{
+            `${new Intl.NumberFormat(undefined, {
+              style: 'currency',
+              currency: transaction.currency_id
+            }).format(transaction.t_amount)}`
+          }}
+        </span></td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+
   <div class="category-details details-column">
     <div class="details-row-left">ausgewählte Kategorie:</div>
     <div class="details-row-right">{{ selectedCategoryName }}</div>
   </div>
+  <br>
   <div class="category-details details-column">
     <div class="details-row-left">Suche:</div>
     <div class="details-row-right"><input type="search" autofocus v-model="categorySearch" placeholder="Kategorie suchen"></div>
@@ -27,6 +65,7 @@
 
 
 <script setup>
+import {DateTime} from "luxon";
 </script>
 
 <script>
@@ -34,6 +73,7 @@ import { mapActions, mapState, mapStores } from "pinia";
 import router from "@/router";
 import _ from "lodash";
 import { MasterDataStore } from "@/stores/masterdata";
+import { TransactionStore } from "@/stores/transactions";
 
 export default {
   name: "CategorySelectionView",
@@ -48,8 +88,9 @@ export default {
     };
   },
   computed: {
-    ...mapStores(MasterDataStore),
+    ...mapStores(MasterDataStore, TransactionStore),
     ...mapState(MasterDataStore, ["categories", "currentlySelectedCategoryId"]),
+    ...mapState(TransactionStore, ["transaction"]),
   },
   watch: {
     categorySearch: function (val, oldVal) {
@@ -59,7 +100,11 @@ export default {
       }
     },
     selectedCategory: function (val, oldVal) {
-      this.selectedCategoryName = this.getCategoryById(val).full_name;
+      if (val) {
+        this.selectedCategoryName = this.getCategoryById(val).full_name;
+      } else {
+        this.selectedCategoryName = 'keine';
+      }
     }
   },
   methods: {
@@ -194,6 +239,14 @@ export default {
 .category-details.details-column > .details-row-right > input {
   display: flex;
   width: 100%;
+}
+
+.label-buchung {
+  margin-top: 0.5em;
+  margin-bottom: 0.25em;
+  font-weight: bold;
+  background-color: #1f91a1;
+  color: white;
 }
 
 label > .selectionInput {
