@@ -44,6 +44,10 @@
           <div class="details-row-left">Text:</div>
           <div class="details-row-right transaction-details-text">{{ transaction.t_text }}</div>
         </div>
+        <div v-if="amazonOrderId" class="transaction-details details-row">
+          <div class="details-row-left">Amazon Bestellung:</div>
+          <a class="details-row-right" target="_blank" :href="`https://www.amazon.de/gp/your-account/order-details?ie=UTF8&orderID=${amazonOrderId}`">{{amazonOrderId}}</a>
+        </div>
         <div class="transaction-details details-column">
           <div class="details-row-left">Notiz:</div>
           <textarea class="details-row-right " v-model="transactionNotes"></textarea>
@@ -126,6 +130,7 @@ export default {
       showConfirmDialog: false,
       confirmText: '',
       editName: false,
+      amazonOrderId: '',
     };
   },
   watch: {
@@ -312,6 +317,14 @@ export default {
     }
     this.transactionNotes = this.transaction.t_notes;
     this.transactionPayee = this.transaction.t_payee;
+    if (this.transaction.t_text && this.transaction.t_payee && this.transaction.t_payee.startsWith('AMAZON')) {
+      const matches = this.transaction.t_text.match(/(\d{3}\-\d{7}\-\d{7})/);
+      if (matches.length > 0) {
+        this.amazonOrderId = matches[0];
+      } else {
+        this.amazonOrderId = '';
+      }
+    }
     if (!this.transaction.confirmed) {
       this.transaction.confirmed = true;
       this.updateData.confirmed = true;
