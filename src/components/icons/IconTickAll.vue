@@ -7,5 +7,6 @@
 <script>
 export default {
   name: "IconTickAll",
+  // https://icon-sets.iconify.design/mdi/
 };
 </script>
