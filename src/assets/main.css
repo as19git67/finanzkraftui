@@ -21,6 +21,9 @@ table {
 .transaction-date {
   background-color: var(--as-color-complement-4);
   color: white;
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 .transaction-date td {
   font-weight: bold;

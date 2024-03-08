@@ -1,136 +1,140 @@
 <template>
-  <h1 class="page-title">Regelset</h1>
-  <div class="top-links">
-    <router-link class="action" :to="{ name: 'TransactionDetail'}">
-      < Zurück
-    </router-link>
-    <button @click="saveRuleSet" :disabled="!canSave" class="action btn btn--is-primary">Regel speichern</button>
-  </div>
-  <div class="form">
-    <div class="form-component" v-if="loadedRuleSet.id">
-      <label><input type="checkbox" v-model="includeProcessed" >Buchungen aktualisieren</label>
+  <div class="page">
+    <h1 class="page-title">Regelset</h1>
+    <div class="top-links">
+      <router-link class="action" :to="{ name: 'TransactionDetail'}">
+        < Zurück
+      </router-link>
+      <button @click="saveRuleSet" :disabled="!canSave" class="action btn btn--is-primary">Regel speichern</button>
     </div>
-    <div class="form-component">
-      <button @click="deleteRuleSet" :disabled="!loadedRuleSet.id" class="action btn btn--is-danger">Regel löschen</button>
-    </div>
-  </div>
-  <div v-if="error" class="error">{{ error }}</div>
+    <div v-if="error" class="error">{{ error }}</div>
+    <div class="form">
+      <div class="form-component" v-if="loadedRuleSet.id">
+        <label><input type="checkbox" v-model="includeProcessed">Buchungen aktualisieren</label>
+      </div>
+      <div class="form-component">
+        <button @click="deleteRuleSet" :disabled="!loadedRuleSet.id" class="action btn btn--is-danger">Regel löschen
+        </button>
+      </div>
 
-  <p class="label-buchung">Buchung</p>
-  <table class="transaction-details-table">
-    <tbody>
-    <tr class="transaction-details">
-      <td class="transaction-text">
-        <div class="transaction-data">
-          <div class="td-text-item">
-            {{
-              transaction.t_payee ? transaction.t_payee : transaction.textShortened ? transaction.textShortened : transaction.t_entry_ext
-            }}
-          </div>
-          <div class="td-text-item item--is-category">{{ transaction.category_name }}</div>
-          <div class="td-text-item item--is-text" :title="transaction.t_payee ? transaction.textShortened : ''">
-            {{ transaction.t_payee ? transaction.textShortened : '' }}
-          </div>
-          <div class="td-text-item item--is-notes">{{ transaction.t_notes }}</div>
-        </div>
-      </td>
-      <td class="transaction-amount"><span v-if="transaction.currency_id">
-          {{
-          `${new Intl.NumberFormat(undefined, {
-            style: 'currency',
-            currency: transaction.currency_id
-          }).format(transaction.t_amount)}`
-        }}
-        </span></td>
-    </tr>
-    </tbody>
-  </table>
-
-  <p class="label-ruleset">Regel</p>
-  <div class="form form--is-column">
-    <div class="form-component">
-      <label class="form-label" for="ruleSetName">Name:</label>
-      <input type="text" v-model="ruleSet.name" placeholder="Name Regelset" id="ruleSetName">
-    </div>
-    <div class="form-component">
-      <label>Betrag:</label>
-    </div>
-    <div class="form-component">
-      <input type="checkbox" v-model="useMinAmount">
-      <label class="form-label" for="minAmount">kleinster:</label>
-      <input type="text" v-model="minAmount" placeholder="kleinster Betrag" id="minAmount">
-      {{ transaction.currencyShort }}
-    </div>
-    <div class="form-component">
-      <input type="checkbox" v-model="useMaxAmount">
-      <label class="form-label" for="maxAmountInput">größter:</label>
-      <input type="text" v-model="maxAmount" placeholder="größter Betrag" id="maxAmountInput">
-      {{ transaction.currencyShort }}
-    </div>
-  </div>
-  <p class="label-token">Wähle eine Kategorie</p>
-  <div class="form-component">
-    <input type="search" autofocus v-model="categorySearch" placeholder="Kategorie suchen">
-  </div>
-
-  <table>
-    <tbody>
-    <tr v-for="(item) in filteredCategories" :key="item.id">
-      <td class="text-h-center"><label><input class="selectionInput" type="radio" v-model="selectedCategory" :value="item.id" :checked="item.selected" name="ruleCategory">{{ item.full_name }}</label>
-      </td>
-    </tr>
-    </tbody>
-  </table>
-
-  <p class="label-token">Textabschnitte vom Verwendungszweck - markiere diejenigen, die Teil der Regel sein sollen</p>
-  <table>
-    <tbody>
-    <tr v-for="(item) in textToken" :key="item.text">
-      <td class="text-h-center"><label><input class="selectionInput" type="checkbox" v-model="item.selected" @change="tokenSelected(item.text)">{{ item.text }}</label></td>
-    </tr>
-    </tbody>
-  </table>
-
-  <p class="label-matching-transactions">{{ matchingTransactions.length }} Buchungen, die mit den ausgewählten
-    Textabschnitten gefunden werden:</p>
-  <table class="all-transactions-table" v-if="matchingTransactionsByDate.length">
-    <tbody>
-    <template v-for="(trOfDate) in matchingTransactionsByDate" :key="trOfDate">
-      <tr class="transaction-date">
-        <td>{{ DateTime.fromISO(trOfDate.valueDate).toLocaleString() }}</td>
-      </tr>
-      <tr>
-        <td>
-          <table class="transaction-details-table">
-            <tbody>
-            <tr v-for="(item, index) in trOfDate.transactions" :key="item.t_id" class="transaction-details"
-                :class="{'alternate-row-background': index % 2 }">
-              <td class="transaction-text">
-                <div class="transaction-data">
-                  <div class="td-text-item">
-                    {{ item.t_payee ? item.t_payee : item.textShortened ? item.textShortened : item.t_entry_text }}
-                  </div>
-                  <div class="td-text-item item--is-category">{{ item.category_name }}</div>
-                  <div class="td-text-item item--is-text">{{ item.t_payee ? item.textShortened : '' }}</div>
-                  <div class="td-text-item item--is-notes">{{ item.t_notes }}</div>
-                </div>
-              </td>
-              <td class="transaction-amount">
+      <div class="form-title">Buchung</div>
+      <table class="transaction-details-table">
+        <tbody>
+        <tr class="transaction-details">
+          <td class="transaction-text">
+            <div class="transaction-data">
+              <div class="td-text-item">
                 {{
-                  `${new Intl.NumberFormat(undefined, {
-                    style: 'currency',
-                    currency: item.currency_id,
-                  }).format(item.t_amount)}`
+                  transaction.t_payee ? transaction.t_payee : transaction.textShortened ? transaction.textShortened : transaction.t_entry_ext
                 }}
-              </td>
-            </tr>
-            </tbody>
-          </table>
-        </td>
-      </tr>
-    </template>
-    </tbody>
-  </table>
+              </div>
+              <div class="td-text-item item--is-category">{{ transaction.category_name }}</div>
+              <div class="td-text-item item--is-text" :title="transaction.t_payee ? transaction.textShortened : ''">
+                {{ transaction.t_payee ? transaction.textShortened : '' }}
+              </div>
+              <div class="td-text-item item--is-notes">{{ transaction.t_notes }}</div>
+            </div>
+          </td>
+          <td class="transaction-amount"><span v-if="transaction.currency_id">
+          {{
+              `${new Intl.NumberFormat(undefined, {
+                style: 'currency',
+                currency: transaction.currency_id
+              }).format(transaction.t_amount)}`
+            }}
+        </span></td>
+        </tr>
+        </tbody>
+      </table>
+
+      <div class="form-title">Regel</div>
+      <div class="form-component form--is-row">
+        <label class="form-label" for="ruleSetName">Name:</label>
+        <input type="text" v-model="ruleSet.name" placeholder="Name Regelset" id="ruleSetName">
+      </div>
+      <div class="form-component">
+        <label>Betrag:</label>
+      </div>
+      <div class="form-component form--is-row">
+        <input type="checkbox" v-model="useMinAmount">
+        <label class="form-label" for="minAmount">kleinster:</label>
+        <input type="text" v-model="minAmount" placeholder="kleinster Betrag" id="minAmount">
+        {{ transaction.currencyShort }}
+      </div>
+      <div class="form-component form--is-row">
+        <input type="checkbox" v-model="useMaxAmount">
+        <label class="form-label" for="maxAmountInput">größter:</label>
+        <input type="text" v-model="maxAmount" placeholder="größter Betrag" id="maxAmountInput">
+        {{ transaction.currencyShort }}
+      </div>
+      <div class="form-title">Wähle eine Kategorie</div>
+      <div class="form-component form--is-row">
+        <input type="search" autofocus v-model="categorySearch" placeholder="Kategorie suchen">
+      </div>
+
+      <table>
+        <tbody>
+        <tr v-for="(item) in filteredCategories" :key="item.id">
+          <td class="text-h-center"><label><input class="selectionInput" type="radio" v-model="selectedCategory"
+                                                  :value="item.id" :checked="item.selected"
+                                                  name="ruleCategory">{{ item.full_name }}</label>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+
+      <div class="form-title">Textabschnitte vom Verwendungszweck - markiere diejenigen, die Teil der Regel sein sollen</div>
+      <table>
+        <tbody>
+        <tr v-for="(item) in textToken" :key="item.text">
+          <td class="text-h-center"><label><input class="selectionInput" type="checkbox" v-model="item.selected"
+                                                  @change="tokenSelected(item.text)">{{ item.text }}</label></td>
+        </tr>
+        </tbody>
+      </table>
+
+      <div class="form-title">{{ matchingTransactions.length }} Buchungen, die mit den ausgewählten
+        Textabschnitten gefunden werden:</div>
+      <table class="all-transactions-table" v-if="matchingTransactionsByDate.length">
+        <tbody>
+        <template v-for="(trOfDate) in matchingTransactionsByDate" :key="trOfDate">
+          <tr class="transaction-date">
+            <td>{{ DateTime.fromISO(trOfDate.valueDate).toLocaleString() }}</td>
+          </tr>
+          <tr>
+            <td>
+              <table class="transaction-details-table">
+                <tbody>
+                <tr v-for="(item, index) in trOfDate.transactions" :key="item.t_id" class="transaction-details"
+                    :class="{'alternate-row-background': index % 2 }">
+                  <td class="transaction-text">
+                    <div class="transaction-data">
+                      <div class="td-text-item">
+                        {{ item.t_payee ? item.t_payee : item.textShortened ? item.textShortened : item.t_entry_text }}
+                      </div>
+                      <div class="td-text-item item--is-category">{{ item.category_name }}</div>
+                      <div class="td-text-item item--is-text">{{ item.t_payee ? item.textShortened : '' }}</div>
+                      <div class="td-text-item item--is-notes">{{ item.t_notes }}</div>
+                    </div>
+                  </td>
+                  <td class="transaction-amount">
+                    {{
+                      `${new Intl.NumberFormat(undefined, {
+                        style: 'currency',
+                        currency: item.currency_id,
+                      }).format(item.t_amount)}`
+                    }}
+                  </td>
+                </tr>
+                </tbody>
+              </table>
+            </td>
+          </tr>
+        </template>
+        </tbody>
+      </table>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -138,13 +142,13 @@ import IconEdit from "@/components/icons/IconEdit.vue";
 import IconEyes from "@/components/icons/IconEyes.vue";
 
 defineProps({
-  transactionId: { type: String },
+  transactionId: {type: String},
 });
 </script>
 
 <script>
-import { mapActions, mapState, mapStores } from "pinia";
-import { UserStore } from "@/stores/user";
+import {mapActions, mapState, mapStores} from "pinia";
+import {UserStore} from "@/stores/user";
 import router from "@/router";
 import _ from "lodash";
 import {DateTime} from "luxon";
@@ -213,8 +217,8 @@ export default {
     ...mapState(MasterDataStore, ["categories"]),
   },
   methods: {
-    ...mapActions(MasterDataStore, [ "getCategories" ]),
-    ...mapActions(TransactionStore, [ "getTransaction", "getMatchingTransactions", "getRuleSet", "setRules", "deleteRules" ]),
+    ...mapActions(MasterDataStore, ["getCategories"]),
+    ...mapActions(TransactionStore, ["getTransaction", "getMatchingTransactions", "getRuleSet", "setRules", "deleteRules"]),
     _filterCategories: function (searchTerm) {
       this.filteredCategories = this.unfilteredCategories
       .filter((category) => {
@@ -404,7 +408,11 @@ export default {
     },
   },
   created() {
-    this._decimalFormatter = new Intl.NumberFormat(undefined, {style: 'decimal', minimumFractionDigits: 2, maximumFractionDigits: 2});
+    this._decimalFormatter = new Intl.NumberFormat(undefined, {
+      style: 'decimal',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
     this.transaction = {};
     this.ruleSet = {name: ''};
     this.textToken = {};
@@ -549,53 +557,6 @@ export default {
 </script>
 
 <style scoped>
-.form-component {
-  width: 100%;
-}
-.form-component input {
-  flex: 1 1 auto;
-}
-.form-component input[type=checkbox] {
-  flex: 0 0 auto;
-}
-
-.form-component label {
-  display: flex;
-  gap: 0.5em;
-  align-items: center;
-}
-
-.top-links {
-  display: flex;
-  flex-direction: row;
-  flex: 1 1 100%;
-  margin-bottom: 1em;
-  justify-content: space-between;
-}
-
-.top-links a {
-  font-size: 16px;
-  color: var(--as-color-secondary-2-4);
-}
-
-.detail-links a {
-  font-size: 16px;
-  color: var(--as-color-secondary-2-4);
-  padding-top: 0.5em;
-  padding-bottom: 0.5em;
-}
-
-.label-buchung,
-.label-ruleset,
-.label-token,
-.label-matching-transactions {
-  margin-top: 0.5em;
-  margin-bottom: 0.25em;
-  font-weight: bold;
-  background-color: #1f91a1;
-  color: white;
-}
-
 label > .selectionInput {
   margin-right: 0.5em;
 }

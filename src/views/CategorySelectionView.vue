@@ -1,66 +1,70 @@
 <template>
-  <div class="top-links">
-    <button @click="goBackCancel" class="action btn btn--is-secondary">Abbrechen</button>
-    <button @click="goBackOk" :disabled="!selectedCategory"
-            class="action btn btn--is-secondary">Übernehmen
-    </button>
-  </div>
-  <div v-if="error" class="error">{{ error }}</div>
+  <div class="page">
+    <div class="top-links">
+      <button @click="goBackCancel" class="action btn btn--is-secondary">Abbrechen</button>
+      <button @click="goBackOk" :disabled="!selectedCategory"
+              class="action btn btn--is-primary">Übernehmen
+      </button>
+    </div>
+    <div v-if="error" class="error">{{ error }}</div>
 
-  <div v-if="transaction">
-    <p class="label-buchung">Buchung
-      <span v-if="transaction.t_value_date">({{DateTime.fromISO(transaction.t_value_date).toLocaleString(DateTime.DATE_HUGE) }})</span>
-    </p>
-    <table class="transaction-details-table">
-      <tbody>
-      <tr class="transaction-details">
-        <td class="transaction-text">
-          <div class="transaction-data">
-            <div class="td-text-item">
-              {{
-                transaction.t_payee ? transaction.t_payee :
-                transaction.textShortened ? transaction.textShortened : transaction.t_entry_ext
-              }}
+    <div class="form" v-if="transaction">
+      <div class="form-title">Buchung
+        <span v-if="transaction.t_value_date">&nbsp;({{
+            DateTime.fromISO(transaction.t_value_date).toLocaleString(DateTime.DATE_HUGE)
+          }})</span>
+      </div>
+      <table class="transaction-details-table">
+        <tbody>
+        <tr class="transaction-details">
+          <td class="transaction-text">
+            <div class="transaction-data">
+              <div class="td-text-item">
+                {{
+                  transaction.t_payee ? transaction.t_payee :
+                      transaction.textShortened ? transaction.textShortened : transaction.t_entry_ext
+                }}
+              </div>
+              <div class="td-text-item item--is-category">{{ transaction.category_name }}</div>
+              <div class="td-text-item item--is-text"
+                   :title="transaction.t_payee ? transaction.textShortened : ''">
+                {{ transaction.t_payee ? transaction.textShortened : '' }}
+              </div>
+              <div class="td-text-item item--is-notes">{{ transaction.t_notes }}</div>
             </div>
-            <div class="td-text-item item--is-category">{{ transaction.category_name }}</div>
-            <div class="td-text-item item--is-text"
-                 :title="transaction.t_payee ? transaction.textShortened : ''">
-              {{ transaction.t_payee ? transaction.textShortened : '' }}
-            </div>
-            <div class="td-text-item item--is-notes">{{ transaction.t_notes }}</div>
-          </div>
-        </td>
-        <td class="transaction-amount"><span v-if="transaction.currency_id">
+          </td>
+          <td class="transaction-amount"><span v-if="transaction.currency_id">
           {{
-            `${new Intl.NumberFormat(undefined, {
-              style: 'currency',
-              currency: transaction.currency_id
-            }).format(transaction.t_amount)}`
-          }}
+              `${new Intl.NumberFormat(undefined, {
+                style: 'currency',
+                currency: transaction.currency_id
+              }).format(transaction.t_amount)}`
+            }}
         </span></td>
-      </tr>
-      </tbody>
-    </table>
-  </div>
+        </tr>
+        </tbody>
+      </table>
 
-  <div class="category-details details-column">
-    <div class="details-row-left">ausgewählte Kategorie:</div>
-    <div class="details-row-right">{{ selectedCategoryName }}</div>
+      <div class="form-title">ausgewählte Kategorie:</div>
+      <div class="form-component form--is-row">
+        {{ selectedCategoryName }}
+      </div>
+      <div class="form-title">Kategoriesuche:</div>
+      <div class="form-component form--is-row">
+        <input type="search" autofocus v-model="categorySearch" placeholder="Kategorie suchen">
+      </div>
+      <table>
+        <tbody>
+        <tr v-for="(item) in filteredCategories" :key="item.id">
+          <td class="text-h-center"><label><input class="selectionInput" type="radio" v-model="selectedCategory"
+                                                  :value="item.id" :checked="item.selected"
+                                                  name="ruleCategory">{{ item.full_name }}</label>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
-  <br>
-  <div class="category-details details-column">
-    <div class="details-row-left">Suche:</div>
-    <div class="details-row-right"><input type="search" autofocus v-model="categorySearch" placeholder="Kategorie suchen"></div>
-  </div>
-  <table>
-    <tbody>
-    <tr v-for="(item) in filteredCategories" :key="item.id">
-      <td class="text-h-center"><label><input class="selectionInput" type="radio" v-model="selectedCategory" :value="item.id" :checked="item.selected" name="ruleCategory">{{ item.full_name }}</label>
-      </td>
-    </tr>
-    </tbody>
-  </table>
-
 </template>
 
 
@@ -69,11 +73,11 @@ import {DateTime} from "luxon";
 </script>
 
 <script>
-import { mapActions, mapState, mapStores } from "pinia";
+import {mapActions, mapState, mapStores} from "pinia";
 import router from "@/router";
 import _ from "lodash";
-import { MasterDataStore } from "@/stores/masterdata";
-import { TransactionStore } from "@/stores/transactions";
+import {MasterDataStore} from "@/stores/masterdata";
+import {TransactionStore} from "@/stores/transactions";
 
 export default {
   name: "CategorySelectionView",
@@ -108,7 +112,7 @@ export default {
     }
   },
   methods: {
-    ...mapActions(MasterDataStore, [ "getCategories", "getCategoryById", "setCurrentlySelectedCategoryId" ]),
+    ...mapActions(MasterDataStore, ["getCategories", "getCategoryById", "setCurrentlySelectedCategoryId"]),
     goBackOk: function () {
       this.setCurrentlySelectedCategoryId(this.selectedCategory);
       router.back();
@@ -118,14 +122,14 @@ export default {
     },
     _filterCategories: function (searchTerm) {
       this.filteredCategories = this.unfilteredCategories
-          .filter((category) => {
-            const lowerCaseCategory = category.full_name.toLowerCase();
-            if (category.selected) {
-              this.selectedCategoryName = category.full_name;
-              return true;
-            }
-            return searchTerm && lowerCaseCategory.indexOf(searchTerm) >= 0;
-          });
+      .filter((category) => {
+        const lowerCaseCategory = category.full_name.toLowerCase();
+        if (category.selected) {
+          this.selectedCategoryName = category.full_name;
+          return true;
+        }
+        return searchTerm && lowerCaseCategory.indexOf(searchTerm) >= 0;
+      });
     },
   },
   created() {
@@ -152,14 +156,14 @@ export default {
         status = result.status;
       }
       switch (status) {
-      case 401:
-        mustAuthenticate = true;
-        break;
-      case 200:
-        break;
-      default:
-        not_ok = true;
-        this.error = result.message;
+        case 401:
+          mustAuthenticate = true;
+          break;
+        case 200:
+          break;
+        default:
+          not_ok = true;
+          this.error = result.message;
       }
     });
     if (mustAuthenticate || not_ok) {
@@ -192,31 +196,8 @@ export default {
 </script>
 
 <style scoped>
-.form-component {
-  width: 100%;
-}
 .form-component input {
   flex: 1 1 auto;
-}
-
-.top-links {
-  display: flex;
-  flex-direction: row;
-  flex: 1 1 100%;
-  margin-bottom: 1em;
-  justify-content: space-between;
-}
-
-.top-links a {
-  font-size: 16px;
-  color: var(--as-color-secondary-2-4);
-}
-
-.detail-links a {
-  font-size: 16px;
-  color: var(--as-color-secondary-2-4);
-  padding-top: 0.5em;
-  padding-bottom: 0.5em;
 }
 
 .action.action--is-disabled {
@@ -239,14 +220,6 @@ export default {
 .category-details.details-column > .details-row-right > input {
   display: flex;
   width: 100%;
-}
-
-.label-buchung {
-  margin-top: 0.5em;
-  margin-bottom: 0.25em;
-  font-weight: bold;
-  background-color: #1f91a1;
-  color: white;
 }
 
 label > .selectionInput {

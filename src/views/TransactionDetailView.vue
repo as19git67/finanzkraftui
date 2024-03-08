@@ -1,95 +1,117 @@
 <template>
-  <div v-if="error" class="error">{{ error }}</div>
-  <div v-else>
+  <div class="page">
     <div class="top-links">
       <button v-if="!dirty" @click="goToTransactionList" class="action btn btn--is-secondary">Zurück</button>
       <button v-if="dirty" @click="cancelChanges" class="action btn btn--is-secondary">Abbrechen</button>
       <button :disabled="!dirty" @click="saveTransaction" class="action btn btn--is-primary">Speichern</button>
     </div>
+    <div v-if="error" class="error">{{ error }}</div>
 
-    <div v-if="transaction" class="transaction-details all">
-      <div class="transaction-details title">
-        <div class="transaction-details payee">
-          <div v-if="editName" class="detail-wrapper">
-            <input class="detail-value" type="text" v-model="transactionPayee" placeholder="Name">
-            <button @click="switchOffEditName" class="btn-icon-only" aria-label="Edit"><IconTick/></button>
+    <div class="form">
+      <div v-if="transaction" class="transaction-details all">
+        <div class="transaction-details title">
+          <div class="transaction-details payee">
+            <div v-if="editName" class="detail-wrapper">
+              <input class="detail-value" type="text" v-model="transactionPayee" placeholder="Name">
+              <button @click="switchOffEditName" class="btn-icon-only" aria-label="Edit">
+                <IconTick/>
+              </button>
+            </div>
+            <div class="detail-value" v-else>
+              {{ transaction.t_payee ? transaction.t_payee : transaction.t_entry_text }}
+              <button v-if="!transaction.t_entry_text" @click="switchToEditName" class="btn-icon-only"
+                      aria-label="Edit">
+                <IconEdit/>
+              </button>
+            </div>
+            <button v-if="transaction.confirmed" class="btn-icon-only" aria-label="markiere ungesehen"
+                    @click="markUnconfirmed()">
+              <IconEyeOK class="icon-seen"/>
+            </button>
           </div>
-          <div class="detail-value" v-else >
-            {{transaction.t_payee ? transaction.t_payee : transaction.t_entry_text}}
-            <button v-if="!transaction.t_entry_text" @click="switchToEditName" class="btn-icon-only"
-                     aria-label="Edit"><IconEdit/></button>
+          <div class="transaction-details category">
+            <span v-if="transaction.category_name">{{ transaction.category_name }}</span>
+            <span v-if="!transaction.category_name">Kategorie wählen</span>
+            <router-link class="action" :to="{ name: 'CategorySelection'}">
+              <button class="btn-icon-only" aria-label="Edit">
+                <IconEdit/>
+              </button>
+            </router-link>
           </div>
-          <button v-if="transaction.confirmed" class="btn-icon-only" aria-label="markiere ungesehen" @click="markUnconfirmed()">
-            <IconEyeOK class="icon-seen"/>
+        </div>
+        <div v-if="transaction.currency_id" class="transaction-details details">
+          <div class="transaction-details details-row">
+            <div class="details-row-left">Betrag:</div>
+            <div class="details-row-right">{{
+                `${new Intl.NumberFormat(undefined, {
+                  style: 'currency',
+                  currency: transaction.currency_id
+                }).format(transaction.t_amount)}`
+              }}
+            </div>
+          </div>
+          <div v-if="transaction.t_value_date" class="transaction-details details-row">
+            <div class="details-row-left">Datum:</div>
+            <div class="details-row-right">
+              {{ DateTime.fromISO(transaction.t_value_date).toLocaleString(DateTime.DATE_HUGE) }}
+            </div>
+          </div>
+          <div v-if="transaction.t_text" class="transaction-details details-column">
+            <div class="details-row-left">Text:</div>
+            <div class="details-row-right transaction-details-text">{{ transaction.t_text }}</div>
+          </div>
+          <div v-if="amazonOrderId" class="transaction-details details-row">
+            <div class="details-row-left">Amazon Bestellung:</div>
+            <a class="details-row-right" target="_blank"
+               :href="`https://www.amazon.de/gp/your-account/order-details?ie=UTF8&orderID=${amazonOrderId}`">{{ amazonOrderId }}</a>
+          </div>
+          <div class="transaction-details details-column">
+            <div class="details-row-left">Notiz:</div>
+            <textarea class="details-row-right " v-model="transactionNotes"></textarea>
+          </div>
+          <div class="transaction-details details-row">
+            <div class="details-row-left">Konto:</div>
+            <div class="details-row-right">{{ transaction.account_name }}</div>
+          </div>
+          <div v-if="transaction.t_payeePayerAcctNo" class="transaction-details details-row">
+            <div class="details-row-left">Zahlungsempfänger:</div>
+            <div class="details-row-right">{{ transaction.t_payeePayerAcctNo }}</div>
+          </div>
+          <div class="transaction-details details-row">
+            <div class="details-row-left">Buchungsart:</div>
+            <div class="details-row-right">{{
+                transaction.t_entry_text ? transaction.t_entry_text : 'Nicht angegeben'
+              }}
+            </div>
+          </div>
+          <div v-if="transaction" class="transaction-details details-row detail-links">
+            <router-link class="action" :to="{ path:'/', name: 'home'}">
+              Tags bearbeiten
+            </router-link>
+          </div>
+          <div v-if="transaction" class="transaction-details details-row detail-links">
+            <router-link class="action"
+                         :to="{ name: 'TransactionRules', state: { ruleSetId: transaction.rule_set_id }, meta: { ruleSetId: transaction.rule_set_id } }">
+              Regeln <span v-if="transaction.rule_set_id">({{ transaction.rule_set_name }})</span>
+            </router-link>
+          </div>
+        </div>
+        <div class="transaction-details history">
+
+        </div>
+      </div>
+
+      <p v-if="actionError" class="error">{{ actionError }}</p>
+    </div>
+    <div v-if="showConfirmDialog" class="confirm">
+      <div class="confirm-backdrop"></div>
+      <div class="confirm-dialog confirm--yes-no">
+        <span class="confirm-text">{{ confirmText }}</span>
+        <div class="btn-group">
+          <button class="btn btn-confirm" @click="confirmDialogButtonClicked('yes')">Ja</button>
+          <button class="btn btn-confirm btn--is-primary" autofocus @click="confirmDialogButtonClicked('no')">Nein
           </button>
         </div>
-        <div class="transaction-details category">
-          <span v-if="transaction.category_name">{{transaction.category_name}}</span>
-          <span v-if="!transaction.category_name">Kategorie wählen</span>
-          <router-link class="action" :to="{ name: 'CategorySelection'}">
-            <button class="btn-icon-only" aria-label="Edit"><IconEdit/></button>
-          </router-link>
-        </div>
-      </div>
-      <div v-if="transaction.currency_id" class="transaction-details details">
-        <div class="transaction-details details-row">
-          <div class="details-row-left">Betrag:</div>
-          <div class="details-row-right">{{`${new Intl.NumberFormat(undefined, {style: 'currency', currency: transaction.currency_id}).format(transaction.t_amount)}`}}</div>
-        </div>
-        <div v-if="transaction.t_value_date" class="transaction-details details-row">
-          <div class="details-row-left">Datum:</div>
-          <div class="details-row-right">{{ DateTime.fromISO(transaction.t_value_date).toLocaleString(DateTime.DATE_HUGE) }}</div>
-        </div>
-        <div v-if="transaction.t_text" class="transaction-details details-column">
-          <div class="details-row-left">Text:</div>
-          <div class="details-row-right transaction-details-text">{{ transaction.t_text }}</div>
-        </div>
-        <div v-if="amazonOrderId" class="transaction-details details-row">
-          <div class="details-row-left">Amazon Bestellung:</div>
-          <a class="details-row-right" target="_blank" :href="`https://www.amazon.de/gp/your-account/order-details?ie=UTF8&orderID=${amazonOrderId}`">{{amazonOrderId}}</a>
-        </div>
-        <div class="transaction-details details-column">
-          <div class="details-row-left">Notiz:</div>
-          <textarea class="details-row-right " v-model="transactionNotes"></textarea>
-        </div>
-        <div class="transaction-details details-row">
-          <div class="details-row-left">Konto:</div>
-          <div class="details-row-right">{{ transaction.account_name }}</div>
-        </div>
-        <div v-if="transaction.t_payeePayerAcctNo" class="transaction-details details-row">
-          <div class="details-row-left">Zahlungsempfänger:</div>
-          <div class="details-row-right">{{ transaction.t_payeePayerAcctNo }}</div>
-        </div>
-        <div class="transaction-details details-row">
-          <div class="details-row-left">Buchungsart:</div>
-          <div class="details-row-right">{{ transaction.t_entry_text ? transaction.t_entry_text : 'Nicht angegeben' }}</div>
-        </div>
-        <div v-if="transaction" class="transaction-details details-row detail-links">
-          <router-link class="action" :to="{ path:'/', name: 'home'}">
-            Tags bearbeiten
-          </router-link>
-        </div>
-        <div v-if="transaction" class="transaction-details details-row detail-links">
-          <router-link class="action" :to="{ name: 'TransactionRules', state: { ruleSetId: transaction.rule_set_id }, meta: { ruleSetId: transaction.rule_set_id } }">
-            Regeln <span v-if="transaction.rule_set_id">({{transaction.rule_set_name}})</span>
-          </router-link>
-        </div>
-      </div>
-      <div class="transaction-details history">
-
-      </div>
-    </div>
-
-    <p v-if="actionError" class="error">{{ actionError }}</p>
-  </div>
-  <div v-if="showConfirmDialog" class="confirm">
-    <div class="confirm-backdrop"></div>
-    <div class="confirm-dialog confirm--yes-no">
-      <span class="confirm-text">{{ confirmText }}</span>
-      <div class="btn-group">
-        <button class="btn btn-confirm" @click="confirmDialogButtonClicked('yes')">Ja</button>
-        <button class="btn btn-confirm btn--is-primary" autofocus @click="confirmDialogButtonClicked('no')">Nein
-        </button>
       </div>
     </div>
   </div>
@@ -102,18 +124,18 @@ import IconTick from "@/components/icons/IconTick.vue";
 import IconEyeOK from "@/components/icons/IconEyeOK.vue";
 
 defineProps({
-  transactionId: { type: String },
+  transactionId: {type: String},
 });
 </script>
 
 <script>
-import { mapActions, mapState, mapStores } from "pinia";
-import { UserStore } from "@/stores/user";
+import {mapActions, mapState, mapStores} from "pinia";
+import {UserStore} from "@/stores/user";
 import router from "@/router";
 import _ from "lodash";
 import {DateTime} from "luxon";
 import {TransactionStore} from "@/stores/transactions";
-import { MasterDataStore } from "@/stores/masterdata";
+import {MasterDataStore} from "@/stores/masterdata";
 
 export default {
   name: "TransactionDetailView",
@@ -168,7 +190,7 @@ export default {
   },
   computed: {
     confirmed() {
-      return  this.transaction?.confirmed;
+      return this.transaction?.confirmed;
     },
     dirty() {
       const keyCount = Object.keys(this.updateData).length;
@@ -182,8 +204,8 @@ export default {
     ...mapState(MasterDataStore, ["currentlySelectedCategoryId", "categories"]),
   },
   methods: {
-    ...mapActions(TransactionStore, [ "getTransaction", "updateTransaction", "setCurrentTransactionId" ]),
-    ...mapActions(MasterDataStore, [ "setCurrentlySelectedCategoryId", "getCategoryById", "getCategories" ]),
+    ...mapActions(TransactionStore, ["getTransaction", "updateTransaction", "setCurrentTransactionId"]),
+    ...mapActions(MasterDataStore, ["setCurrentlySelectedCategoryId", "getCategoryById", "getCategories"]),
     switchToEditName() {
       this.editName = true;
     },
@@ -199,7 +221,7 @@ export default {
       const res = await new Promise((resolve, reject) => {
         this.dialogResolve = resolve;
       });
-      switch(res) {
+      switch (res) {
         case 'yes':
           this.goToTransactionList();
           break;
@@ -247,22 +269,22 @@ export default {
     this.loading = true;
 
     // cancel the debounced dataChanged function in case of leaving before save
-/*
-    router.beforeEach(async (to, from, next) => {
-      if (from.name === 'TransactionDetail') {
-        if (to.name === 'home') {
-          const keyCount = Object.keys(this.updateData).length;
-          if (keyCount === 1 && this.updateData.confirmed) {
-            this.dataChanged.cancel();
-          } else {
-            this.dataChanged();
-            this.dataChanged.flush();
+    /*
+        router.beforeEach(async (to, from, next) => {
+          if (from.name === 'TransactionDetail') {
+            if (to.name === 'home') {
+              const keyCount = Object.keys(this.updateData).length;
+              if (keyCount === 1 && this.updateData.confirmed) {
+                this.dataChanged.cancel();
+              } else {
+                this.dataChanged();
+                this.dataChanged.flush();
+              }
+            }
           }
-        }
-      }
-      next();
-    });
-*/
+          next();
+        });
+    */
 
     if (!this.transactionId) {
       router.replace("/");
@@ -310,13 +332,16 @@ export default {
     const lastPage = router.options.history.state.forward;
     if (lastPage === '/categorySelection') {
       // back from category selection
-        this.categoryId = this.currentlySelectedCategoryId;
+      this.categoryId = this.currentlySelectedCategoryId;
     } else {
       this.setCurrentlySelectedCategoryId(this.transaction.category_id);
       this.categoryId = this.transaction.category_id;
     }
     this.transactionNotes = this.transaction.t_notes;
     this.transactionPayee = this.transaction.t_payee;
+    if (!this.transaction.t_payee && !this.transaction.t_entry_text) {
+      this.editName = true;
+    }
     if (this.transaction.t_text && this.transaction.t_payee && this.transaction.t_payee.startsWith('AMAZON')) {
       const matches = this.transaction.t_text.match(/(\d{3}\-\d{7}\-\d{7})/);
       if (matches.length > 0) {
@@ -342,6 +367,7 @@ export default {
   width: 100vw;
   height: 100vh;
 }
+
 .confirm .confirm-backdrop {
   position: absolute;
   top: 0;
@@ -352,6 +378,7 @@ export default {
   background-color: var(--as-color-complement-0);
   z-index: 100;
 }
+
 .confirm .confirm-dialog {
   position: absolute;
   top: 50%;
@@ -364,12 +391,15 @@ export default {
   padding: 1em;
   z-index: 200;
 }
+
 .confirm-dialog.confirm--yes-no {
   flex-direction: column;
 }
+
 .confirm-dialog .confirm-text {
   margin-bottom: 1em;
 }
+
 .confirm-dialog .btn-group {
   display: flex;
   gap: 1em;
@@ -381,21 +411,9 @@ export default {
 .form-component {
   width: 100%;
 }
+
 .form-component input {
   flex: 1 1 auto;
-}
-
-.top-links {
-  display: flex;
-  flex-direction: row;
-  flex: 1 1 100%;
-  margin-bottom: 1em;
-  justify-content: space-between;
-}
-
-.top-links a {
-  font-size: 16px;
-  color: var(--as-color-secondary-2-4);
 }
 
 .detail-links a {
@@ -419,14 +437,13 @@ export default {
 }
 
 .transaction-details.all {
-  padding-left: 1em;
-  padding-right: 1em;
 }
 
 .transaction-details.details {
   display: flex;
   width: 100%;
 }
+
 .transaction-details.title {
   display: flex;
   flex-direction: column;

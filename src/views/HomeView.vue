@@ -1,79 +1,81 @@
 <template>
-  <h1 class="page-title"><span v-if="!loading">{{ transactions.length }}</span> Buchungen
-    <span v-if="loading">laden...</span>
-  </h1>
-  <form v-on:submit.prevent v-on:keyup.enter="searchTransactions"
-        class="transaction-filter form">
-    <div class="form-component">
-      <label for="accountFilter">Bankkonten:</label>
-      <select name="accountFilter" id="accountFilter" v-model="accountFilter"
-              @change="accountChanged">
-        <option v-for="item of accountList" :key="item.id" :value="item.id">{{ item.name }}</option>
-      </select>
-    </div>
-    <div class="form-component">
-      <label for="dateFilter">Zeitspanne:</label>
-      <select name="dateFilter" id="dateFilter" v-model="dateFilter"
-              @change="dateFilterChanged">
-        <option v-for="item of timespanList" :key="item.id" :value="item.id">{{
-            item.name
-          }}
-        </option>
-      </select>
-    </div>
-    <div class="form-component">
-      <input type="search" autofocus v-model="searchTerm" placeholder="Suchbegriff">
-      <button @click="searchTransactions" class="btn btn--is-primary">Suchen</button>
-    </div>
-  </form>
-  <div class="transaction-list" @scroll="tableScroll">
-    <table class="all-transactions-table" v-if="transactionsByDate.length">
-      <tbody>
-      <template v-for="(trOfDate, index) in transactionsByDate" :key="trOfDate">
-        <tr class="transaction-date">
-          <td>{{ DateTime.fromISO(trOfDate.valueDate).toLocaleString() }}</td>
-        </tr>
-        <tr>
-          <td>
-            <table class="transaction-details-table">
-              <tbody>
-              <tr v-for="(item, index) in trOfDate.transactions" :key="item.t_id" :id="'transaction-' + item.t_id"
-                  class="transaction-details" :class="{'alternate-row-background': index % 2 }">
-                <td class="transaction-text">
-                  <router-link class="transaction-data action"
-                               :to="{ path:'/transaction/:transactionId', name: 'TransactionDetail', params: { transactionId: item.t_id }}">
-                    <div class="td-text-item" :class="{'tr-not-confirmed': !item.confirmed }">
-                      {{ item.t_payee ? item.t_payee : item.textShortened ? item.textShortened : item.t_entry_text }}
-                    </div>
-                    <div class="td-text-item item--is-category">{{ item.category_name }}</div>
-                    <div class="td-text-item item--is-text">{{ item.t_payee ? item.textShortened : '' }}</div>
-                    <div class="td-text-item item--is-notes">{{ item.t_notes }}</div>
-                  </router-link>
-                </td>
-                <td class="transaction-amount">
-                  <router-link class="action"
-                               :to="{ path:'/transaction/:transactionId', name: 'TransactionDetail', params: { transactionId: item.t_id }}">
-                    {{
-                      `${new Intl.NumberFormat(undefined, {
-                        style: 'currency',
-                        currency: item.currency_id
-                      }).format(item.t_amount)}`
-                    }}
-                  </router-link>
-                </td>
-              </tr>
-              </tbody>
-            </table>
-          </td>
-        </tr>
-      </template>
-      </tbody>
-    </table>
+  <div class="page">
+    <h1 class="page-title"><span v-if="!loading">{{ transactions.length }}</span> Buchungen
+      <span v-if="loading">laden...</span>
+    </h1>
+    <form v-on:submit.prevent v-on:keyup.enter="searchTransactions"
+          class="transaction-filter form">
+      <div class="form-component">
+        <label for="accountFilter">Bankkonten:</label>
+        <select name="accountFilter" id="accountFilter" v-model="accountFilter"
+                @change="accountChanged">
+          <option v-for="item of accountList" :key="item.id" :value="item.id">{{ item.name }}</option>
+        </select>
+      </div>
+      <div class="form-component">
+        <label for="dateFilter">Zeitspanne:</label>
+        <select name="dateFilter" id="dateFilter" v-model="dateFilter"
+                @change="dateFilterChanged">
+          <option v-for="item of timespanList" :key="item.id" :value="item.id">{{
+              item.name
+            }}
+          </option>
+        </select>
+      </div>
+      <div class="form-component">
+        <input type="search" autofocus v-model="searchTerm" placeholder="Suchbegriff">
+        <button @click="searchTransactions" class="btn btn--is-primary">Suchen</button>
+      </div>
+    </form>
+    <div class="transaction-list" @scroll="tableScroll">
+      <table class="all-transactions-table" v-if="transactionsByDate.length">
+        <tbody>
+        <template v-for="(trOfDate, index) in transactionsByDate" :key="trOfDate">
+          <tr class="transaction-date">
+            <td>{{ DateTime.fromISO(trOfDate.valueDate).toLocaleString() }}</td>
+          </tr>
+          <tr>
+            <td>
+              <table class="transaction-details-table">
+                <tbody>
+                <tr v-for="(item, index) in trOfDate.transactions" :key="item.t_id" :id="'transaction-' + item.t_id"
+                    class="transaction-details" :class="{'alternate-row-background': index % 2 }">
+                  <td class="transaction-text">
+                    <router-link class="transaction-data action"
+                                 :to="{ path:'/transaction/:transactionId', name: 'TransactionDetail', params: { transactionId: item.t_id }}">
+                      <div class="td-text-item" :class="{'tr-not-confirmed': !item.confirmed }">
+                        {{ item.t_payee ? item.t_payee : item.textShortened ? item.textShortened : item.t_entry_text }}
+                      </div>
+                      <div class="td-text-item item--is-category">{{ item.category_name }}</div>
+                      <div class="td-text-item item--is-text">{{ item.t_payee ? item.textShortened : '' }}</div>
+                      <div class="td-text-item item--is-notes">{{ item.t_notes }}</div>
+                    </router-link>
+                  </td>
+                  <td class="transaction-amount">
+                    <router-link class="action"
+                                 :to="{ path:'/transaction/:transactionId', name: 'TransactionDetail', params: { transactionId: item.t_id }}">
+                      {{
+                        `${new Intl.NumberFormat(undefined, {
+                          style: 'currency',
+                          currency: item.currency_id
+                        }).format(item.t_amount)}`
+                      }}
+                    </router-link>
+                  </td>
+                </tr>
+                </tbody>
+              </table>
+            </td>
+          </tr>
+        </template>
+        </tbody>
+      </table>
 
-    <p v-else><span v-if="!loading">Keine Buchungen vom Server geladen</span></p>
-    <div v-if="incompleteTransactionList">
-      <hr>
-      <h4>Hinweis: es gibt mehr Ergebnisse als dargestellt</h4>
+      <p v-else><span v-if="!loading">Keine Buchungen vom Server geladen</span></p>
+      <div v-if="incompleteTransactionList">
+        <hr>
+        <h4>Hinweis: es gibt mehr Ergebnisse als dargestellt</h4>
+      </div>
     </div>
   </div>
 </template>
@@ -157,33 +159,33 @@ export default {
         this.dateFilterTo = undefined;
         const tsInfo = tsInfos[0];
         switch (tsInfo.fromRuleNo) {
-        case 1: // months back
-          const noMonth = parseInt(tsInfo.fromRuleAttribute);
-          this.dateFilterFrom = DateTime.now().minus({months: noMonth}).toISO();
-          break;
-        case 2: // this year
-          const currentYear = DateTime.now().year;
-          this.dateFilterFrom = DateTime.fromObject(
-              {year: currentYear, month: 1, day: 1}).toISO();
-          break;
-        case 3: // last year
-          const lastYear = DateTime.now().minus({years: 1}).year;
-          this.dateFilterFrom = DateTime.fromObject({year: lastYear, month: 1, day: 1}).toISO();
-          this.dateFilterTo = DateTime.fromObject({
-            year: lastYear, month: 12, day: 31, hour: 23, minute: 59,
-            second: 59
-          }).toISO();
-          break;
-        case 4: // given year
-          const year = parseInt(tsInfo.fromRuleAttribute);
-          this.dateFilterFrom = DateTime.fromObject({year: year, month: 1, day: 1}).toISO();
-          this.dateFilterTo = DateTime.fromObject({
-            year: year, month: 12, day: 31, hour: 23, minute: 59,
-            second: 59
-          }).toISO();
-          break;
-        default:
-          this.dateFilterFrom = undefined;
+          case 1: // months back
+            const noMonth = parseInt(tsInfo.fromRuleAttribute);
+            this.dateFilterFrom = DateTime.now().minus({months: noMonth}).toISO();
+            break;
+          case 2: // this year
+            const currentYear = DateTime.now().year;
+            this.dateFilterFrom = DateTime.fromObject(
+                {year: currentYear, month: 1, day: 1}).toISO();
+            break;
+          case 3: // last year
+            const lastYear = DateTime.now().minus({years: 1}).year;
+            this.dateFilterFrom = DateTime.fromObject({year: lastYear, month: 1, day: 1}).toISO();
+            this.dateFilterTo = DateTime.fromObject({
+              year: lastYear, month: 12, day: 31, hour: 23, minute: 59,
+              second: 59
+            }).toISO();
+            break;
+          case 4: // given year
+            const year = parseInt(tsInfo.fromRuleAttribute);
+            this.dateFilterFrom = DateTime.fromObject({year: year, month: 1, day: 1}).toISO();
+            this.dateFilterTo = DateTime.fromObject({
+              year: year, month: 12, day: 31, hour: 23, minute: 59,
+              second: 59
+            }).toISO();
+            break;
+          default:
+            this.dateFilterFrom = undefined;
         }
       } else {
         this.dateFilterFrom = undefined;
@@ -209,7 +211,7 @@ export default {
         let mustAuthenticate = false;
         let not_ok = false;
         results.forEach((result) => {
-          switch(result) {
+          switch (result) {
             case 401:
             case 404:
               mustAuthenticate = true;
@@ -266,7 +268,7 @@ export default {
         if (this.dateFilter === undefined) {
           this.dateFilter = tsInfo.id;
         }
-        return { id: tsInfo.id, name: tsInfo.name };
+        return {id: tsInfo.id, name: tsInfo.name};
       });
     },
     _fillAccountList() {
@@ -299,7 +301,7 @@ export default {
 
 <style scoped>
 .transaction-list {
-  overflow-y:scroll;
+  overflow-y: scroll;
   height: calc(100vh - 70px);
 }
 </style>

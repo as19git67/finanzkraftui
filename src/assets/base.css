@@ -122,7 +122,7 @@ button:hover svg .metaphor {
   fill: var(--as-color-primary-3);
 }
 
-.form {
+.page {
   display: flex;
   flex-direction: row;
   justify-content: start;
@@ -130,18 +130,19 @@ button:hover svg .metaphor {
   column-gap: 1em;
   row-gap: 0.5em;
   flex-wrap: wrap;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: start;
+  column-gap: 1em;
+  row-gap: 0.5em;
+  flex-wrap: wrap;
   margin-bottom: 1em;
   margin-left: 0.5em;
   margin-right: 0.5em;
-}
-
-.form.form--is-right {
-  justify-content: end;
-}
-
-.form--is-column {
-  flex-direction: column;
-  align-items: start;
 }
 
 .form-component {
@@ -151,15 +152,50 @@ button:hover svg .metaphor {
   column-gap: 0.5em;
   overflow-x: hidden;
   flex: 1 1 auto;
+  width: 100%;
+}
+
+.form-component.form--is-right {
+  justify-content: end;
+}
+
+.form-component.form--is-column {
+  flex-direction: column;
+  align-items: start;
+}
+
+.form .form-title {
+  display: flex;
+  width: calc(100% + 1em);
+  flex: 1 1 auto;
+  margin-top: 0.5em;
+  margin-bottom: 0.25em;
+  margin-left: -0.5em;
+  margin-right: -0.5em;
+  padding-left: 0.5em;
+  padding-right: 0.5em;
+  font-weight: bold;
+  background-color: #1f91a1;
+  color: white;
+}
+
+.form-component input {
+  flex: 1 1 auto;
+}
+
+.form-component input[type=checkbox] {
+  flex: 0 0 auto;
+}
+
+.form-component label {
+  display: flex;
+  gap: 0.5em;
+  align-items: center;
 }
 
 .form-component > .form-label {
   width: 5.5em;
   min-width: 5.5em;
-}
-
-.form-component > input {
-  flex: 1 1 auto;
 }
 
 .form select {
@@ -174,8 +210,9 @@ button:hover svg .metaphor {
   align-items: center;
 }
 
-.page-title {
+.page .page-title {
   display: flex;
+  flex: 1 1 auto;
   justify-content: center;
   background-color: var(--as-color-complement-0);
   color: white;
@@ -187,6 +224,27 @@ button:hover svg .metaphor {
 
 .page-title span {
   font-weight: bold;
+}
+
+.page .top-links {
+  display: flex;
+  flex-direction: row;
+  flex: 1 1 100%;
+  justify-content: space-between;
+  margin-left: 0.5em;
+  margin-right: 0.5em;
+}
+
+.top-links a {
+  font-size: 16px;
+  color: var(--as-color-secondary-2-4);
+}
+
+.detail-links a {
+  font-size: 16px;
+  color: var(--as-color-secondary-2-4);
+  padding-top: 0.5em;
+  padding-bottom: 0.5em;
 }
 
 .title .btn-icon-only {
