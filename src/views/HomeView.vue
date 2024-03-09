@@ -78,11 +78,8 @@
 
     </div>
     <div class="section">
-      <p v-if="!transactionsByDate.length"><span v-if="!loading">Keine Buchungen vom Server geladen</span></p>
-      <div v-if="incompleteTransactionList">
-        <hr>
-        <h4>Hinweis: es gibt mehr Ergebnisse als dargestellt</h4>
-      </div>
+      <div class="footer" v-if="!transactionsByDate.length"><span v-if="!loading">Keine Buchungen vom Server geladen</span></div>
+      <div class="footer" v-if="incompleteTransactionList">Hinweis: es gibt mehr Ergebnisse als dargestellt</div>
     </div>
   </div>
 </template>

@@ -208,10 +208,20 @@ button:hover svg .metaphor {
   padding-right: 0.5em;
 }
 
+.page > .section > .footer {
+  background-color: var(--as-color-complement-0);
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+  padding-left: 1em;
+  padding-right: 1em;
+  margin-left: -0.5em;
+  margin-right: -0.5em;
+}
+
 .transaction-filter {
   flex-wrap: wrap;
 }
-
 
 .form {
   display: flex;
