@@ -23,6 +23,7 @@ table {
 }
 .transaction-date td {
   font-weight: bold;
+  padding-inline-start: 2px;
 }
 .transaction-details-table {
   width: 100%;

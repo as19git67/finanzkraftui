@@ -149,6 +149,10 @@ button:hover svg .metaphor {
   flex-direction: column;
 }
 
+.label-value.in-column {
+  gap: unset;
+}
+
 .label-value-group.in-row,
 .label-value.in-row {
   flex-direction: row;
@@ -169,8 +173,13 @@ button:hover svg .metaphor {
   flex: 0 0 5em;
 }
 
-.label-value.in-row > .value {
+.label-value.in-row > .value,
+.label-value.in-row > .value >.detail-value {
   flex: 1 1 auto;
+}
+
+.label-value.in-row > .value {
+  justify-content: flex-end;
 }
 
 .page {
@@ -206,13 +215,13 @@ button:hover svg .metaphor {
 .page > .section .label-value {
   padding-left: 0.5em;
   padding-right: 0.5em;
+  margin-top: 0.5em;
 }
 
 .page > .section > .footer {
-  background-color: var(--as-color-complement-0);
-  color: white;
-  font-size: 18px;
-  font-weight: bold;
+  background-color: var(--color-heading);
+  color: var(--color-text);
+  font-size: 16px;
   padding-left: 1em;
   padding-right: 1em;
   margin-left: -0.5em;
@@ -221,6 +230,29 @@ button:hover svg .metaphor {
 
 .transaction-filter {
   flex-wrap: wrap;
+}
+
+.page > .section > .top-links {
+  display: flex;
+  flex-direction: row;
+  flex: 1 1 auto;
+  justify-content: space-between;
+  margin-left: 0.5em;
+  margin-right: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+.detail-links a {
+  font-size: 16px;
+  color: var(--as-color-secondary-2-4);
+  padding-top: 0.5em;
+  padding-bottom: 0.5em;
+}
+
+.page > .section > .detail-links {
+  margin-top: 1em;
+  margin-left: 0.5em;
+  margin-right: 0.5em;
 }
 
 .form {
@@ -318,25 +350,9 @@ button:hover svg .metaphor {
   font-weight: bold;
 }
 
-.page .top-links {
-  display: flex;
-  flex-direction: row;
-  flex: 1 1 100%;
-  justify-content: space-between;
-  margin-left: 0.5em;
-  margin-right: 0.5em;
-}
-
 .top-links a {
   font-size: 16px;
   color: var(--as-color-secondary-2-4);
-}
-
-.detail-links a {
-  font-size: 16px;
-  color: var(--as-color-secondary-2-4);
-  padding-top: 0.5em;
-  padding-bottom: 0.5em;
 }
 
 .title .btn-icon-only {
