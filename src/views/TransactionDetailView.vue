@@ -10,6 +10,9 @@
 
     <div class="section">
       <div v-if="error" class="error">{{ error }}</div>
+    </div>
+
+    <div class="section">
       <div v-if="transaction" class="label-value in-row">
         <div v-if="editName" class="value">
           <input class="detail-value" type="text" v-model="transactionPayee" placeholder="Name">
@@ -100,7 +103,9 @@
         </router-link>
       </div>
     </div>
-    <div class="transaction-details history">
+    <div class="section">
+      <div class="detail-links">
+      </div>
     </div>
     <div class="section">
       <div class="footer error" v-if="actionError">{{ actionError }}</div>
@@ -408,10 +413,6 @@ export default {
   flex-direction: row;
   width: 100%;
   justify-content: flex-end;
-}
-
-.form-component input {
-  flex: 1 1 auto;
 }
 
 .action.action--is-disabled {

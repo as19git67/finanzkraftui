@@ -1,5 +1,5 @@
 <template>
-  <div class="page">
+  <div class="page page--has-no-overflow">
     <div class="section">
       <h1 class="title"><span v-if="!loading">{{ transactions.length }}</span> Buchungen
         <span v-if="loading">laden...</span>

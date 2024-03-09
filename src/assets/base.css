@@ -179,6 +179,10 @@ button:hover svg .metaphor {
 }
 
 .label-value.in-row > .value {
+  justify-content: flex-start;
+}
+
+.label-value.in-row > .label + .value {
   justify-content: flex-end;
 }
 
@@ -186,13 +190,33 @@ button:hover svg .metaphor {
   display: flex;
   width: 100vw;
   flex-direction: column;
+}
+
+.page.page--has-no-overflow {
   overflow: hidden;
+}
+
+.page > .title {
+  justify-content: center;
+  background-color: var(--as-color-complement-0);
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+  gap: 0.5em;
+  margin-left: -0.5em;
+  margin-right: -0.5em;
+  margin-bottom: 0.5em;
 }
 
 .page > .section {
   display: flex;
   flex-direction: column;
   flex: 0 1 auto;
+  margin-bottom: 0.5em;
+}
+
+.page > .section:last-child {
+  margin-bottom: 0;
 }
 
 .page > .section.section--is-scrollable {
@@ -201,12 +225,11 @@ button:hover svg .metaphor {
 }
 
 .page > .section > .title {
-  justify-content: center;
-  background-color: var(--as-color-complement-0);
+  background-color: var(--as-color-complement-4);
   color: white;
-  font-size: 18px;
-  font-weight: bold;
-  gap: 0.5em;
+  font-size: 15px;
+  font-weight: 700;
+  padding-inline-start: 1em;
   margin-left: -0.5em;
   margin-right: -0.5em;
   margin-bottom: 0.5em;
@@ -237,9 +260,7 @@ button:hover svg .metaphor {
   flex-direction: row;
   flex: 1 1 auto;
   justify-content: space-between;
-  margin-left: 0.5em;
-  margin-right: 0.5em;
-  margin-bottom: 0.5em;
+  margin: 0.5em;
 }
 
 .detail-links a {
