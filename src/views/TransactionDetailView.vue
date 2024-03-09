@@ -8,47 +8,47 @@
     <div v-if="error" class="error">{{ error }}</div>
 
     <div class="form">
-      <div v-if="transaction" class="transaction-details all">
-        <div class="transaction-details title">
-          <div class="transaction-details payee">
-            <div v-if="editName" class="detail-wrapper">
-              <input class="detail-value" type="text" v-model="transactionPayee" placeholder="Name">
-              <button @click="switchOffEditName" class="btn-icon-only" aria-label="Edit">
-                <IconTick/>
-              </button>
-            </div>
-            <div class="detail-value" v-else>
-              {{ transaction.t_payee ? transaction.t_payee : transaction.t_entry_text }}
-              <button v-if="!transaction.t_entry_text" @click="switchToEditName" class="btn-icon-only"
-                      aria-label="Edit">
-                <IconEdit/>
-              </button>
-            </div>
-            <button v-if="transaction.confirmed" class="btn-icon-only" aria-label="markiere ungesehen"
-                    @click="markUnconfirmed()">
-              <IconEyeOK class="icon-seen"/>
+      <div v-if="transaction" class="transaction-details">
+        <div class="label-value in-row">
+          <div v-if="editName" class="value">
+            <input class="detail-value" type="text" v-model="transactionPayee" placeholder="Name">
+            <button @click="switchOffEditName" class="btn-icon-only" aria-label="Edit">
+              <IconTick/>
             </button>
           </div>
-          <div class="transaction-details category">
-            <span v-if="transaction.category_name">{{ transaction.category_name }}</span>
-            <span v-if="!transaction.category_name">Kategorie wählen</span>
-            <router-link class="action" :to="{ name: 'CategorySelection'}">
-              <button class="btn-icon-only" aria-label="Edit">
-                <IconEdit/>
-              </button>
-            </router-link>
+          <div class="value" v-else>
+            {{ transactionPayee ? transactionPayee : transaction.t_entry_text }}
+            <button v-if="!transaction.t_entry_text" @click="switchToEditName" class="btn-icon-only"
+                    aria-label="Edit">
+              <IconEdit/>
+            </button>
           </div>
+          <button v-if="transaction.confirmed" class="btn-icon-only" aria-label="markiere ungesehen"
+                  @click="markUnconfirmed()">
+            <IconEyeOK class="icon-seen"/>
+          </button>
         </div>
-        <div v-if="transaction.currency_id" class="transaction-details details">
-          <div class="transaction-details details-row">
-            <div class="details-row-left">Betrag:</div>
-            <div class="details-row-right">{{
-                `${new Intl.NumberFormat(undefined, {
-                  style: 'currency',
-                  currency: transaction.currency_id
-                }).format(transaction.t_amount)}`
-              }}
-            </div>
+        <div class="label-value in-row">
+          <span v-if="transaction.category_name">{{ transaction.category_name }}</span>
+          <span v-if="!transaction.category_name">Kategorie wählen</span>
+          <router-link class="action" :to="{ name: 'CategorySelection'}">
+            <button class="btn-icon-only" aria-label="Edit">
+              <IconEdit/>
+            </button>
+          </router-link>
+        </div>
+        <div class="label-value in-column">
+          <div class="label">Notiz:</div>
+          <textarea class="value" v-model="transactionNotes"></textarea>
+        </div>
+        <div v-if="transaction.currency_id" class="label-value in-row">
+          <div class="label">Betrag:</div>
+          <div class="value">{{
+              `${new Intl.NumberFormat(undefined, {
+                style: 'currency',
+                currency: transaction.currency_id
+              }).format(transaction.t_amount)}`
+            }}
           </div>
           <div v-if="transaction.t_value_date" class="transaction-details details-row">
             <div class="details-row-left">Datum:</div>
@@ -63,11 +63,9 @@
           <div v-if="amazonOrderId" class="transaction-details details-row">
             <div class="details-row-left">Amazon Bestellung:</div>
             <a class="details-row-right" target="_blank"
-               :href="`https://www.amazon.de/gp/your-account/order-details?ie=UTF8&orderID=${amazonOrderId}`">{{ amazonOrderId }}</a>
-          </div>
-          <div class="transaction-details details-column">
-            <div class="details-row-left">Notiz:</div>
-            <textarea class="details-row-right " v-model="transactionNotes"></textarea>
+               :href="`https://www.amazon.de/gp/your-account/order-details?ie=UTF8&orderID=${amazonOrderId}`">{{
+                amazonOrderId
+              }}</a>
           </div>
           <div class="transaction-details details-row">
             <div class="details-row-left">Konto:</div>
@@ -408,10 +406,6 @@ export default {
   justify-content: flex-end;
 }
 
-.form-component {
-  width: 100%;
-}
-
 .form-component input {
   flex: 1 1 auto;
 }
@@ -434,9 +428,6 @@ export default {
   width: 100%;
   align-items: flex-start;
   margin-top: 0.5em;
-}
-
-.transaction-details.all {
 }
 
 .transaction-details.details {

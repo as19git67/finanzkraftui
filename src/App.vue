@@ -35,7 +35,6 @@ header {
   background-color: var(--color-heading);
   color: var(--color-text);
   display: block;
-  margin-bottom: 0.5em;
 }
 
 nav {

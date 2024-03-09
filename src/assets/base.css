@@ -122,19 +122,101 @@ button:hover svg .metaphor {
   fill: var(--as-color-primary-3);
 }
 
-.page {
+#app {
+  font-weight: normal;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.label-value-group {
+  display: flex;
+  gap: 0.5em;
+}
+
+.label-value {
+  display: flex;
+  flex: 1 1 auto;
+  width: 100%;
+  gap: 0.5em;
+}
+
+.label-value-group.in-column,
+.label-value.in-column {
+  flex-direction: column;
+}
+
+.label-value-group.in-row,
+.label-value.in-row {
+  flex-direction: row;
+}
+
+.label-value > .label,
+.label-value > .value {
   display: flex;
   flex-direction: row;
-  justify-content: start;
-  align-items: center;
-  column-gap: 1em;
-  row-gap: 0.5em;
+  flex: 1 1 auto;
+}
+
+.label-value > .label {
+  font-weight: bold;
+}
+
+.label-value.in-row > .label {
+  flex: 0 0 5em;
+}
+
+.label-value.in-row > .value {
+  flex: 1 1 auto;
+}
+
+.page {
+  display: flex;
+  width: 100vw;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.page > .section {
+  display: flex;
+  flex-direction: column;
+  flex: 0 1 auto;
+}
+
+.page > .section.section--is-scrollable {
+  flex: 1 1 auto;
+  overflow: auto;
+}
+
+.page > .section > .title {
+  justify-content: center;
+  background-color: var(--as-color-complement-0);
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+  gap: 0.5em;
+  margin-left: -0.5em;
+  margin-right: -0.5em;
+  margin-bottom: 0.5em;
+}
+
+.page > .section .label-value {
+  padding-left: 0.5em;
+  padding-right: 0.5em;
+}
+
+.transaction-filter {
   flex-wrap: wrap;
 }
+
 
 .form {
   display: flex;
   flex-direction: column;
+  width: 100%;
   justify-content: center;
   align-items: start;
   column-gap: 1em;

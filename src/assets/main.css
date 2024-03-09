@@ -1,9 +1,5 @@
 @import './base.css';
 
-#app {
-  font-weight: normal;
-  width: 100%;
-}
 
 a {
   text-decoration: none;

@@ -1,33 +1,36 @@
 <template>
   <div class="page">
-    <h1 class="page-title"><span v-if="!loading">{{ transactions.length }}</span> Buchungen
-      <span v-if="loading">laden...</span>
-    </h1>
-    <form v-on:submit.prevent v-on:keyup.enter="searchTransactions"
-          class="transaction-filter form">
-      <div class="form-component">
-        <label for="accountFilter">Bankkonten:</label>
-        <select name="accountFilter" id="accountFilter" v-model="accountFilter"
-                @change="accountChanged">
-          <option v-for="item of accountList" :key="item.id" :value="item.id">{{ item.name }}</option>
-        </select>
-      </div>
-      <div class="form-component">
-        <label for="dateFilter">Zeitspanne:</label>
-        <select name="dateFilter" id="dateFilter" v-model="dateFilter"
-                @change="dateFilterChanged">
-          <option v-for="item of timespanList" :key="item.id" :value="item.id">{{
-              item.name
-            }}
-          </option>
-        </select>
-      </div>
-      <div class="form-component">
-        <input type="search" autofocus v-model="searchTerm" placeholder="Suchbegriff">
-        <button @click="searchTransactions" class="btn btn--is-primary">Suchen</button>
-      </div>
-    </form>
-    <div class="transaction-list" @scroll="tableScroll">
+    <div class="section">
+      <h1 class="title"><span v-if="!loading">{{ transactions.length }}</span> Buchungen
+        <span v-if="loading">laden...</span>
+      </h1>
+
+      <form class="label-value-group in-row transaction-filter" v-on:submit.prevent
+            v-on:keyup.enter="searchTransactions">
+        <div class="label-value in-row">
+          <label class="label" for="accountFilter">Bankkonten:</label>
+          <select class="value" name="accountFilter" id="accountFilter" v-model="accountFilter"
+                  @change="accountChanged">
+            <option v-for="item of accountList" :key="item.id" :value="item.id">{{ item.name }}</option>
+          </select>
+        </div>
+        <div class="label-value in-row">
+          <label class="label" for="dateFilter">Zeitspanne:</label>
+          <select class="value" name="dateFilter" id="dateFilter" v-model="dateFilter"
+                  @change="dateFilterChanged">
+            <option v-for="item of timespanList" :key="item.id" :value="item.id">{{
+                item.name
+              }}
+            </option>
+          </select>
+        </div>
+        <div class="label-value in-row">
+          <input class="value" type="search" autofocus v-model="searchTerm" placeholder="Suchbegriff">
+          <button class="btn btn--is-primary" @click="searchTransactions">Suchen</button>
+        </div>
+      </form>
+    </div>
+    <div class="section section--is-scrollable transaction-list" @scroll="tableScroll">
       <table class="all-transactions-table" v-if="transactionsByDate.length">
         <tbody>
         <template v-for="(trOfDate, index) in transactionsByDate" :key="trOfDate">
@@ -44,7 +47,9 @@
                     <router-link class="transaction-data action"
                                  :to="{ path:'/transaction/:transactionId', name: 'TransactionDetail', params: { transactionId: item.t_id }}">
                       <div class="td-text-item" :class="{'tr-not-confirmed': !item.confirmed }">
-                        {{ item.t_payee ? item.t_payee : item.textShortened ? item.textShortened : item.t_entry_text }}
+                        {{
+                          item.t_payee ? item.t_payee : item.textShortened ? item.textShortened : item.t_entry_text
+                        }}
                       </div>
                       <div class="td-text-item item--is-category">{{ item.category_name }}</div>
                       <div class="td-text-item item--is-text">{{ item.t_payee ? item.textShortened : '' }}</div>
@@ -71,7 +76,9 @@
         </tbody>
       </table>
 
-      <p v-else><span v-if="!loading">Keine Buchungen vom Server geladen</span></p>
+    </div>
+    <div class="section">
+      <p v-if="!transactionsByDate.length"><span v-if="!loading">Keine Buchungen vom Server geladen</span></p>
       <div v-if="incompleteTransactionList">
         <hr>
         <h4>Hinweis: es gibt mehr Ergebnisse als dargestellt</h4>
@@ -300,8 +307,7 @@ export default {
 </script>
 
 <style scoped>
-.transaction-list {
-  overflow-y: scroll;
-  height: calc(100vh - 70px);
+.section.transaction-list {
+  margin-top: 0.5em;
 }
 </style>
