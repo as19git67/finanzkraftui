@@ -201,11 +201,15 @@ button:hover svg .metaphor {
   background-color: var(--as-color-complement-0);
   color: white;
   font-size: 18px;
-  font-weight: bold;
   gap: 0.5em;
   margin-left: -0.5em;
   margin-right: -0.5em;
   margin-bottom: 0.5em;
+}
+
+.page > .title,
+.page > .title > * {
+  font-weight: bold;
 }
 
 .page > .section {
@@ -222,6 +226,7 @@ button:hover svg .metaphor {
 .page > .section.section--is-scrollable {
   flex: 1 1 auto;
   overflow: auto;
+  border-top: 1px solid var(--as-color-complement-4);
 }
 
 .page > .section > .title {
@@ -232,7 +237,11 @@ button:hover svg .metaphor {
   padding-inline-start: 1em;
   margin-left: -0.5em;
   margin-right: -0.5em;
-  margin-bottom: 0.5em;
+  margin-top: 0em;
+}
+
+.page > .section > .title ~ .title {
+  margin-top: 0.5em;
 }
 
 .page > .section .label-value {

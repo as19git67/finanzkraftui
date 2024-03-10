@@ -1,10 +1,11 @@
 <template>
   <div class="page page--has-no-overflow">
-    <div class="section">
-      <h1 class="title"><span v-if="!loading">{{ transactions.length }}</span> Buchungen
-        <span v-if="loading">laden...</span>
-      </h1>
+    <h1 class="title">
+      <span v-if="loading">Buchungen laden...</span>
+      <span v-if="!loading">{{ `${transactions.length} Buchungen` }}</span>
+    </h1>
 
+    <div class="section">
       <form class="label-value-group in-row transaction-filter" v-on:submit.prevent
             v-on:keyup.enter="searchTransactions">
         <div class="label-value in-row">
@@ -78,7 +79,8 @@
 
     </div>
     <div class="section">
-      <div class="footer" v-if="!transactionsByDate.length"><span v-if="!loading">Keine Buchungen vom Server geladen</span></div>
+      <div class="footer" v-if="!transactionsByDate.length"><span
+          v-if="!loading">Keine Buchungen vom Server geladen</span></div>
       <div class="footer" v-if="incompleteTransactionList">Hinweis: es gibt mehr Ergebnisse als dargestellt</div>
     </div>
   </div>
