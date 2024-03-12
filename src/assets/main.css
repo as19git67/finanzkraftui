@@ -10,12 +10,14 @@ nav a {
   padding: 0.25em 0.5em 0.25em 0.5em;
 }
 
-table {
-  table-layout: fixed;
+.all-transactions-table > tbody > tr > td {
+  padding-inline-start: 0.5em;
+  padding-inline-end: 0.5em;
 }
 
-.all-transactions-table {
-  border-collapse: collapse;
+.all-transactions-table.table--is-wide > tbody > tr > td {
+  padding-inline-start: 0.25em;
+  padding-inline-end: 0.25em;
 }
 
 .transaction-date {
@@ -27,11 +29,19 @@ table {
 }
 .transaction-date td {
   font-weight: bold;
-  padding-inline-start: 2px;
+  padding-left: 0.5em;
+  padding-right: 0.5em;
 }
-.transaction-details-table {
-  width: 100%;
+.table--is-wide .transaction-date td {
+  padding-left: 0;
+  padding-right: 0;
 }
+
+.details {
+  padding-left: 0.5em;
+  padding-right: 0.5em;
+}
+
 .tr-not-confirmed {
   font-weight: bold;
 }
@@ -44,10 +54,8 @@ table {
   display: block;
 }
 .transaction-text .td-text-item {
-  white-space: nowrap;
-  text-overflow: ellipsis;
   overflow-x: hidden;
-  overflow-wrap: break-word;
+  overflow-wrap: anywhere;
   hyphens: auto;
 }
 .transaction-amount {
@@ -68,16 +76,14 @@ table {
 .item--is-text {
   font-size: 0.8em;
   overflow-x: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow-wrap: break-word;
+  overflow-wrap: anywhere;
   hyphens: auto;
 }
 .item--is-notes {
   font-size: 0.8em;
   overflow-x: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
+  hyphens: auto;
 }
 
 @media (hover: hover) {

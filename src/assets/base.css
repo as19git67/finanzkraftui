@@ -55,7 +55,11 @@
 :root {
   --color-background: var(--vt-c-white);
   --color-background-soft: var(--as-color-complement-0);
-  --color-background-mute: var(--as-color-complement-1);
+  --color-background-medium: var(--as-color-complement-3);
+  --color-background-hard: var(--as-color-complement-4);
+  --color-text-soft: var(--vt-c-white);
+  --color-text-medium: var(--vt-c-white);
+  --color-text-hard: var(--vt-c-white);
 
   --color-border: var(--as-color-primary-2);
   --color-border-hover: var(--as-color-primary-0);
@@ -169,6 +173,14 @@ button:hover svg .metaphor {
   font-weight: bold;
 }
 
+.label-value.in-column > .label.label--is-emphasis {
+  background-color: var(--color-background-medium);
+  color: var(--color-text-medium);
+  margin-left: -0.5em;
+  padding-left: 0.5em;
+  margin-right: -0.5em;
+  padding-right: 0.5em;
+}
 .label-value.in-row > .label {
   flex: 0 0 5em;
 }
@@ -198,8 +210,8 @@ button:hover svg .metaphor {
 
 .page > .title {
   justify-content: center;
-  background-color: var(--as-color-complement-0);
-  color: white;
+  background-color: var(--color-background-soft);
+  color: var(--color-text-soft);
   font-size: 18px;
   gap: 0.5em;
   margin-left: -0.5em;
@@ -226,18 +238,16 @@ button:hover svg .metaphor {
 .page > .section.section--is-scrollable {
   flex: 1 1 auto;
   overflow: auto;
-  border-top: 1px solid var(--as-color-complement-4);
+  border-top: 1px solid var(--color-background-hard);
 }
 
 .page > .section > .title {
-  background-color: var(--as-color-complement-4);
-  color: white;
+  background-color: var(--color-background-hard);
+  color: var(--color-text-hard);
   font-size: 15px;
   font-weight: 700;
-  padding-inline-start: 1em;
-  margin-left: -0.5em;
-  margin-right: -0.5em;
-  margin-top: 0em;
+  padding-inline-start: 0.5em;
+  margin-top: 0;
 }
 
 .page > .section > .title ~ .title {
@@ -283,6 +293,15 @@ button:hover svg .metaphor {
   margin-top: 1em;
   margin-left: 0.5em;
   margin-right: 0.5em;
+}
+
+.page > .section label {
+  display: flex;
+  align-items: center;
+}
+
+.page > .section label > input {
+  margin-inline-end: 0.5em;
 }
 
 .form {
@@ -368,8 +387,8 @@ button:hover svg .metaphor {
   display: flex;
   flex: 1 1 auto;
   justify-content: center;
-  background-color: var(--as-color-complement-0);
-  color: white;
+  background-color: var(--color-background-soft);
+  color: var(--color-text-soft);
   font-size: 18px;
   font-weight: bold;
   gap: 0.5em;
@@ -457,8 +476,20 @@ input {
 }
 
 table {
+  table-layout: fixed;
   font-size: 15px;
   font-family: monospace;
+  border-collapse: collapse;
+}
+
+.table--is-normal {
+  margin-left: 0.5em;
+  margin-right: 0.5em;
+}
+
+.table--is-wide {
+  margin-left: 0;
+  margin-right: 0;
 }
 
 th {

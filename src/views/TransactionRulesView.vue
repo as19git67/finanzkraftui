@@ -8,55 +8,68 @@
         </router-link>
         <button @click="saveRuleSet" :disabled="!canSave" class="action btn btn--is-primary">Regel speichern</button>
       </div>
+      <div class="top-links">
+        <button v-if="loadedRuleSet.id" @click="deleteRuleSet" :disabled="!loadedRuleSet.id"
+                class="action btn btn--is-danger">Regel löschen
+        </button>
+        <label v-if="loadedRuleSet.id"><input type="checkbox" v-model="includeProcessed">Buchungen aktualisieren</label>
+      </div>
 
       <div v-if="error" class="error">{{ error }}</div>
 
-      <div class="label-value in-row" v-if="loadedRuleSet.id">
-        <label><input type="checkbox" v-model="includeProcessed">Buchungen aktualisieren</label>
-      </div>
-      <div class="label-value in-row" v-if="loadedRuleSet.id">
-        <button @click="deleteRuleSet" :disabled="!loadedRuleSet.id" class="action btn btn--is-danger">Regel löschen
-        </button>
-      </div>
-
-      <div class="title">Buchung</div>
-
-      <table class="transaction-details-table">
-        <tbody>
-        <tr class="transaction-details">
-          <td class="transaction-text">
-            <div class="transaction-data">
-              <div class="td-text-item">
-                {{
-                  transaction.t_payee ? transaction.t_payee : transaction.textShortened ? transaction.textShortened : transaction.t_entry_ext
-                }}
-              </div>
-              <div class="td-text-item item--is-category">{{ transaction.category_name }}</div>
-              <div class="td-text-item item--is-text" :title="transaction.t_payee ? transaction.textShortened : ''">
-                {{ transaction.t_payee ? transaction.textShortened : '' }}
-              </div>
-              <div class="td-text-item item--is-notes">{{ transaction.t_notes }}</div>
-            </div>
-          </td>
-          <td class="transaction-amount"><span v-if="transaction.currency_id">
-          {{
-              `${new Intl.NumberFormat(undefined, {
-                style: 'currency',
-                currency: transaction.currency_id
-              }).format(transaction.t_amount)}`
-            }}
-        </span></td>
-        </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div class="section section--is-scrollable">
       <div class="title">Regel</div>
       <div class="label-value in-row">
         <label class="label" for="ruleSetName">Name:</label>
         <input class="value" type="text" v-model="ruleSet.name" placeholder="Name Regelset" id="ruleSetName">
       </div>
+      <div class="label-value in-column">
+        <div class="label">Kategorie:</div>
+        <div class="value">
+          <span>{{ selectedCategoryName }}</span>
+          <router-link class="action" :to="{ name: 'CategorySelection', query: {showTransaction: false}}">
+            <button class="btn-icon-only" aria-label="Edit">
+              <IconEdit/>
+            </button>
+          </router-link>
+        </div>
+      </div>
+
+      <div class="title">Buchung</div>
+
+      <div class="details">
+        <table class="table--is-wide">
+          <tbody>
+          <tr class="transaction-details">
+            <td class="transaction-text">
+              <div class="transaction-data">
+                <div class="td-text-item">
+                  {{
+                    transaction.t_payee ? transaction.t_payee : transaction.textShortened ? transaction.textShortened : transaction.t_entry_ext
+                  }}
+                </div>
+                <div class="td-text-item item--is-category">{{ transaction.category_name }}</div>
+                <div class="td-text-item item--is-text" :title="transaction.t_payee ? transaction.textShortened : ''">
+                  {{ transaction.t_payee ? transaction.textShortened : '' }}
+                </div>
+                <div class="td-text-item item--is-notes">{{ transaction.t_notes }}</div>
+              </div>
+            </td>
+            <td class="transaction-amount"><span v-if="transaction.currency_id">
+          {{
+                `${new Intl.NumberFormat(undefined, {
+                  style: 'currency',
+                  currency: transaction.currency_id
+                }).format(transaction.t_amount)}`
+              }}
+        </span></td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="section section--is-scrollable">
+      <div class="title">Kriterien</div>
       <div class="label-value in-column">
         <div class="label">Betrag:</div>
       </div>
@@ -72,25 +85,13 @@
         <input class="value" type="text" v-model="maxAmount" placeholder="größter Betrag" id="maxAmountInput">
         {{ transaction.currencyShort }}
       </div>
-      <div class="title">Wähle eine Kategorie</div>
-      <div class="label-value in-row">
-        <input class="value" type="search" autofocus v-model="categorySearch" placeholder="Kategorie suchen">
-      </div>
 
-      <table>
-        <tbody>
-        <tr v-for="(item) in filteredCategories" :key="item.id">
-          <td class="text-h-center"><label><input class="selectionInput" type="radio" v-model="selectedCategory"
-                                                  :value="item.id" :checked="item.selected"
-                                                  name="ruleCategory">{{ item.full_name }}</label>
-          </td>
-        </tr>
-        </tbody>
-      </table>
-
-      <div class="title">Textabschnitte vom Verwendungszweck - markiere diejenigen, die Teil der Regel sein sollen
+      <div class="label-value in-column">
+        <div class="label label--is-emphasis">Textabschnitte vom Verwendungszweck - markiere diejenigen, die Teil der
+          Regel sein sollen:
+        </div>
       </div>
-      <table>
+      <table class="table--is-normal">
         <tbody>
         <tr v-for="(item) in textToken" :key="item.text">
           <td class="text-h-center"><label><input class="selectionInput" type="checkbox" v-model="item.selected"
@@ -99,8 +100,13 @@
         </tbody>
       </table>
 
-      <div class="title">
-        {{ `${matchingTransactions.length} Buchungen, die mit den ausgewählten Textabschnitten gefunden werden:` }}
+      <div class="label-value in-column">
+        <div v-if="matchingTransactions.length" class="label label--is-emphasis">
+          {{ `${matchingTransactions.length} Buchungen, die mit den ausgewählten Kriterien gefunden werden:` }}
+        </div>
+        <div v-if="!matchingTransactions.length" class="label label--is-emphasis">Es gibt keine Buchungen, die mit den
+          ausgewählten Kriterien gefunden werden.
+        </div>
       </div>
       <table class="all-transactions-table" v-if="matchingTransactionsByDate.length">
         <tbody>
@@ -110,14 +116,16 @@
           </tr>
           <tr>
             <td>
-              <table class="transaction-details-table">
+              <table class="table--is-wide">
                 <tbody>
                 <tr v-for="(item, index) in trOfDate.transactions" :key="item.t_id" class="transaction-details"
                     :class="{'alternate-row-background': index % 2 }">
                   <td class="transaction-text">
                     <div class="transaction-data">
                       <div class="td-text-item">
-                        {{ item.t_payee ? item.t_payee : item.textShortened ? item.textShortened : item.t_entry_text }}
+                        {{
+                          item.t_payee ? item.t_payee : item.textShortened ? item.textShortened : item.t_entry_text
+                        }}
                       </div>
                       <div class="td-text-item item--is-category">{{ item.category_name }}</div>
                       <div class="td-text-item item--is-text">{{ item.t_payee ? item.textShortened : '' }}</div>
@@ -173,6 +181,7 @@ export default {
       categorySearch: this.categorySearch,
       filteredCategories: this.filteredCategories,
       selectedCategory: this.selectedCategory,
+      selectedCategoryName: 'keine',
       transaction: this.transaction,
       matchingTransactionsByDate: this.matchingTransactionsByDate,
       minAmount: this.minAmount,
@@ -185,12 +194,13 @@ export default {
     };
   },
   watch: {
-    categorySearch: function (val, oldVal) {
-      if (_.isString(val)) {
-        const searchTerm = val.trim().toLowerCase();
-        this._filterCategories(searchTerm);
+    selectedCategory: function (val, oldVal) {
+      if (val) {
+        this.selectedCategoryName = this.getCategoryById(val).full_name;
+      } else {
+        this.selectedCategoryName = 'keine';
       }
-    },
+    }
   },
   computed: {
     canSave() {
@@ -221,18 +231,11 @@ export default {
     },
     ...mapStores(UserStore),
     ...mapState(UserStore, ["authenticated"]),
-    ...mapState(MasterDataStore, ["categories"]),
+    ...mapState(MasterDataStore, ["currentlySelectedCategoryId", "categories"]),
   },
   methods: {
-    ...mapActions(MasterDataStore, ["getCategories"]),
+    ...mapActions(MasterDataStore, ["setCurrentlySelectedCategoryId", "getCategoryById", "getCategories"]),
     ...mapActions(TransactionStore, ["getTransaction", "getMatchingTransactions", "getRuleSet", "setRules", "deleteRules"]),
-    _filterCategories: function (searchTerm) {
-      this.filteredCategories = this.unfilteredCategories
-          .filter((category) => {
-            const lowerCaseCategory = category.full_name.toLowerCase();
-            return category.selected || (searchTerm && lowerCaseCategory.indexOf(searchTerm) >= 0);
-          });
-    },
     deleteRuleSet() {
       if (!this.loadedRuleSet.id) {
         return;
@@ -520,14 +523,16 @@ export default {
 
     this.transaction = {...(results[0].data)};
 
-    this.unfilteredCategories = this.categories.map(category => {
-      const c = {...category};
-      c.selected = (this.loadedRuleSet.idSetCategory === c.id);
-      return c;
-    });
-    if (this.loadedRuleSet.idSetCategory) {
-      this.selectedCategory = this.loadedRuleSet.idSetCategory;
-      this._filterCategories();
+    const lastPage = router.options.history.state.forward;
+    if (lastPage === '/categorySelection') {
+      // back from category selection
+      this.selectedCategory = this.currentlySelectedCategoryId;
+    } else {
+      if (this.loadedRuleSet.idSetCategory) {
+        this.selectedCategory = this.loadedRuleSet.idSetCategory;
+      } else {
+        this.selectedCategory = 0;
+      }
     }
 
     this.ruleSet.name = this.loadedRuleSet.name;

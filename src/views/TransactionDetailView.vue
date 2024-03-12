@@ -8,8 +8,8 @@
       </div>
     </div>
 
-    <div class="section">
-      <div v-if="error" class="error">{{ error }}</div>
+    <div v-if="error" class="section">
+      <div class="error">{{ error }}</div>
     </div>
 
     <div class="section">
@@ -37,7 +37,7 @@
       <div class="label-value in-row">
         <span v-if="transaction.category_name">{{ transaction.category_name }}</span>
         <span v-if="!transaction.category_name">Kategorie wählen</span>
-        <router-link class="action" :to="{ name: 'CategorySelection'}">
+        <router-link class="action" :to="{ name: 'CategorySelection', query: {showTransaction: true}}">
           <button class="btn-icon-only" aria-label="Edit">
             <IconEdit/>
           </button>

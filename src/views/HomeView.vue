@@ -32,7 +32,7 @@
       </form>
     </div>
     <div class="section section--is-scrollable transaction-list" @scroll="tableScroll">
-      <table class="all-transactions-table" v-if="transactionsByDate.length">
+      <table class="all-transactions-table table--is-wide" v-if="transactionsByDate.length">
         <tbody>
         <template v-for="(trOfDate, index) in transactionsByDate" :key="trOfDate">
           <tr class="transaction-date">
@@ -40,7 +40,7 @@
           </tr>
           <tr>
             <td>
-              <table class="transaction-details-table">
+              <table class="table--is-wide">
                 <tbody>
                 <tr v-for="(item, index) in trOfDate.transactions" :key="item.t_id" :id="'transaction-' + item.t_id"
                     class="transaction-details" :class="{'alternate-row-background': index % 2 }">

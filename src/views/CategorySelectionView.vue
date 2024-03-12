@@ -1,20 +1,20 @@
 <template>
-  <div class="page">
-    <div class="top-links">
-      <button @click="goBackCancel" class="action btn btn--is-secondary">Abbrechen</button>
-      <button @click="goBackOk" :disabled="!selectedCategory"
-              class="action btn btn--is-primary">Übernehmen
-      </button>
-    </div>
-    <div v-if="error" class="error">{{ error }}</div>
+  <div class="page page--has-no-overflow">
+    <h1 class="title">Kategorieauswahl</h1>
+    <div class="section">
+      <div class="top-links">
+        <button @click="goBackCancel" class="action btn btn--is-secondary">Abbrechen</button>
+        <button @click="goBackOk" :disabled="!selectedCategory" class="action btn btn--is-primary">Übernehmen</button>
+      </div>
 
-    <div class="form" v-if="transaction">
-      <div class="form-title">Buchung
-        <span v-if="transaction.t_value_date">&nbsp;({{
+      <div v-if="error" class="error">{{ error }}</div>
+
+      <div v-if="showTransaction" class="title">Buchung
+        <span v-if="showTransaction && transaction && transaction.t_value_date">&nbsp;({{
             DateTime.fromISO(transaction.t_value_date).toLocaleString(DateTime.DATE_HUGE)
           }})</span>
       </div>
-      <table class="transaction-details-table">
+      <table v-if="showTransaction" class="table--is-normal">
         <tbody>
         <tr class="transaction-details">
           <td class="transaction-text">
@@ -45,15 +45,16 @@
         </tbody>
       </table>
 
-      <div class="form-title">ausgewählte Kategorie:</div>
-      <div class="form-component form--is-row">
-        {{ selectedCategoryName }}
+      <div class="title">ausgewählte Kategorie:</div>
+
+      <div class="label-value in-row">
+        <div class="value">{{ selectedCategoryName }}</div>
       </div>
-      <div class="form-title">Kategoriesuche:</div>
-      <div class="form-component form--is-row">
-        <input type="search" autofocus v-model="categorySearch" placeholder="Kategorie suchen">
+      <div class="label-value in-column">
+        <div class="label">Kategoriesuche:</div>
+        <input class="value" type="search" autofocus v-model="categorySearch" placeholder="Kategorie suchen">
       </div>
-      <table>
+      <table class="table--is-normal">
         <tbody>
         <tr v-for="(item) in filteredCategories" :key="item.id">
           <td class="text-h-center"><label><input class="selectionInput" type="radio" v-model="selectedCategory"
@@ -89,6 +90,7 @@ export default {
       selectedCategoryName: this.selectedCategoryName,
       categorySearch: this.categorySearch,
       filteredCategories: this.filteredCategories,
+      showTransaction: this.showTransaction,
     };
   },
   computed: {
@@ -138,6 +140,7 @@ export default {
     this.filteredCategories = [];
     this.unfilteredCategories = [];
     this.selectedCategoryName = 'keine';
+    this.showTransaction = false;
   },
   async mounted() {
     this.error = undefined;
@@ -187,10 +190,11 @@ export default {
       return c;
     });
 
-
     if (this.currentlySelectedCategoryId) {
       this._filterCategories();
     }
+
+    this.showTransaction = router.currentRoute.value.query.showTransaction === 'true';
   },
 };
 </script>
