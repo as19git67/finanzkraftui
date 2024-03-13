@@ -209,7 +209,7 @@ export const TransactionStore = defineStore('transaction', {
             const t = this._transactions.filter((tr) => {
               return tr.t_id === id;
             });
-            _.assignIn(t[0], updateData);
+            _.assign(t[0], updateData);
           }
           return { status: response.status, data: resultData };
         } catch (ex) {

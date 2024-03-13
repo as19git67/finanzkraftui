@@ -256,6 +256,11 @@ export default {
     async handleDataChanged() {
       this.actionError = undefined;
       this.updateData.id = this.transactionId;
+      if (this.updateData.category_id !== undefined) {
+        // update also the category_name, but it is only used in the transactions list and is
+        // not really being updated, because it is retrieved via joining Fk_Category
+        this.updateData.category_name = this.getCategoryById(this.updateData.category_id).full_name;
+      }
       const result = await this.updateTransaction(this.updateData);
       if (result.status === 200) {
         this.transaction = _.extend(this.transaction, this.updateData);
