@@ -1,44 +1,61 @@
 <template>
-  <h1 class="title">Regeln</h1>
-  <form class="form" v-on:submit.prevent v-on:keyup.enter="addRule">
-    <div class="form-component">
-      <input type="text" autofocus v-model="newRuleSetName" placeholder="Name der Regel">
-      <button @click="addRule" class="btn btn--is-primary">Hinzufügen</button>
+  <div class="page page--has-no-overflow">
+    <h1 class="title">Regeln</h1>
+
+
+    <div class="section">
+      <form class="label-value-group in-row" v-on:submit.prevent v-on:keyup.enter="addRule">
+        <div class="label-value in-row">
+          <input class="value" type="text" autofocus v-model="newRuleSetName"
+                 placeholder="Name der Regel">
+          <button @click="addRule" class="btn btn--is-primary">Hinzufügen</button>
+        </div>
+      </form>
     </div>
-  </form>
 
-  <p v-if="actionError" class="error">{{ actionError }}</p>
+    <div v-if="actionError" class="section">
+      <div class="error">{{ actionError }}</div>
+    </div>
 
-  <table class="data-table" v-if="ruleSets && ruleSets.length">
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Aktionen</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr v-for="item of ruleSets" :key="item.id">
-        <td>
-          <router-link class="action" :to="{ path:'/ruleSetEdit/:ruleSetId', name: 'RuleSetEdit', params: { ruleSetId: item.id }}">
-            {{ item.name }}
-          </router-link>
-        </td>
-        <td>
-          <router-link class="action" :to="{ path:'/ruleSetEdit/:ruleSetId', name: 'RuleSetEdit', params: { ruleSetId: item.id }}">
-            <button class="btn-icon-only" aria-label="Edit"><IconEdit/></button>
-          </router-link>
-          <button
-            class="btn-icon-only"
-            @click="deleteRuleSet(item.id)"
-            title="Regel löschen"
-          >
-            <IconDelete />
-          </button>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-  <p v-else>Keine Regeln vom Server geladen</p>
+    <div class="section section--is-scrollable">
+      <table class="data-table" v-if="ruleSets && ruleSets.length">
+        <thead>
+        <tr>
+          <th>Name</th>
+          <th>Aktionen</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr v-for="item of ruleSets" :key="item.id">
+          <td>
+            <router-link class="action"
+                         :to="{ path:'/ruleSetEdit/:ruleSetId', name: 'RuleSetEdit', params: { ruleSetId: item.id }}">
+              {{ item.name }}
+            </router-link>
+          </td>
+          <td>
+            <div class="action-group">
+              <router-link class="action"
+                           :to="{ path:'/ruleSetEdit/:ruleSetId', name: 'RuleSetEdit', params: { ruleSetId: item.id }}">
+                <button class="btn-icon-only" aria-label="Edit">
+                  <IconEdit/>
+                </button>
+              </router-link>
+              <button
+                  class="btn-icon-only"
+                  @click="deleteRuleSet(item.id)"
+                  title="Regel löschen"
+              >
+                <IconDelete/>
+              </button>
+            </div>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+      <p v-else>Keine Regeln vom Server geladen</p>
+    </div>
+  </div>
 </template>
 
 <script>
@@ -49,7 +66,7 @@ import IconAdd from "@/components/icons/IconAdd.vue";
 import IconEdit from "@/components/icons/IconEdit.vue";
 import IconDelete from "@/components/icons/IconDelete.vue";
 import ModalDialog from "@/components/ModalDialog.vue";
-import {TransactionStore} from "@/stores/transactions";
+import { TransactionStore } from "@/stores/transactions";
 
 export default {
   name: "RuleSetsView",
@@ -73,13 +90,13 @@ export default {
       let mustAuthenticate = false;
       let not_ok = false;
       switch (result.status) {
-        case 401:
-          mustAuthenticate = true;
-          break;
-        case 200:
-          break;
-        default:
-          not_ok = true;
+      case 401:
+        mustAuthenticate = true;
+        break;
+      case 200:
+        break;
+      default:
+        not_ok = true;
       }
       if (mustAuthenticate) {
         router.replace("/login");
@@ -117,6 +134,7 @@ th {
   font-weight: bold;
   text-align: start;
 }
+
 .data-table td .btn {
   display: inline-flex;
 }

@@ -156,6 +156,15 @@ export const UserStore = defineStore('user', {
     logout() {
       this.setAuthenticated(false);
     },
+    _setResponseMessage(ex, result) {
+      if (ex?.response?.data) {
+        // eslint-disable-next-line no-param-reassign
+        result.message = ex.response.data;
+      } else {
+        // eslint-disable-next-line no-param-reassign
+        result.message = ex.message;
+      }
+    },
     handleAxiosException(ex, userStore, emptyResultData) {
       const result = {};
       if (emptyResultData) {
@@ -166,11 +175,13 @@ export const UserStore = defineStore('user', {
           userStore.setNotAuthenticated();
         }
         result.status = ex.response.status;
-        result.message = ex.message;
+        // eslint-disable-next-line no-underscore-dangle
+        this._setResponseMessage(ex, result);
         return result;
       }
       result.status = 500;
-      result.message = ex.message;
+      // eslint-disable-next-line no-underscore-dangle
+      this._setResponseMessage(ex, result);
       return result;
     },
     async getUsers() {
