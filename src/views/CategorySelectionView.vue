@@ -2,10 +2,6 @@
   <div class="page page--has-no-overflow">
     <h1 class="title">Kategorieauswahl</h1>
     <div class="section">
-      <div class="top-links">
-        <button @click="goBackCancel" class="action btn btn--is-secondary">Abbrechen</button>
-        <button @click="goBackOk" :disabled="!selectedCategory" class="action btn btn--is-primary">Übernehmen</button>
-      </div>
 
       <div v-if="error" class="error">{{ error }}</div>
 
@@ -25,7 +21,7 @@
                       transaction.textShortened ? transaction.textShortened : transaction.t_entry_ext
                 }}
               </div>
-              <div class="td-text-item item--is-category">{{ transaction.category_name }}</div>
+              <div class="td-text-item item--is-category">{{ selectedCategoryName }}</div>
               <div class="td-text-item item--is-text"
                    :title="transaction.t_payee ? transaction.textShortened : ''">
                 {{ transaction.t_payee ? transaction.textShortened : '' }}
@@ -45,10 +41,13 @@
         </tbody>
       </table>
 
-      <div class="title">ausgewählte Kategorie:</div>
-
-      <div class="label-value in-row">
+      <div v-if="!showTransaction" class="label-value in-column">
+        <div class="label">ausgewählte Kategorie:</div>
         <div class="value">{{ selectedCategoryName }}</div>
+      </div>
+      <div class="action-group">
+        <button @click="goBackCancel" class="action btn btn--is-secondary">Abbrechen</button>
+        <button @click="goBackOk" :disabled="!selectedCategory" class="action btn btn--is-primary">Übernehmen</button>
       </div>
       <div class="label-value in-column">
         <div class="label">Kategoriesuche:</div>
@@ -95,7 +94,7 @@ export default {
   },
   computed: {
     ...mapStores(MasterDataStore, TransactionStore),
-    ...mapState(MasterDataStore, ["categories", "currentlySelectedCategoryId"]),
+    ...mapState(MasterDataStore, ["categories"]),
     ...mapState(TransactionStore, ["transaction"]),
   },
   watch: {
@@ -114,13 +113,14 @@ export default {
     }
   },
   methods: {
-    ...mapActions(MasterDataStore, ["getCategories", "getCategoryById", "setCurrentlySelectedCategoryId"]),
+    ...mapActions(MasterDataStore, ["getCategories", "getCategoryById"]),
     goBackOk: function () {
-      this.setCurrentlySelectedCategoryId(this.selectedCategory);
-      router.back();
+      const prevPage = router.options.history.state.back;
+      router.push({ path: prevPage,  query: { selectedCategory: this.selectedCategory } });
     },
     goBackCancel: function () {
-      router.back();
+      const prevPage = router.options.history.state.back;
+      router.push({ path: prevPage,  query: { selectedCategory: 0 } });
     },
     _filterCategories: function (searchTerm) {
       this.filteredCategories = this.unfilteredCategories
@@ -182,15 +182,18 @@ export default {
       }
       return;
     }
-
-    this.selectedCategory = this.currentlySelectedCategoryId;
+    if (router.currentRoute.value.query.currentCategoryId) {
+      this.selectedCategory = parseInt(router.currentRoute.value.query.currentCategoryId);
+    } else {
+      this.selectedCategory = 0;
+    }
     this.unfilteredCategories = this.categories.map(category => {
       const c = {...category};
-      c.selected = (this.currentlySelectedCategoryId === c.id);
+      c.selected = (this.selectedCategory === c.id);
       return c;
     });
 
-    if (this.currentlySelectedCategoryId) {
+    if (this.selectedCategory) {
       this._filterCategories();
     }
 
@@ -202,6 +205,10 @@ export default {
 <style scoped>
 .form-component input {
   flex: 1 1 auto;
+}
+
+.item--is-category {
+  font-weight: bold;
 }
 
 .action.action--is-disabled {

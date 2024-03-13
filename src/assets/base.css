@@ -160,6 +160,18 @@ button:hover svg .metaphor {
 .label-value-group.in-row,
 .label-value.in-row {
   flex-direction: row;
+  align-items: center;
+}
+
+.action-group {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5em;
+  padding-inline-start: 0.5em;
+}
+.action-group .action {
+  flex: 0 0 auto;
 }
 
 .label-value > .label,
@@ -192,6 +204,7 @@ button:hover svg .metaphor {
 
 .label-value.in-row > .value {
   justify-content: flex-start;
+  gap: 0.5em;
 }
 
 .label-value.in-row > .label + .value {
@@ -200,7 +213,7 @@ button:hover svg .metaphor {
 
 .page {
   display: flex;
-  width: 100vw;
+  width: 100%;
   flex-direction: column;
 }
 
@@ -209,19 +222,23 @@ button:hover svg .metaphor {
 }
 
 .page > .title {
-  justify-content: center;
+  justify-content: start;
   background-color: var(--color-background-soft);
   color: var(--color-text-soft);
   font-size: 18px;
   gap: 0.5em;
-  margin-left: -0.5em;
-  margin-right: -0.5em;
+  padding-left: 0.5em;
+  padding-right: 0.5em;
   margin-bottom: 0.5em;
 }
 
 .page > .title,
 .page > .title > * {
   font-weight: bold;
+}
+
+.title.title--is-status {
+  justify-content: center;
 }
 
 .page > .section {
@@ -480,11 +497,13 @@ table {
   font-size: 15px;
   font-family: monospace;
   border-collapse: collapse;
+  width: 100%;
 }
 
 .table--is-normal {
   margin-left: 0.5em;
   margin-right: 0.5em;
+  width: calc(100% - 1em);
 }
 
 .table--is-wide {

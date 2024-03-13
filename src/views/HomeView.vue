@@ -1,6 +1,6 @@
 <template>
   <div class="page page--has-no-overflow">
-    <h1 class="title">
+    <h1 class="title title--is-status">
       <span v-if="loading">Buchungen laden...</span>
       <span v-if="!loading">{{ `${transactions.length} Buchungen` }}</span>
     </h1>

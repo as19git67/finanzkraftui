@@ -2,9 +2,14 @@
   <div class="page">
     <div class="section">
       <div class="top-links">
-        <button v-if="!dirty" @click="goToTransactionList" class="action btn btn--is-secondary">Zurück</button>
-        <button v-if="dirty" @click="cancelChanges" class="action btn btn--is-secondary">Abbrechen</button>
-        <button :disabled="!dirty" @click="saveTransaction" class="action btn btn--is-primary">Speichern</button>
+        <router-link v-if="!dirty" class="action" :to="{ name: 'home'}">
+          < Zurück
+        </router-link>
+        <button v-if="dirty" @click="cancelChanges" class="action btn btn--is-secondary">Abbrechen
+        </button>
+        <button :disabled="!dirty" @click="saveTransaction" class="action btn btn--is-primary">
+          Speichern
+        </button>
       </div>
     </div>
 
@@ -37,7 +42,7 @@
       <div class="label-value in-row">
         <span v-if="transaction.category_name">{{ transaction.category_name }}</span>
         <span v-if="!transaction.category_name">Kategorie wählen</span>
-        <router-link class="action" :to="{ name: 'CategorySelection', query: {showTransaction: true}}">
+        <router-link class="action" :to="{ name: 'CategorySelection', query: { showTransaction: true, currentCategoryId: transaction.category_id }}">
           <button class="btn-icon-only" aria-label="Edit">
             <IconEdit/>
           </button>
@@ -117,7 +122,8 @@
       <span class="confirm-text">{{ confirmText }}</span>
       <div class="btn-group">
         <button class="btn btn-confirm" @click="confirmDialogButtonClicked('yes')">Ja</button>
-        <button class="btn btn-confirm btn--is-primary" autofocus @click="confirmDialogButtonClicked('no')">Nein
+        <button class="btn btn-confirm btn--is-primary" autofocus
+                @click="confirmDialogButtonClicked('no')">Nein
         </button>
       </div>
     </div>
@@ -131,18 +137,18 @@ import IconTick from "@/components/icons/IconTick.vue";
 import IconEyeOK from "@/components/icons/IconEyeOK.vue";
 
 defineProps({
-  transactionId: {type: String},
+  transactionId: { type: String },
 });
 </script>
 
 <script>
-import {mapActions, mapState, mapStores} from "pinia";
-import {UserStore} from "@/stores/user";
+import { mapActions, mapState, mapStores } from "pinia";
+import { UserStore } from "@/stores/user";
 import router from "@/router";
 import _ from "lodash";
-import {DateTime} from "luxon";
-import {TransactionStore} from "@/stores/transactions";
-import {MasterDataStore} from "@/stores/masterdata";
+import { DateTime } from "luxon";
+import { TransactionStore } from "@/stores/transactions";
+import { MasterDataStore } from "@/stores/masterdata";
 
 export default {
   name: "TransactionDetailView",
@@ -208,11 +214,12 @@ export default {
     },
     ...mapStores(UserStore, MasterDataStore),
     ...mapState(UserStore, ["authenticated"]),
-    ...mapState(MasterDataStore, ["currentlySelectedCategoryId", "categories"]),
+    ...mapState(MasterDataStore, ["categories"]),
   },
   methods: {
-    ...mapActions(TransactionStore, ["getTransaction", "updateTransaction", "setCurrentTransactionId"]),
-    ...mapActions(MasterDataStore, ["setCurrentlySelectedCategoryId", "getCategoryById", "getCategories"]),
+    ...mapActions(TransactionStore,
+        ["getTransaction", "updateTransaction", "setCurrentTransactionId"]),
+    ...mapActions(MasterDataStore, ["getCategoryById", "getCategories"]),
     switchToEditName() {
       this.editName = true;
     },
@@ -229,11 +236,11 @@ export default {
         this.dialogResolve = resolve;
       });
       switch (res) {
-        case 'yes':
-          this.goToTransactionList();
-          break;
-        case 'no':
-          break;
+      case 'yes':
+        this.goToTransactionList();
+        break;
+      case 'no':
+        break;
       }
     },
     confirmDialogButtonClicked(btnId) {
@@ -314,13 +321,13 @@ export default {
         status = result.status;
       }
       switch (status) {
-        case 401:
-          mustAuthenticate = true;
-          break;
-        case 200:
-          break;
-        default:
-          not_ok = true;
+      case 401:
+        mustAuthenticate = true;
+        break;
+      case 200:
+        break;
+      default:
+        not_ok = true;
       }
     });
     if (mustAuthenticate || not_ok) {
@@ -335,13 +342,13 @@ export default {
       return;
     }
 
-    this.transaction = {...(results[0].data)};
-    const lastPage = router.options.history.state.forward;
-    if (lastPage === '/categorySelection') {
+    this.transaction = { ...(results[0].data) };
+
+    const selectedCategory = parseInt(router.currentRoute.value.query.selectedCategory);
+    if (selectedCategory) {
       // back from category selection
-      this.categoryId = this.currentlySelectedCategoryId;
+      this.categoryId = selectedCategory;
     } else {
-      this.setCurrentlySelectedCategoryId(this.transaction.category_id);
       this.categoryId = this.transaction.category_id;
     }
     this.transactionNotes = this.transaction.t_notes;
@@ -349,7 +356,8 @@ export default {
     if (!this.transaction.t_payee && !this.transaction.t_entry_text) {
       this.editName = true;
     }
-    if (this.transaction.t_text && this.transaction.t_payee && this.transaction.t_payee.startsWith('AMAZON')) {
+    if (this.transaction.t_text && this.transaction.t_payee &&
+        this.transaction.t_payee.startsWith('AMAZON')) {
       const matches = this.transaction.t_text.match(/(\d{3}\-\d{7}\-\d{7})/);
       if (matches.length > 0) {
         this.amazonOrderId = matches[0];

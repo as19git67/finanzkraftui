@@ -26,7 +26,8 @@
         <div class="label">Kategorie:</div>
         <div class="value">
           <span>{{ selectedCategoryName }}</span>
-          <router-link class="action" :to="{ name: 'CategorySelection', query: {showTransaction: false}}">
+          <router-link class="action" :to="{ name: 'CategorySelection', query: {showTransaction:
+          false, currentCategoryId: selectedCategory}}">
             <button class="btn-icon-only" aria-label="Edit">
               <IconEdit/>
             </button>
@@ -108,7 +109,7 @@
           ausgewählten Kriterien gefunden werden.
         </div>
       </div>
-      <table class="all-transactions-table" v-if="matchingTransactionsByDate.length">
+      <table class="all-transactions-table" v-if="matchingTransactions.length">
         <tbody>
         <template v-for="(trOfDate) in matchingTransactionsByDate" :key="trOfDate">
           <tr class="transaction-date">
@@ -231,10 +232,10 @@ export default {
     },
     ...mapStores(UserStore),
     ...mapState(UserStore, ["authenticated"]),
-    ...mapState(MasterDataStore, ["currentlySelectedCategoryId", "categories"]),
+    ...mapState(MasterDataStore, ["categories"]),
   },
   methods: {
-    ...mapActions(MasterDataStore, ["setCurrentlySelectedCategoryId", "getCategoryById", "getCategories"]),
+    ...mapActions(MasterDataStore, ["getCategoryById", "getCategories"]),
     ...mapActions(TransactionStore, ["getTransaction", "getMatchingTransactions", "getRuleSet", "setRules", "deleteRules"]),
     deleteRuleSet() {
       if (!this.loadedRuleSet.id) {
@@ -523,16 +524,12 @@ export default {
 
     this.transaction = {...(results[0].data)};
 
-    const lastPage = router.options.history.state.forward;
-    if (lastPage === '/categorySelection') {
+    const selectedCategory = parseInt(router.currentRoute.value.query.selectedCategory);
+    if (selectedCategory) {
       // back from category selection
-      this.selectedCategory = this.currentlySelectedCategoryId;
+      this.selectedCategory = selectedCategory;
     } else {
-      if (this.loadedRuleSet.idSetCategory) {
-        this.selectedCategory = this.loadedRuleSet.idSetCategory;
-      } else {
-        this.selectedCategory = 0;
-      }
+      this.selectedCategory = this.transaction.category_id;
     }
 
     this.ruleSet.name = this.loadedRuleSet.name;

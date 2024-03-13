@@ -8,7 +8,6 @@ export const MasterDataStore = defineStore('masterdata', {
     _timespans: [],
     _categories: [],
     _categoriesById: {},
-    _currentlySelectedCategoryId: 0,
   }),
   getters: {
     timespans(state) {
@@ -16,9 +15,6 @@ export const MasterDataStore = defineStore('masterdata', {
     },
     categories(state) {
       return state._categories;
-    },
-    currentlySelectedCategoryId(state) {
-      return state._currentlySelectedCategoryId;
     },
   },
   actions: {
@@ -90,9 +86,6 @@ export const MasterDataStore = defineStore('masterdata', {
     },
     getCategoryById(id) {
       return this._categoriesById[id];
-    },
-    setCurrentlySelectedCategoryId(id) {
-      this._currentlySelectedCategoryId = id;
     },
   },
 });

@@ -1,24 +1,32 @@
 <template>
-  <h1 class="page-title">Konten</h1>
-  <table v-if="accounts.length">
-    <thead>
-    <tr>
-      <th>Name</th>
-      <th>IBAN</th>
-      <th>Währung</th>
-      <th>Geschlossen</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr v-for="(item, index) of accounts" :key="item" :class="{ 'account-closed': !!item.closedAt, 'alternate-row-background': index % 2 }">
-      <td>{{ item.name }}</td>
-      <td>{{ item.iban }}</td>
-      <td>{{ item.currencyName }}</td>
-      <td class="right-aligned">{{ item.closedAt !== null ? DateTime.fromISO(item.closedAt).toLocaleString() : '' }}</td>
-    </tr>
-    </tbody>
-  </table>
-  <p v-else>Keine Accounts vom Server geladen</p>
+  <div class="page">
+    <h1 class="title">Konten</h1>
+    <div class="section section--is-scrollable">
+      <table v-if="accounts.length">
+        <thead>
+        <tr>
+          <th>Name</th>
+          <th>IBAN</th>
+          <th>Währung</th>
+          <th>Geschlossen</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr v-for="(item, index) of accounts" :key="item"
+            :class="{ 'account-closed': !!item.closedAt, 'alternate-row-background': index % 2 }">
+          <td>{{ item.name }}</td>
+          <td>{{ item.iban }}</td>
+          <td>{{ item.currencyName }}</td>
+          <td class="right-aligned">{{
+              item.closedAt !== null ? DateTime.fromISO(item.closedAt).toLocaleString() : ''
+            }}
+          </td>
+        </tr>
+        </tbody>
+      </table>
+      <p v-else>Keine Accounts vom Server geladen</p>
+    </div>
+  </div>
 </template>
 
 <script>
@@ -76,9 +84,11 @@ th {
   text-align: start;
   border-bottom: 1px solid rebeccapurple;
 }
+
 td {
   font-family: "Verdana";
 }
+
 .account-closed {
   color: var(--as-color-primary-4);
 }
