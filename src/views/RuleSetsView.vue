@@ -116,7 +116,31 @@ export default {
       this.actionError = "";
     },
     async deleteRuleSet(id) {
-      this.actionError = "";
+      this.deleteRules(id).then(resultData => {
+        let mustAuthenticate = false;
+        let not_ok = false;
+        let status = resultData.status;
+        switch (status) {
+          case 401:
+            mustAuthenticate = true;
+            break;
+          case 200:
+            break;
+          default:
+            not_ok = true;
+        }
+        if (mustAuthenticate) {
+          this.actionError = 'Keine Berechtigung';
+          return;
+        }
+        if (not_ok) {
+          this.actionError = resultData.message;
+          return;
+        }
+        this.actionError = "";
+      }).catch(reason => {
+        this.actionError = reason.message;
+      });
     },
   },
   created() {

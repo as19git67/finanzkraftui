@@ -265,7 +265,7 @@ export default {
         router.back();
       }).catch(reason => {
         this.error = reason.message;
-      })
+      });
 
     },
     saveRuleSet() {
