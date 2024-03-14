@@ -380,53 +380,6 @@ export default {
 </script>
 
 <style scoped>
-.confirm {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-}
-
-.confirm .confirm-backdrop {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  opacity: 0.5;
-  background-color: var(--as-color-complement-0);
-  z-index: 100;
-}
-
-.confirm .confirm-dialog {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  display: flex;
-  align-items: center;
-  justify-items: center;
-  padding: 1em;
-  z-index: 200;
-}
-
-.confirm-dialog.confirm--yes-no {
-  flex-direction: column;
-}
-
-.confirm-dialog .confirm-text {
-  margin-bottom: 1em;
-}
-
-.confirm-dialog .btn-group {
-  display: flex;
-  gap: 1em;
-  flex-direction: row;
-  width: 100%;
-  justify-content: flex-end;
-}
-
 .action.action--is-disabled {
   color: var(--as-color-complement-5);
 }
