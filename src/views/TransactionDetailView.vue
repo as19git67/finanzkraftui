@@ -42,7 +42,8 @@
       <div class="label-value in-row">
         <span v-if="transaction.category_name">{{ transaction.category_name }}</span>
         <span v-if="!transaction.category_name">Kategorie wählen</span>
-        <router-link class="action" :to="{ name: 'CategorySelection', query: { showTransaction: true, currentCategoryId: transaction.category_id }}">
+        <router-link class="action"
+                     :to="{ name: 'CategorySelection', query: { showTransaction: true, currentCategoryId: transaction.category_id }}">
           <button class="btn-icon-only" aria-label="Kategorie auswählen" tabindex="-1">
             <IconEdit/>
           </button>
@@ -112,9 +113,6 @@
       <div class="detail-links">
       </div>
     </div>
-    <div class="section">
-      <div class="footer error" v-if="actionError">{{ actionError }}</div>
-    </div>
   </div>
   <div v-if="showConfirmDialog" class="confirm">
     <div class="confirm-backdrop"></div>
@@ -137,18 +135,18 @@ import IconTick from "@/components/icons/IconTick.vue";
 import IconEyeOK from "@/components/icons/IconEyeOK.vue";
 
 defineProps({
-  transactionId: { type: String },
+  transactionId: {type: String},
 });
 </script>
 
 <script>
-import { mapActions, mapState, mapStores } from "pinia";
-import { UserStore } from "@/stores/user";
+import {mapActions, mapState, mapStores} from "pinia";
+import {UserStore} from "@/stores/user";
 import router from "@/router";
 import _ from "lodash";
-import { DateTime } from "luxon";
-import { TransactionStore } from "@/stores/transactions";
-import { MasterDataStore } from "@/stores/masterdata";
+import {DateTime} from "luxon";
+import {TransactionStore} from "@/stores/transactions";
+import {MasterDataStore} from "@/stores/masterdata";
 
 export default {
   name: "TransactionDetailView",
@@ -160,7 +158,6 @@ export default {
       categoryId: this.categoryId,
       transaction: this.transaction,
       error: this.error,
-      actionError: this.actionError,
       updateData: this.updateData,
       showConfirmDialog: false,
       confirmText: '',
@@ -227,7 +224,7 @@ export default {
       this.editName = false;
     },
     goToTransactionList() {
-      router.replace({ name: 'home' });
+      router.replace({name: 'home'});
     },
     async cancelChanges() {
       this.confirmText = 'Änderungen verwerfen und zurück zur Liste?';
@@ -236,11 +233,11 @@ export default {
         this.dialogResolve = resolve;
       });
       switch (res) {
-      case 'yes':
-        this.goToTransactionList();
-        break;
-      case 'no':
-        break;
+        case 'yes':
+          this.goToTransactionList();
+          break;
+        case 'no':
+          break;
       }
     },
     confirmDialogButtonClicked(btnId) {
@@ -254,7 +251,7 @@ export default {
       }
     },
     async handleDataChanged() {
-      this.actionError = undefined;
+      this.error = undefined;
       this.updateData.id = this.transactionId;
       if (this.updateData.category_id !== undefined) {
         // update also the category_name, but it is only used in the transactions list and is
@@ -262,14 +259,36 @@ export default {
         this.updateData.category_name = this.getCategoryById(this.updateData.category_id).full_name;
       }
       const result = await this.updateTransaction(this.updateData);
-      if (result.status === 200) {
-        this.transaction = _.extend(this.transaction, this.updateData);
-        this.updateData = {};
-        return true;
-      } else {
-        this.actionError = result.message;
+      let not_ok = false;
+      let mustAuthenticate = false;
+      let status = result.status;
+      switch (status) {
+        case 401:
+          mustAuthenticate = true;
+          break;
+        case 403:
+          this.error = 'Die Berechtigung zum Ändern der Buchung fehlt.';
+          not_ok = true;
+          break;
+        case 200:
+          break;
+        default:
+          not_ok = true;
+      }
+      if (mustAuthenticate) {
+        this.error = 'Benutzer muss angemeldet sein';
         return false;
       }
+      if (not_ok) {
+        if (!this.error) {
+          this.error = result.message;
+        }
+        return false;
+      }
+
+      this.transaction = _.extend(this.transaction, this.updateData);
+      this.updateData = {};
+      return true;
     },
     async markUnconfirmed() {
       this.updateData.confirmed = false;
@@ -284,7 +303,6 @@ export default {
   },
   async mounted() {
     this.error = undefined;
-    this.actionError = undefined;
     this.loading = true;
 
     // cancel the debounced dataChanged function in case of leaving before save
@@ -320,19 +338,30 @@ export default {
 
     let mustAuthenticate = false;
     let not_ok = false;
-    results.forEach((result) => {
+    results.forEach((result, index) => {
       let status = result;
       if (_.isObject(result)) {
         status = result.status;
       }
       switch (status) {
-      case 401:
-        mustAuthenticate = true;
-        break;
-      case 200:
-        break;
-      default:
-        not_ok = true;
+        case 401:
+          mustAuthenticate = true;
+          break;
+        case 403:
+          if (index === 0) {
+            this.error = 'Die Berechtigung zum Laden der Buchung fehlt.';
+          } else {
+            if (this.error) {
+              this.error += ' ';
+            }
+            this.error += 'Die Berechtigung zum Laden der Kategorien fehlt.'
+          }
+          not_ok = true;
+          break;
+        case 200:
+          break;
+        default:
+          not_ok = true;
       }
     });
     if (mustAuthenticate || not_ok) {
@@ -343,11 +372,10 @@ export default {
       return;
     }
     if (not_ok) {
-      router.replace("/");
       return;
     }
 
-    this.transaction = { ...(results[0].data) };
+    this.transaction = {...(results[0].data)};
 
     const selectedCategory = parseInt(router.currentRoute.value.query.selectedCategory);
     if (selectedCategory) {

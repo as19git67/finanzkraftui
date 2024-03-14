@@ -1,51 +1,30 @@
 <template>
-  <div class="registration-form">
-    <h1>Neuen Benutzer registrieren</h1>
-    <hr />
-    <div class="registration-grid">
+  <div class="registration-form dialog">
+    <h1>Neuen Finanzkraft Benutzer registrieren</h1>
+    <hr class="divider-hr"/>
+    <form class="registration-grid" v-on:submit.prevent v-on:keyup.enter="registerClicked">
       <label class="email" for="email">Email Adresse:</label>
-      <input v-model="email" class="email" id="email" name="Email" />
+      <input v-model="email" class="email" id="email" name="Email"/>
       <label class="pass" for="password">Passwort:</label>
-      <input
-        type="password"
-        v-model="password"
-        class="pass"
-        id="password"
-        name="Password"
-      />
-      <label class="pass-repeat" for="password-repeat"
-        >Passwort wiederholen:</label
-      >
-      <input
-        type="password"
-        v-model="passwordRepeat"
-        class="pass-repeat"
-        id="password-repeat"
-        name="Password wiederholen"
-      />
-      <div v-if="error" class="error" v-text="error" />
-      <button
-        @click="registerClicked()"
-        :disabled="
-          !email ||
-          email.length < 8 ||
-          !password ||
-          password.length < 8 ||
-          !passwordRepeat ||
-          passwordRepeat.length < 8
-        "
-        class="btn btn-register"
-      >
+      <input type="password" v-model="password" class="pass" id="password" name="Password"/>
+      <label class="pass-repeat" for="password-repeat">Passwort wiederholen:</label>
+      <input type="password" v-model="passwordRepeat" class="pass-repeat" id="password-repeat"
+             name="Password wiederholen"/>
+      <div v-if="error" class="error" v-text="error"/>
+
+      <button @click="registerClicked()"
+              :disabled="!email || email.length < 8 || !password || password.length < 8 || !passwordRepeat || passwordRepeat.length < 8"
+              class="btn btn-register">
         Registrieren
       </button>
-    </div>
+    </form>
   </div>
 </template>
 
 <script>
 import router from "@/router/index";
-import { UserStore } from "@/stores/user";
-import { mapActions, mapStores, mapState } from "pinia";
+import {UserStore} from "@/stores/user";
+import {mapActions, mapStores, mapState} from "pinia";
 
 export default {
   name: "RegistrationForm1",
@@ -66,12 +45,20 @@ export default {
     registerClicked() {
       this.error = "";
       this.registerNewUser(this.email, this.password)
-        .then(() => {
-          router.replace("/login");
-        })
-        .catch((error) => {
+      .then(() => {
+        router.replace("/login");
+      })
+      .catch((error) => {
+        if (error.response) {
+          switch (error.response.status) {
+            case 422:
+              this.error = "Es existiert bereits ein Benutzerkonto mit der gleichen Email-Adresse."
+              break;
+          }
+        } else {
           this.error = error.message;
-        });
+        }
+      });
     },
   },
   mounted() {
@@ -81,15 +68,10 @@ export default {
 </script>
 
 <style scoped>
-.registration-form {
-  border: 1px solid mediumvioletred;
-  margin-top: 1em;
-  padding: 1em;
-}
-
 .registration-grid {
   margin-top: 1em;
   display: grid;
+  align-items: center;
   gap: 1em;
   grid-template-columns: 1fr 2fr;
   grid-template-rows: 1fr 1fr;

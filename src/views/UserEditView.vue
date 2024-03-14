@@ -1,48 +1,53 @@
 <template>
-  <h1 v-if="user" class="title">Benutzer {{ user.Email }} ändern</h1>
+  <div class="page page--has-no-overflow">
+    <h1 v-if="user" class="title">{{ `Benutzer ${user.Email} ändern` }}</h1>
 
-  <div class="form form--is-column" v-if="user">
-    <div class="form-component">
-      <label for="email">Email:</label>
-      <input type="text" v-model="user.Email" placeholder="Email" id="email">
+    <div class="section">
+      <div class="label-value-group in-column" v-if="user">
+        <div class="label-value in-row">
+          <label class="label" for="email">Email:</label>
+          <input class="value" type="text" v-model="user.Email" placeholder="Email" id="email">
+        </div>
+        <div class="label-value in-row">
+          <label class="label" for="initials">Initialien:</label>
+          <input class="value" type="text" v-model="user.Initials" placeholder="Initialien" id="initials">
+        </div>
+        <div class="label-value in-row">
+          <label class="label" for="confirmed">Email ist bestätigt:</label>
+          <input class="value" type="checkbox" v-model="user.EmailConfirmed" id="confirmed">
+        </div>
+      </div>
     </div>
-    <div class="form-component">
-      <label for="initials">Initialien:</label>
-      <input type="text" v-model="user.Initials" placeholder="Initialien" id="initials">
-    </div>
-    <div class="form-component">
-      <label for="confirmed">Email ist bestätigt:</label>
-      <input type="checkbox" v-model="user.EmailConfirmed" id="confirmed">
+    <div class="section section--is-scrollable">
+      <table class="data-table" v-if="allRoles && allRoles.length">
+        <thead>
+        <tr>
+          <th>Ausgewählt</th>
+          <th>Rollenname</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr v-for="(item, index) of allRoles" :key="item">
+          <td><input type="checkbox" v-model="item.assigned" @change="assignmentChanged(index)"></td>
+          <td>{{ item.name }}</td>
+        </tr>
+        </tbody>
+      </table>
+      <div class="title" v-else>Keine Rollen verfügbar</div>
     </div>
   </div>
-
-  <table class="data-table" v-if="allRoles && allRoles.length">
-    <thead>
-    <tr>
-      <th>Ausgewählt</th>
-      <th>Rollenname</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr v-for="(item, index) of allRoles" :key="item">
-      <td><input type="checkbox" v-model="item.assigned" @change="assignmentChanged(index)"></td>
-      <td>{{ item.name }}</td>
-    </tr>
-    </tbody>
-  </table>
-  <p v-else>Keine Rollen verfügbar</p>
 </template>
 
 <script setup>
 defineProps({
-  userId: { type: String },
+  userId: {type: String},
 });
 </script>
 
 <script>
 import _ from "lodash";
-import { mapActions, mapState, mapStores } from "pinia";
-import { UserStore } from "@/stores/user";
+import {mapActions, mapState, mapStores} from "pinia";
+import {UserStore} from "@/stores/user";
 import router from "@/router";
 
 export default {
@@ -62,13 +67,13 @@ export default {
     ...mapState(UserStore, ["roles"]),
   },
   methods: {
-    ...mapActions(UserStore, ["getUser", "getRoles", "getRolesOfUser", "setRoleAssignmentsForUser"]),
+    ...mapActions(UserStore, ["getUser", "fillRoles", "getRolesOfUser", "setRoleAssignmentsForUser"]),
     assignmentChanged(index) {
       const roleIds = [];
       this.allRoles.forEach(role => {
-         if (role.assigned) {
-           roleIds.push(role.id);
-         }
+        if (role.assigned) {
+          roleIds.push(role.id);
+        }
       })
       this.setRoleAssignmentsForUser(this.user.id, roleIds);
     }
@@ -84,7 +89,7 @@ export default {
 
     this.loading = true;
     const promises = [];
-    promises.push(this.getRoles());
+    promises.push(this.fillRoles());
     promises.push(this.getRolesOfUser(this.userId));
     const results = await Promise.all(promises);
     this.loading = false;
@@ -97,13 +102,13 @@ export default {
         status = result.status;
       }
       switch (status) {
-      case 401:
-        mustAuthenticate = true;
-        break;
-      case 200:
-        break;
-      default:
-        not_ok = true;
+        case 401:
+          mustAuthenticate = true;
+          break;
+        case 200:
+          break;
+        default:
+          not_ok = true;
       }
     });
     if (mustAuthenticate || not_ok) {

@@ -1,7 +1,7 @@
 <template>
   <div class="login-form dialog">
     <h1>Finanzkraft Login</h1>
-    <hr class="divider-hr">
+    <hr class="divider-hr"/>
     <form class="login-grid" v-on:submit.prevent v-on:keyup.enter="loginClicked">
       <label class="user" for="username">Username:</label>
       <input v-focus v-model="email" class="user" id="username" name="Username"/>

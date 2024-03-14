@@ -2,19 +2,18 @@
   <div class="page page--has-no-overflow">
     <h1 class="title">Regeln</h1>
 
-
     <div class="section">
       <form class="label-value-group in-row" v-on:submit.prevent v-on:keyup.enter="addRule">
         <div class="label-value in-row">
           <input class="value" type="text" autofocus v-model="newRuleSetName"
                  placeholder="Name der Regel">
-          <button @click="addRule" class="btn btn--is-primary">Hinzufügen</button>
+          <button @click="addRule" :disabled="!newRuleSetName" class="btn btn--is-primary">Hinzufügen</button>
         </div>
       </form>
     </div>
 
-    <div v-if="actionError" class="section">
-      <div class="error">{{ actionError }}</div>
+    <div v-if="error" class="section">
+      <div class="error">{{ error }}</div>
     </div>
 
     <div class="section section--is-scrollable">
@@ -88,7 +87,6 @@ export default {
     return {
       newRuleSetName: this.newRuleSetName,
       error: this.error,
-      actionError: this.actionError,
       showConfirmDialog: false,
       confirmText: '',
     };
@@ -118,7 +116,7 @@ export default {
         return false;
       }
       if (not_ok) {
-        this.actionError = result.message;
+        this.error = result.message;
         return false;
       }
       return true;
@@ -128,7 +126,7 @@ export default {
       this._handleActionResult(result);
     },
     async addRuleSet() {
-      this.actionError = "";
+      this.error = "";
     },
     async deleteRuleSet(id) {
       this.confirmText = 'Soll die Regel wirklich gelöscht werden?';
@@ -164,18 +162,18 @@ export default {
             not_ok = true;
         }
         if (mustAuthenticate) {
-          this.actionError = 'Keine Berechtigung';
+          this.error = 'Keine Berechtigung';
           return;
         }
         if (not_ok) {
-          this.actionError = resultData.message;
+          this.error = resultData.message;
           return;
         }
-        this.actionError = "";
+        this.error = "";
         await this.loadRuleSets();
       } catch (reason) {
         await this.loadRuleSets();
-        this.actionError = reason.message;
+        this.error = reason.message;
       }
     },
   },
@@ -184,7 +182,7 @@ export default {
     this.con
   },
   async mounted() {
-    this.actionError = null;
+    this.error = null;
     await this.loadRuleSets();
   },
 };

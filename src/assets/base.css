@@ -113,6 +113,8 @@ body {
   font-weight: bold;
   color: var(--color-text-error);
   margin-bottom: 1em;
+  padding-left: 0.5em;
+  padding-right: 0.5em;
 }
 
 a {
@@ -138,7 +140,8 @@ button:hover svg .metaphor {
   align-items: stretch;
 }
 
-.login-form {
+.login-form,
+.registration-form {
   margin-top: 1em;
   padding: 1em;
   max-width: 40em;
@@ -155,6 +158,11 @@ button:hover svg .metaphor {
   background-color: var(--color-background-dialog);
   box-shadow: rgba(50, 50, 93, 0.25) 0 50px 100px -20px, rgba(0, 0, 0, 0.3) 0 30px 60px -30px, rgba(10, 37, 64, 0.35) 0 -2px 6px 0 inset;
 }
+
+.dialog input {
+  height: fit-content;
+}
+
 .confirm {
   position: absolute;
   top: 0;
@@ -279,6 +287,10 @@ button:hover svg .metaphor {
 
 .label-value.in-row > .label + .value {
   justify-content: flex-end;
+}
+
+.label-value.in-row > input.value[type=checkbox] {
+  flex: 0 0 auto;
 }
 
 .page {
@@ -611,6 +623,9 @@ td {
 
 .data-table th {
   background-color: var(--as-color-secondary-1-4);
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
 .data-table th,

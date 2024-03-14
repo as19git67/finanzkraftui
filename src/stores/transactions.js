@@ -218,6 +218,32 @@ export const TransactionStore = defineStore('transaction', {
       }
       return { status: 401, data: resultData };
     },
+    async addTransaction(transactionData) {
+      const resultData = {};
+      const userStore = UserStore();
+      if (userStore.authenticated) {
+        const config = userStore.getBearerAuthRequestHeader();
+        try {
+          const tr = {
+            t_notes: transactionData.t_notes,
+            t_payee: transactionData.t_payee,
+            t_amount: transactionData.t_amount,
+            t_value_date: transactionData.t_value_date,
+            t_category_id: transactionData.t_category_id,
+            confirmed: true,
+          };
+          const response = await axios.put('/api/transaction', tr, config);
+          if (response.status === 200) {
+            tr.t_id = parseInt(response.data, 10);
+            this._transactions.push(tr);
+          }
+          return { status: response.status, data: tr };
+        } catch (ex) {
+          return userStore.handleAxiosException(ex, userStore, resultData);
+        }
+      }
+      return { status: 401, data: resultData };
+    },
     async getRuleSets() {
       let resultData = [];
       const userStore = UserStore();

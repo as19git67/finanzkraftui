@@ -14,6 +14,7 @@ import RoleEditView from '../views/RoleEditView.vue';
 import UserEditView from '../views/UserEditView.vue';
 import RegistrationView1 from '../views/RegistrationView1.vue';
 import AboutView from '../views/AboutView.vue';
+import TransactionNewView from "@/views/TransactionNewView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -44,6 +45,11 @@ const router = createRouter({
       name: 'TransactionRules',
       props: true,
       component: TransactionRulesView,
+    },
+    {
+      path: '/addTransaction',
+      name: 'AddTransaction',
+      component: TransactionNewView,
     },
     {
       path: '/ruleSets',

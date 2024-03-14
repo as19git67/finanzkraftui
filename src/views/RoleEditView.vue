@@ -1,45 +1,53 @@
 <template>
-  <div v-if="error" class="error">{{ error }}</div>
-  <div v-else>
-    <h1 v-if="role" class="title">Rolle {{ roleName }} ändern</h1>
+  <div class="page page--has-no-overflow">
+    <h1 class="title">{{ `Rolle ${roleName} ändern` }}</h1>
 
-    <div class="form form--is-column" v-if="role">
-      <div class="form-component">
-        <label for="roleName">Rollenname:</label>
-        <input type="text" v-model="role.Name" placeholder="Rollenname" id="roleName">
-      </div>
+    <div v-if="role" class="section">
+      <form class="label-value-group in-row" v-on:submit.prevent v-on:keyup.enter="addRole">
+        <div class="label-value in-row">
+          <div class="label">Rollenname:</div>
+          <input class="value" type="text" v-model="role.Name" placeholder="Rollenname" id="roleName">
+        </div>
+      </form>
     </div>
 
-    <p v-if="actionError" class="error">{{ actionError }}</p>
+    <div v-if="error" class="section">
+      <div class="error">{{ error }}</div>
+    </div>
+    <div v-if="actionError" class="section">
+      <div class="error">{{ actionError }}</div>
+    </div>
 
-    <table class="data-table" v-if="allPermissionProfiles.length">
-      <thead>
-      <tr>
-        <th>Bezeichnung</th>
-        <th>Auswahl</th>
-      </tr>
-      </thead>
-      <tbody>
-      <tr v-for="item of allPermissionProfiles" :key="item.id">
-        <td>{{ item.description }}</td>
-        <td class="text-h-center"><input type="checkbox" v-model="item.assigned" @change="assignmentChanged(index)"></td>
-      </tr>
-      </tbody>
-    </table>
-
+    <div class="section section--is-scrollable">
+      <table class="data-table" v-if="allPermissionProfiles.length">
+        <thead>
+        <tr>
+          <th>Bezeichnung</th>
+          <th>Auswahl</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr v-for="item of allPermissionProfiles" :key="item.id">
+          <td>{{ item.description }}</td>
+          <td class="text-h-center"><input type="checkbox" v-model="item.assigned" @change="assignmentChanged(index)">
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </template>
 
 
 <script setup>
 defineProps({
-  roleId: { type: String },
+  roleId: {type: String},
 });
 </script>
 
 <script>
-import { mapActions, mapState, mapStores } from "pinia";
-import { UserStore } from "@/stores/user";
+import {mapActions, mapState, mapStores} from "pinia";
+import {UserStore} from "@/stores/user";
 import router from "@/router";
 import _ from "lodash";
 
@@ -74,7 +82,7 @@ export default {
   },
   computed: {
     roleName() {
-      return  this.role?.Name;
+      return this.role?.Name;
     },
     ...mapStores(UserStore),
     ...mapState(UserStore, ["authenticated", "roles"]),
@@ -113,13 +121,13 @@ export default {
     if (!this.roles || this.roles.length === 0) {
       const result = await this.fillRoles();
       if (result !== 200) {
-        router.replace("roles");
+        router.replace({name: 'Roles'});
         return;
       }
     }
     this.role = this.getRole(this.roleId);
     if (!this.role) {
-      router.replace("/roles");
+      router.replace({name: 'Roles'});
       return;
     }
 

@@ -155,7 +155,6 @@
 
 <script setup>
 import IconEdit from "@/components/icons/IconEdit.vue";
-import IconEyes from "@/components/icons/IconEyes.vue";
 
 defineProps({
   transactionId: {type: String},
@@ -287,17 +286,23 @@ export default {
             case 401:
               mustAuthenticate = true;
               break;
+            case 403:
+              this.error = 'Die Berechtigung zum Speichern der Regel fehlt.';
+              not_ok = true;
+              break;
             case 200:
               break;
             default:
               not_ok = true;
           }
           if (mustAuthenticate) {
-            this.error = 'Keine Berechtigung';
+            this.error = 'Benutzer muss angemeldet sein';
             return;
           }
           if (not_ok) {
-            this.error = resultData.message;
+            if (!this.error) {
+              this.error = resultData.message;
+            }
             return;
           }
           router.replace({ name: 'TransactionDetail' });

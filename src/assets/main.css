@@ -5,11 +5,6 @@ a {
   text-decoration: none;
 }
 
-nav a {
-  transition: 0.4s;
-  padding: 0.25em 0.5em 0.25em 0.5em;
-}
-
 .all-transactions-table > tbody > tr > td {
   padding-inline-start: 0.5em;
   padding-inline-end: 0.5em;

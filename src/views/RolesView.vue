@@ -11,7 +11,6 @@
       </form>
     </div>
 
-
     <div v-if="actionError" class="section">
       <div class="error">{{ actionError }}</div>
     </div>
