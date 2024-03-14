@@ -14,7 +14,7 @@ export default {
   },
   mounted() {
     this.logout();
-    router.replace("/");
+    router.replace({ name: 'login'});
   },
 };
 </script>

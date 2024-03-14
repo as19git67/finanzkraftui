@@ -5,7 +5,7 @@ import { UserStore } from "@/stores/user";
 </script>
 
 <template>
-  <header>
+  <header v-if="authenticated">
     <div class="wrapper">
       <nav>
         <RouterLink to="/" v-if="authenticated">Home</RouterLink>
@@ -13,9 +13,7 @@ import { UserStore } from "@/stores/user";
         <RouterLink to="/Accounts" v-if="authenticated && menuPermissions['admin.accounts']">Konten</RouterLink>
         <RouterLink to="/Users" v-if="authenticated && menuPermissions['admin.users']">User</RouterLink>
         <RouterLink to="/Roles" v-if="authenticated && menuPermissions['admin.roles']">Rollen</RouterLink>
-        <RouterLink to="/registration1" v-if="!authenticated">Register</RouterLink>
         <RouterLink to="/logout" v-if="authenticated">Logout</RouterLink>
-        <RouterLink to="/login" v-else>Login</RouterLink>
       </nav>
     </div>
   </header>

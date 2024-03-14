@@ -3,7 +3,7 @@
     <h1 class="title">Regelset</h1>
     <div class="section">
       <div class="top-links">
-        <router-link class="action" :to="{ name: 'TransactionDetail'}">
+        <router-link class="action" replace :to="{ name: 'TransactionDetail'}">
           < Zurück
         </router-link>
         <button @click="saveRuleSet" :disabled="!canSave" class="action btn btn--is-primary">Regel speichern</button>
@@ -28,7 +28,7 @@
           <span>{{ selectedCategoryName }}</span>
           <router-link class="action" :to="{ name: 'CategorySelection', query: {showTransaction:
           false, currentCategoryId: selectedCategory}}">
-            <button class="btn-icon-only" aria-label="Edit">
+            <button class="btn-icon-only" aria-label="Kategorie auswählen" tabindex="-1">
               <IconEdit/>
             </button>
           </router-link>
@@ -262,7 +262,7 @@ export default {
           this.error = resultData.message;
           return;
         }
-        router.back();
+        router.replace({ name: 'TransactionDetail' });
       }).catch(reason => {
         this.error = reason.message;
       });
@@ -300,7 +300,7 @@ export default {
             this.error = resultData.message;
             return;
           }
-          router.back();
+          router.replace({ name: 'TransactionDetail' });
         }).catch(reason => {
           this.error = reason.message;
         })
@@ -446,7 +446,7 @@ export default {
     this.loading = true;
 
     if (!this.transactionId) {
-      router.replace("/");
+      router.replace({ name: 'home' });
       return;
     }
 

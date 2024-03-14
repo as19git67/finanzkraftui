@@ -1,8 +1,8 @@
 <template>
-  <div class="page">
+  <div class="page page--has-no-overflow">
     <h1 class="title">Konten</h1>
     <div class="section section--is-scrollable">
-      <table v-if="accounts.length">
+      <table class="data-table" v-if="accounts.length">
         <thead>
         <tr>
           <th>Name</th>
@@ -79,14 +79,26 @@ export default {
 </script>
 
 <style scoped>
+
+table {
+  table-layout: initial;
+}
+
 th {
+  position: sticky;
+  top: 0;
+  z-index: 100;
   font-weight: bold;
   text-align: start;
-  border-bottom: 1px solid rebeccapurple;
 }
 
 td {
   font-family: "Verdana";
+}
+
+th, td {
+  padding-left: 0.5em;
+  padding-right: 0.5em;
 }
 
 .account-closed {

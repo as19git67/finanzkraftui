@@ -2,7 +2,7 @@
   <div class="page">
     <div class="section">
       <div class="top-links">
-        <router-link v-if="!dirty" class="action" :to="{ name: 'home'}">
+        <router-link v-if="!dirty" class="action" replace :to="{ name: 'home'}">
           < Zurück
         </router-link>
         <button v-if="dirty" @click="cancelChanges" class="action btn btn--is-secondary">Abbrechen
@@ -43,7 +43,7 @@
         <span v-if="transaction.category_name">{{ transaction.category_name }}</span>
         <span v-if="!transaction.category_name">Kategorie wählen</span>
         <router-link class="action" :to="{ name: 'CategorySelection', query: { showTransaction: true, currentCategoryId: transaction.category_id }}">
-          <button class="btn-icon-only" aria-label="Edit">
+          <button class="btn-icon-only" aria-label="Kategorie auswählen" tabindex="-1">
             <IconEdit/>
           </button>
         </router-link>
@@ -97,12 +97,12 @@
     </div>
     <div class="section">
       <div v-if="transaction" class="detail-links">
-        <router-link class="action" :to="{ path:'/', name: 'home'}">
+        <router-link class="action" replace :to="{ path:'/', name: 'home'}">
           Tags bearbeiten
         </router-link>
       </div>
       <div v-if="transaction" class="detail-links">
-        <router-link class="action"
+        <router-link class="action" replace
                      :to="{ name: 'TransactionRules', state: { ruleSetId: transaction.rule_set_id }, meta: { ruleSetId: transaction.rule_set_id } }">
           Regeln <span v-if="transaction.rule_set_id">({{ transaction.rule_set_name }})</span>
         </router-link>
@@ -118,11 +118,11 @@
   </div>
   <div v-if="showConfirmDialog" class="confirm">
     <div class="confirm-backdrop"></div>
-    <div class="confirm-dialog confirm--yes-no">
+    <div class="dialog confirm-dialog confirm--yes-no">
       <span class="confirm-text">{{ confirmText }}</span>
       <div class="btn-group">
         <button class="btn btn-confirm" @click="confirmDialogButtonClicked('yes')">Ja</button>
-        <button class="btn btn-confirm btn--is-primary" autofocus
+        <button class="btn btn-confirm btn--is-primary" v-focus
                 @click="confirmDialogButtonClicked('no')">Nein
         </button>
       </div>
@@ -227,7 +227,7 @@ export default {
       this.editName = false;
     },
     goToTransactionList() {
-      router.replace('/');
+      router.replace({ name: 'home' });
     },
     async cancelChanges() {
       this.confirmText = 'Änderungen verwerfen und zurück zur Liste?';
@@ -404,7 +404,6 @@ export default {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: var(--as-color-secondary-1-4);
   display: flex;
   align-items: center;
   justify-items: center;

@@ -1,46 +1,25 @@
 <template>
-  <div class="login-form">
-    <h1>Login</h1>
-    <hr>
-    <div class="login-grid">
+  <div class="login-form dialog">
+    <h1>Finanzkraft Login</h1>
+    <hr class="divider-hr">
+    <form class="login-grid" v-on:submit.prevent v-on:keyup.enter="loginClicked">
       <label class="user" for="username">Username:</label>
-      <input v-model="email" class="user" id="username" name="Username" />
+      <input v-focus v-model="email" class="user" id="username" name="Username"/>
       <label class="pass" for="password">Passwort:</label>
-      <input
-        type="password"
-        v-model="password"
-        class="pass"
-        id="password"
-        name="Password"
-      />
-      <button
-        autofocus
-        @click="loginClicked()"
-        :disabled="
-          !email || email.length < 8 || !password || password.length < 8
-        "
-        class="btn btn-login"
-      >
-        Login
+      <input type="password" v-model="password" class="pass" id="password" name="Password"/>
+      <button @click="loginClicked()" class="btn btn-login"
+              :disabled="!email || email.length < 8 || !password || password.length < 8">Login
       </button>
-      <hr class="divider" />
-      <router-link
-        class="register-router-link"
-        to="/registration1"
-        v-slot="{ navigate }"
-      >
-        <button class="btn btn-register" @click="navigate" role="link">
-          Registrieren
-        </button>
-      </router-link>
-    </div>
+      <hr class="divider divider-hr"/>
+      <button class="btn btn-register" @click="navigateToRegister" role="link">Registrieren</button>
+    </form>
   </div>
 </template>
 
 <script>
 import router from "@/router/index";
-import { UserStore } from "@/stores/user";
-import { mapActions, mapStores, mapState } from "pinia";
+import {UserStore} from "@/stores/user";
+import {mapActions, mapStores, mapState} from "pinia";
 
 export default {
   name: "LoginView",
@@ -60,13 +39,16 @@ export default {
     loginClicked() {
       this.error = "";
       this.loginBasic(this.email, this.password)
-        .then(() => {
-          router.replace("/");
-        })
-        .catch((error) => {
-          this.error = error.message;
-        });
+      .then(() => {
+        router.replace({name: 'home'});
+      })
+      .catch((error) => {
+        this.error = error.message;
+      });
     },
+    navigateToRegister() {
+      router.replace({name: 'Registration1'})
+    }
   },
   mounted() {
     this.error = null;
@@ -75,11 +57,6 @@ export default {
 </script>
 
 <style scoped>
-.login-form {
-  border: 1px solid mediumvioletred;
-  margin-top: 1em;
-  padding: 1em;
-}
 
 .login-grid {
   margin-top: 1em;
@@ -128,5 +105,10 @@ export default {
 
 .divider {
   grid-area: divider;
+}
+
+.divider-hr {
+  border-style: solid;
+  color: var(--color-border);
 }
 </style>

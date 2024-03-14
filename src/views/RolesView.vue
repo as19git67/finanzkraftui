@@ -18,7 +18,7 @@
 
     <div class="section">
 
-      <table class="data-table table--is-normal" v-if="roles && roles.length">
+      <table class="data-table" v-if="roles && roles.length">
         <thead>
         <tr>
           <th>Name</th>
