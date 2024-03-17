@@ -270,7 +270,9 @@ button:hover svg .metaphor {
   padding-left: 0.5em;
   margin-right: -0.5em;
   padding-right: 0.5em;
+  margin-top: 2px;
 }
+
 .label-value.in-row > .label {
   flex: 0 0 5em;
 }
@@ -311,7 +313,7 @@ button:hover svg .metaphor {
   gap: 0.5em;
   padding-left: 0.5em;
   padding-right: 0.5em;
-  margin-bottom: 0.5em;
+  margin-bottom: 0.25em;
 }
 
 .page > .title,
@@ -327,7 +329,7 @@ button:hover svg .metaphor {
   display: flex;
   flex-direction: column;
   flex: 0 1 auto;
-  margin-bottom: 0.5em;
+  margin-bottom: 0.25em;
 }
 
 .page > .section:last-child {
@@ -350,13 +352,16 @@ button:hover svg .metaphor {
 }
 
 .page > .section > .title ~ .title {
-  margin-top: 0.5em;
+  margin-top: 0.25em;
 }
 
 .page > .section .label-value {
   padding-left: 0.5em;
   padding-right: 0.5em;
-  margin-top: 0.5em;
+}
+
+.page > .section .title + .label-value.in-row {
+  margin-top: 2px;
 }
 
 .page > .section > .footer {
@@ -379,7 +384,13 @@ button:hover svg .metaphor {
   flex: 1 1 auto;
   justify-content: space-between;
   align-items: center;
-  margin: 0.5em;
+  margin-bottom: 0.25em;
+  margin-left: 0.5em;
+  margin-right: 0.5em;
+}
+
+.page > .section:first-child > .top-links {
+  margin-top: 2px;
 }
 
 .detail-links a {
@@ -631,6 +642,7 @@ td {
 .data-table th,
 .data-table td {
   padding: 0.25em 0.5em;
+  min-width: 3em;
   text-align: start;
   border-left: 1px solid var(--color-border);
   margin: 0;

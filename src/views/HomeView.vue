@@ -307,6 +307,6 @@ export default {
 
 <style scoped>
 .section.transaction-list {
-  margin-top: 0.5em;
+  margin-top: 2px;
 }
 </style>

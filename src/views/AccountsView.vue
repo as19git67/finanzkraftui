@@ -7,8 +7,8 @@
         <tr>
           <th>Name</th>
           <th>IBAN</th>
-          <th>Währung</th>
-          <th>Geschlossen</th>
+          <th><span class="only-wide">Währung</span><span class="only-small" aria-label="Währung"></span></th>
+          <th><span class="only-wide">Geschlossen</span><span class="only-small" aria-label="Geschlossen"></span></th>
         </tr>
         </thead>
         <tbody>
@@ -16,7 +16,7 @@
             :class="{ 'account-closed': !!item.closedAt, 'alternate-row-background': index % 2 }">
           <td>{{ item.name }}</td>
           <td>{{ item.iban }}</td>
-          <td>{{ item.currencyName }}</td>
+          <td><span class="only-wide">{{ item.currencyName }}</span><span class="only-small">{{ item.currencyShort }}</span></td>
           <td class="right-aligned">{{
               item.closedAt !== null ? DateTime.fromISO(item.closedAt).toLocaleString() : ''
             }}

@@ -52,6 +52,9 @@ export default {
   },
   mounted() {
     this.error = null;
+    if(this.authenticated) {
+      router.replace({name: 'home'});
+    }
   },
 };
 </script>

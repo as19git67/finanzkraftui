@@ -34,9 +34,10 @@
           </router-link>
         </div>
       </div>
+    </div>
 
+    <div class="section section--is-scrollable">
       <div class="title">Buchung</div>
-
       <div class="details">
         <table class="table--is-wide">
           <tbody>
@@ -67,9 +68,6 @@
           </tbody>
         </table>
       </div>
-    </div>
-
-    <div class="section section--is-scrollable">
       <div class="title">Kriterien</div>
       <div class="label-value in-column">
         <div class="label">Betrag:</div>

@@ -81,10 +81,17 @@ a {
   hyphens: auto;
 }
 
-@media (hover: hover) {
+@media (max-width: 1024px) {
+  .only-wide {
+    display: none;
+  }
 }
 
 @media (min-width: 1024px) {
+  .only-small {
+    display: none;
+  }
+
   body {
     display: flex;
   }

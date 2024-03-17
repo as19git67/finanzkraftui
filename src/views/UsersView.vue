@@ -7,15 +7,13 @@
         <thead>
         <tr>
           <th>Email</th>
-          <th>Initials</th>
-          <th>Email confirmed</th>
+          <th>confirmed</th>
           <th></th>
         </tr>
         </thead>
         <tbody>
         <tr v-for="item of users" :key="item">
           <td>{{ item.Email }}</td>
-          <td>{{ item.Initials }}</td>
           <td><IconTick aria-label="ja" v-if="item.EmailConfirmed"/></td>
           <td>
             <div class="action-group">

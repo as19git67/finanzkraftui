@@ -1,6 +1,6 @@
 <template>
   <div class="page page--has-no-overflow">
-    <h1 class="title">{{ `Rolle ${roleName} ändern` }}</h1>
+    <h1 class="title">{{ `Rolle ändern: ${roleName}` }}</h1>
 
     <div v-if="role" class="section">
       <form class="label-value-group in-row" v-on:submit.prevent v-on:keyup.enter="addRole">
@@ -23,7 +23,7 @@
         <thead>
         <tr>
           <th>Bezeichnung</th>
-          <th>Auswahl</th>
+          <th><span class="only-wide">Auswahl</span><span class="only-small" aria-label="Auswahl"></span></th>
         </tr>
         </thead>
         <tbody>

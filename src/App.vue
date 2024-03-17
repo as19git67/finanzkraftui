@@ -46,6 +46,7 @@ header {
 nav {
   flex-wrap: wrap;
   display: flex;
+  justify-content: space-between;
   font-size: larger;
   font-weight: bold;
 }
@@ -62,8 +63,7 @@ nav a {
   align-items: center;
   justify-content: center;
   transition: 0.4s;
-  padding: 12px;
-  width: 60px;
+  flex: 1 1 auto;
 }
 
 nav a:first-of-type {
@@ -80,7 +80,7 @@ nav a.nav-link--is-large {
 }
 
 nav a.nav-link--is-large .nav-icon {
-  width: 48px;
-  height: 48px;
+  width: 42px;
+  height: 42px;
 }
 </style>
