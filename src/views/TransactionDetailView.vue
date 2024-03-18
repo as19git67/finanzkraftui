@@ -42,12 +42,9 @@
       <div class="label-value in-row">
         <span v-if="transaction.category_name">{{ transaction.category_name }}</span>
         <span v-if="!transaction.category_name">Kategorie wählen</span>
-        <router-link class="action"
-                     :to="{ name: 'CategorySelection', query: { showTransaction: true, currentCategoryId: transaction.category_id }}">
-          <button class="btn-icon-only" aria-label="Kategorie auswählen" tabindex="-1">
+          <button class="btn-icon-only" aria-label="Kategorie auswählen" @click="selectCategory">
             <IconEdit/>
           </button>
-        </router-link>
       </div>
       <div class="label-value in-column">
         <div class="label">Notiz:</div>
@@ -126,6 +123,9 @@
       </div>
     </div>
   </div>
+  <div class="dialog-from-side" :class="{ 'dialog-slided' : showCategorySelectionDialog }">
+    <CategorySelectionView show-transaction="true" :category-preselection="categoryPreselection" @close="categorySelectionDialogButtonClicked"/>
+  </div>
 </template>
 
 
@@ -133,6 +133,7 @@
 import IconEdit from "@/components/icons/IconEdit.vue";
 import IconTick from "@/components/icons/IconTick.vue";
 import IconEyeOK from "@/components/icons/IconEyeOK.vue";
+import CategorySelectionView from "@/views/CategorySelectionView.vue";
 
 defineProps({
   transactionId: {type: String},
@@ -160,6 +161,8 @@ export default {
       error: this.error,
       updateData: this.updateData,
       showConfirmDialog: false,
+      showCategorySelectionDialog: false,
+      categoryPreselection: 0,
       confirmText: '',
       editName: false,
       amazonOrderId: '',
@@ -225,6 +228,23 @@ export default {
     },
     goToTransactionList() {
       router.replace({name: 'home'});
+    },
+    async selectCategory() {
+      this.showCategorySelectionDialog = true;
+      this.showTransaction = true;
+      this.categoryPreselection = this.categoryId;
+      const res = await new Promise((resolve, reject) => {
+        this.dialogResolve = resolve;
+      });
+      switch (res.btnId) {
+        case 'ok':
+          this.categoryId = res.categoryId;
+          break;
+      }
+    },
+    categorySelectionDialogButtonClicked(btnId, categoryId) {
+      this.showCategorySelectionDialog = false;
+      this.dialogResolve({btnId: btnId, categoryId: categoryId});
     },
     async cancelChanges() {
       this.confirmText = 'Änderungen verwerfen und zurück zur Liste?';
@@ -377,13 +397,7 @@ export default {
 
     this.transaction = {...(results[0].data)};
 
-    const selectedCategory = parseInt(router.currentRoute.value.query.selectedCategory);
-    if (selectedCategory) {
-      // back from category selection
-      this.categoryId = selectedCategory;
-    } else {
-      this.categoryId = this.transaction.category_id;
-    }
+    this.categoryId = this.transaction.category_id;
     this.transactionNotes = this.transaction.t_notes;
     this.transactionPayee = this.transaction.t_payee;
     if (!this.transaction.t_payee && !this.transaction.t_entry_text) {

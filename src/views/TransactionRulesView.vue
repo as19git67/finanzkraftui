@@ -26,12 +26,9 @@
         <div class="label">Kategorie:</div>
         <div class="value">
           <span>{{ selectedCategoryName }}</span>
-          <router-link class="action" :to="{ name: 'CategorySelection', query: {showTransaction:
-          false, currentCategoryId: selectedCategory}}">
-            <button class="btn-icon-only" aria-label="Kategorie auswählen" tabindex="-1">
-              <IconEdit/>
-            </button>
-          </router-link>
+          <button class="btn-icon-only" aria-label="Kategorie auswählen" @click="selectCategory">
+            <IconEdit/>
+          </button>
         </div>
       </div>
     </div>
@@ -149,10 +146,14 @@
       </table>
     </div>
   </div>
+  <div class="dialog-from-side" :class="{ 'dialog-slided' : showCategorySelectionDialog }">
+    <CategorySelectionView @close="categorySelectionDialogButtonClicked"/>
+  </div>
 </template>
 
 <script setup>
 import IconEdit from "@/components/icons/IconEdit.vue";
+import CategorySelectionView from "@/views/CategorySelectionView.vue";
 
 defineProps({
   transactionId: {type: String},
@@ -180,6 +181,7 @@ export default {
       filteredCategories: this.filteredCategories,
       selectedCategory: this.selectedCategory,
       selectedCategoryName: 'keine',
+      showCategorySelectionDialog: false,
       transaction: this.transaction,
       matchingTransactionsByDate: this.matchingTransactionsByDate,
       minAmount: this.minAmount,
@@ -420,6 +422,21 @@ export default {
       });
       return transactionsByDate;
     },
+    async selectCategory() {
+      this.showCategorySelectionDialog = true;
+      const res = await new Promise((resolve, reject) => {
+        this.dialogResolve = resolve;
+      });
+      switch (res.btnId) {
+        case 'ok':
+          this.selectedCategory = res.categoryId;
+          break;
+      }
+    },
+    categorySelectionDialogButtonClicked(btnId, categoryId) {
+      this.showCategorySelectionDialog = false;
+      this.dialogResolve({btnId: btnId, categoryId: categoryId});
+    },
   },
   created() {
     this._decimalFormatter = new Intl.NumberFormat(undefined, {
@@ -526,14 +543,7 @@ export default {
     }
 
     this.transaction = {...(results[0].data)};
-
-    const selectedCategory = parseInt(router.currentRoute.value.query.selectedCategory);
-    if (selectedCategory) {
-      // back from category selection
-      this.selectedCategory = selectedCategory;
-    } else {
-      this.selectedCategory = this.transaction.category_id;
-    }
+    this.selectedCategory = this.transaction.category_id;
 
     this.ruleSet.name = this.loadedRuleSet.name;
     if (!this.ruleSet.name && this.transaction.t_payee) {

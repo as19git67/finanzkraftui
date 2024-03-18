@@ -1,5 +1,5 @@
 <template>
-  <div class="page page--has-no-overflow">
+  <div class="dialog-full-page">
     <h1 class="title">Kategorieauswahl</h1>
     <div class="section">
 
@@ -53,6 +53,8 @@
         <div class="label">Kategoriesuche:</div>
         <input class="value" type="search" autofocus v-model="categorySearch" placeholder="Kategorie suchen">
       </div>
+    </div>
+    <div class="section section--is-scrollable">
       <table class="table--is-normal">
         <tbody>
         <tr v-for="(item) in filteredCategories" :key="item.id">
@@ -69,10 +71,16 @@
 
 
 <script setup>
-import {DateTime} from "luxon";
+defineProps(['showTransaction', 'categoryPreselection']);
+const emit = defineEmits(['close']);
+
+function goBackCancel() {
+  emit('close', 'cancel');
+}
 </script>
 
 <script>
+import {DateTime} from "luxon";
 import {mapActions, mapState, mapStores} from "pinia";
 import router from "@/router";
 import _ from "lodash";
@@ -85,11 +93,10 @@ export default {
   data() {
     return {
       error: this.error,
-      selectedCategory: 0,
       selectedCategoryName: this.selectedCategoryName,
       categorySearch: this.categorySearch,
+      selectedCategory: this.selectedCategory,
       filteredCategories: this.filteredCategories,
-      showTransaction: this.showTransaction,
     };
   },
   computed: {
@@ -115,12 +122,7 @@ export default {
   methods: {
     ...mapActions(MasterDataStore, ["getCategories", "getCategoryById"]),
     goBackOk: function () {
-      const prevPage = router.options.history.state.back;
-      router.push({ path: prevPage,  query: { selectedCategory: this.selectedCategory } });
-    },
-    goBackCancel: function () {
-      const prevPage = router.options.history.state.back;
-      router.push({ path: prevPage,  query: { selectedCategory: 0 } });
+      this.$emit('close', 'ok', this.selectedCategory);
     },
     _filterCategories: function (searchTerm) {
       this.filteredCategories = this.unfilteredCategories
@@ -140,7 +142,6 @@ export default {
     this.filteredCategories = [];
     this.unfilteredCategories = [];
     this.selectedCategoryName = 'keine';
-    this.showTransaction = false;
   },
   async mounted() {
     this.error = undefined;
@@ -182,11 +183,9 @@ export default {
       }
       return;
     }
-    if (router.currentRoute.value.query.currentCategoryId) {
-      this.selectedCategory = parseInt(router.currentRoute.value.query.currentCategoryId);
-    } else {
-      this.selectedCategory = 0;
-    }
+
+    this.selectedCategory = this.categoryPreselection;
+
     this.unfilteredCategories = this.categories.map(category => {
       const c = {...category};
       c.selected = (this.selectedCategory === c.id);
@@ -196,8 +195,6 @@ export default {
     if (this.selectedCategory) {
       this._filterCategories();
     }
-
-    this.showTransaction = router.currentRoute.value.query.showTransaction === 'true';
   },
 };
 </script>
