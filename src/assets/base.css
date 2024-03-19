@@ -35,7 +35,6 @@
     --as-color-secondary-1-2: #6f7a32;
     --as-color-secondary-1-3: #b9d035;
     --as-color-secondary-1-4: #d9f82d;
-    --as-color-secondary-1-5: rgba(217, 248, 45, 0.75);
 
     --as-color-secondary-2-0: #6a266f; /* Main Secondary color (2) */
     --as-color-secondary-2-1: #331a35;
@@ -66,9 +65,10 @@
     --color-border-hover: var(--as-color-primary-0);
 
     --color-heading: var(--as-color-secondary-1-4);
-    --color-background-dialog: var(--as-color-secondary-1-4);
+    --color-background-dialog: var(--as-color-secondary-1-3);
+    --color-text-dialog: var(--as-color-primary-1);
     --color-text: var(--as-color-primary-1);
-    --color-text-light: var(--as-color-primary-1);
+    --color-text-light: var(--as-color-primary-2);
     --color-text-error: var(--as-color-error);
 
     --color-button-primary: var(--as-color-primary-4);
@@ -156,6 +156,7 @@ button:hover svg .metaphor {
 .dialog {
     border: 1px solid var(--color-border);
     background-color: var(--color-background-dialog);
+    color: var(--color-text-dialog);
     box-shadow: rgba(50, 50, 93, 0.25) 0 50px 100px -20px, rgba(0, 0, 0, 0.3) 0 30px 60px -30px, rgba(10, 37, 64, 0.35) 0 -2px 6px 0 inset;
 }
 
@@ -223,6 +224,7 @@ button:hover svg .metaphor {
 
 .dialog-from-side {
     background-color: var(--color-background-dialog);
+    color: var(--color-text-dialog);
     position: absolute;
     top: 0;
     left: 0;
@@ -368,7 +370,14 @@ button:hover svg .metaphor {
 .page > .section.section--is-scrollable {
     flex: 1 1 auto;
     overflow: auto;
+}
+
+.page > .section.section--is-scrollable {
     border-top: 1px solid var(--color-background-hard);
+}
+
+.dialog-full-page > .section.section--is-scrollable {
+    border-top: 1px solid var(--color-border);
 }
 
 .dialog-full-page > .section > .title,
@@ -447,6 +456,24 @@ button:hover svg .metaphor {
 
 .page > .section label > input {
     margin-inline-end: 0.5em;
+}
+
+.section ol.selection-list {
+    list-style-type: none;
+    padding-inline-start: 0;
+}
+
+.section .selection-list .list-item {
+    padding-inline-start: 0.75em;
+    padding-inline-end: 0.25em;
+}
+@media (pointer:coarse) {
+    .section .selection-list .list-item {
+        padding-inline-start: 1em;
+    }
+    .section .selection-list .list-item input[type=checkbox] {
+        margin: 0.75em;
+    }
 }
 
 .form {

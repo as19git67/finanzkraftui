@@ -6,7 +6,8 @@
       <form class="label-value-group in-row" v-on:submit.prevent v-on:keyup.enter="addRole">
         <div class="label-value in-row">
           <div class="label">Rollenname:</div>
-          <input class="value" type="text" v-model="role.Name" placeholder="Rollenname" id="roleName">
+          <input class="value" type="text" v-model="role.Name" placeholder="Rollenname"
+                 id="roleName">
         </div>
       </form>
     </div>
@@ -18,22 +19,21 @@
       <div class="error">{{ actionError }}</div>
     </div>
 
+    <div class="section">
+      <div class="title">Wähle alle Berechtigungen aus, die ein Benutzer mit dieser Rolle
+        haben soll:
+      </div>
+    </div>
+
     <div class="section section--is-scrollable">
-      <table class="data-table" v-if="allPermissionProfiles.length">
-        <thead>
-        <tr>
-          <th>Bezeichnung</th>
-          <th><span class="only-wide">Auswahl</span><span class="only-small" aria-label="Auswahl"></span></th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr v-for="item of allPermissionProfiles" :key="item.id">
-          <td>{{ item.description }}</td>
-          <td class="text-h-center"><input type="checkbox" v-model="item.assigned" @change="assignmentChanged(index)">
-          </td>
-        </tr>
-        </tbody>
-      </table>
+      <ol class="selection-list" v-if="allPermissionProfiles.length">
+        <li v-for="(item,index) of allPermissionProfiles" :key="item.id"
+             class="list-item text-h-center" :class="{'alternate-row-background': index % 2 }">
+          <label>
+            <input type="checkbox" v-model="item.assigned" @change="assignmentChanged(index)">
+            {{ item.description }}</label>
+        </li>
+      </ol>
     </div>
   </div>
 </template>
@@ -41,13 +41,13 @@
 
 <script setup>
 defineProps({
-  roleId: {type: String},
+  roleId: { type: String },
 });
 </script>
 
 <script>
-import {mapActions, mapState, mapStores} from "pinia";
-import {UserStore} from "@/stores/user";
+import { mapActions, mapState, mapStores } from "pinia";
+import { UserStore } from "@/stores/user";
 import router from "@/router";
 import _ from "lodash";
 
@@ -121,13 +121,13 @@ export default {
     if (!this.roles || this.roles.length === 0) {
       const result = await this.fillRoles();
       if (result !== 200) {
-        router.replace({name: 'Roles'});
+        router.replace({ name: 'Roles' });
         return;
       }
     }
     this.role = this.getRole(this.roleId);
     if (!this.role) {
-      router.replace({name: 'Roles'});
+      router.replace({ name: 'Roles' });
       return;
     }
 
@@ -145,13 +145,13 @@ export default {
         status = result.status;
       }
       switch (status) {
-        case 401:
-          mustAuthenticate = true;
-          break;
-        case 200:
-          break;
-        default:
-          not_ok = true;
+      case 401:
+        mustAuthenticate = true;
+        break;
+      case 200:
+        break;
+      default:
+        not_ok = true;
       }
     });
     if (mustAuthenticate || not_ok) {
@@ -172,7 +172,8 @@ export default {
     });
 
     this.allPermissionProfiles = results[1].data.map((permissionProfile) => {
-      const assigned = permissionProfilesOfRole[permissionProfile.idPermissionProfile] !== undefined;
+      const assigned = permissionProfilesOfRole[permissionProfile.idPermissionProfile] !==
+                       undefined;
       return {
         id: permissionProfile.idPermissionProfile,
         description: permissionProfile.Description,
