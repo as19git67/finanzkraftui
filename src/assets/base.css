@@ -96,7 +96,7 @@
 }
 
 body {
-    min-height: 100vh;
+    min-height: 100dvh;
     color: var(--color-text);
     background: var(--color-background);
     transition: color 0.5s, background-color 0.5s;
@@ -133,7 +133,7 @@ button:hover svg .metaphor {
 #app {
     font-weight: normal;
     width: 100vw;
-    height: 100vh;
+    height: 100dvh;
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -169,7 +169,7 @@ button:hover svg .metaphor {
     top: 0;
     left: 0;
     width: 100vw;
-    height: 100vh;
+    height: 100dvh;
 }
 
 .confirm .confirm-backdrop {
@@ -188,6 +188,8 @@ button:hover svg .metaphor {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+    min-width: 20em;
+    max-width: 40em;
     display: flex;
     align-items: center;
     justify-items: center;
@@ -216,7 +218,7 @@ button:hover svg .metaphor {
 }
 
 .dialog-full-page {
-    height: 100vh;
+    height: 100dvh;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -433,7 +435,7 @@ button:hover svg .metaphor {
 }
 
 .page > .section:first-child > .top-links {
-    margin-top: 2px;
+    margin-top: 0.5em;
 }
 
 .detail-links a {

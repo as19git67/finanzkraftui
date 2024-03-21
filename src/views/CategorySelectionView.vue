@@ -18,7 +18,7 @@
               <div class="td-text-item">
                 {{
                   transaction.t_payee ? transaction.t_payee :
-                      transaction.textShortened ? transaction.textShortened : transaction.t_entry_ext
+                  transaction.textShortened ? transaction.textShortened : transaction.t_entry_ext
                 }}
               </div>
               <div class="td-text-item item--is-category">{{ selectedCategoryName }}</div>
@@ -47,18 +47,22 @@
       </div>
       <div class="action-group">
         <button @click="goBackCancel" class="action btn btn--is-secondary">Abbrechen</button>
-        <button @click="goBackOk" :disabled="!selectedCategory" class="action btn btn--is-primary">Übernehmen</button>
+        <button @click="goBackOk" :disabled="!selectedCategory" class="action btn btn--is-primary">
+          Übernehmen
+        </button>
       </div>
       <div class="label-value in-column">
         <div class="label">Kategoriesuche:</div>
-        <input class="value" type="search" autofocus v-model="categorySearch" placeholder="Kategorie suchen">
+        <input class="value" type="search" autofocus v-model="categorySearch"
+               placeholder="Kategorie suchen">
       </div>
     </div>
     <div class="section section--is-scrollable">
       <table class="table--is-normal">
         <tbody>
         <tr v-for="(item) in filteredCategories" :key="item.id">
-          <td class="text-h-center"><label><input class="selectionInput" type="radio" v-model="selectedCategory"
+          <td class="text-h-center"><label><input class="selectionInput" type="radio"
+                                                  v-model="selectedCategory"
                                                   :value="item.id" :checked="item.selected"
                                                   name="ruleCategory">{{ item.full_name }}</label>
           </td>
@@ -80,12 +84,12 @@ function goBackCancel() {
 </script>
 
 <script>
-import {DateTime} from "luxon";
-import {mapActions, mapState, mapStores} from "pinia";
+import { DateTime } from "luxon";
+import { mapActions, mapState, mapStores } from "pinia";
 import router from "@/router";
 import _ from "lodash";
-import {MasterDataStore} from "@/stores/masterdata";
-import {TransactionStore} from "@/stores/transactions";
+import { MasterDataStore } from "@/stores/masterdata";
+import { TransactionStore } from "@/stores/transactions";
 
 export default {
   name: "CategorySelectionView",
@@ -117,6 +121,16 @@ export default {
       } else {
         this.selectedCategoryName = 'keine';
       }
+    },
+    categoryPreselection: function (val, oldVal) {
+      this.selectedCategory = val;
+      this.unfilteredCategories = this.categories.map(category => {
+        const c = { ...category };
+        c.selected = (this.selectedCategory === c.id);
+        return c;
+      });
+
+      this._filterCategories();
     }
   },
   methods: {
@@ -126,14 +140,14 @@ export default {
     },
     _filterCategories: function (searchTerm) {
       this.filteredCategories = this.unfilteredCategories
-      .filter((category) => {
-        const lowerCaseCategory = category.full_name.toLowerCase();
-        if (category.selected) {
-          this.selectedCategoryName = category.full_name;
-          return true;
-        }
-        return searchTerm && lowerCaseCategory.indexOf(searchTerm) >= 0;
-      });
+          .filter((category) => {
+            const lowerCaseCategory = category.full_name.toLowerCase();
+            if (category.selected) {
+              this.selectedCategoryName = category.full_name;
+              return true;
+            }
+            return searchTerm && lowerCaseCategory.indexOf(searchTerm) >= 0;
+          });
     },
   },
   created() {
@@ -160,14 +174,14 @@ export default {
         status = result.status;
       }
       switch (status) {
-        case 401:
-          mustAuthenticate = true;
-          break;
-        case 200:
-          break;
-        default:
-          not_ok = true;
-          this.error = result.message;
+      case 401:
+        mustAuthenticate = true;
+        break;
+      case 200:
+        break;
+      default:
+        not_ok = true;
+        this.error = result.message;
       }
     });
     if (mustAuthenticate || not_ok) {
@@ -184,17 +198,6 @@ export default {
       return;
     }
 
-    this.selectedCategory = this.categoryPreselection;
-
-    this.unfilteredCategories = this.categories.map(category => {
-      const c = {...category};
-      c.selected = (this.selectedCategory === c.id);
-      return c;
-    });
-
-    if (this.selectedCategory) {
-      this._filterCategories();
-    }
   },
 };
 </script>

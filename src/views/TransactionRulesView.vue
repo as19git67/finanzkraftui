@@ -9,7 +9,7 @@
         <button @click="saveRuleSet" :disabled="!canSave" class="action btn btn--is-primary">Regel speichern</button>
       </div>
       <div class="top-links">
-        <button v-if="loadedRuleSet.id" @click="deleteRuleSet" :disabled="!loadedRuleSet.id"
+        <button v-if="loadedRuleSet.id" @click="deleteRuleSetWithConfirmation" :disabled="!loadedRuleSet.id"
                 class="action btn btn--is-danger">Regel löschen
         </button>
         <label v-if="loadedRuleSet.id"><input type="checkbox" v-model="includeProcessed">Buchungen aktualisieren</label>
@@ -147,7 +147,23 @@
     </div>
   </div>
   <div class="dialog-from-side" :class="{ 'dialog-slided' : showCategorySelectionDialog }">
-    <CategorySelectionView @close="categorySelectionDialogButtonClicked"/>
+    <CategorySelectionView show-transaction="false" :category-preselection="categoryPreselection"
+                           @close="categorySelectionDialogButtonClicked"/>
+  </div>
+  <div v-if="confirmationDialog.show" class="confirm">
+    <div class="confirm-backdrop"></div>
+    <div class="dialog confirm-dialog confirm--yes-no">
+      <span class="confirm-text">{{ confirmationDialog.text }}</span>
+      <div class="btn-group">
+        <button class="btn btn-confirm" @click="confirmDialogButtonClicked(confirmationDialog.button2.key)">
+          {{ confirmationDialog.button2.label }}
+        </button>
+        <button class="btn btn-confirm btn--is-primary" v-focus
+                @click="confirmDialogButtonClicked(confirmationDialog.button1.key)">
+          {{ confirmationDialog.button1.label }}
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -180,8 +196,22 @@ export default {
       categorySearch: this.categorySearch,
       filteredCategories: this.filteredCategories,
       selectedCategory: this.selectedCategory,
+      categoryPreselection: 0,
       selectedCategoryName: 'keine',
       showCategorySelectionDialog: false,
+      confirmationDialog: {
+        show: false,
+        title: '',
+        text: '',
+        button1: {
+          label: '',
+          key: ''
+        },
+        button2: {
+          label: '',
+          key: ''
+        },
+      },
       transaction: this.transaction,
       matchingTransactionsByDate: this.matchingTransactionsByDate,
       minAmount: this.minAmount,
@@ -236,11 +266,12 @@ export default {
   methods: {
     ...mapActions(MasterDataStore, ["getCategoryById", "getCategories"]),
     ...mapActions(TransactionStore, ["getTransaction", "getMatchingTransactions", "getRuleSet", "setRules", "deleteRules"]),
-    deleteRuleSet() {
-      if (!this.loadedRuleSet.id) {
-        return;
+    async deleteRuleSet() {
+      if (!this.loadedRuleSet?.id) {
+        throw new Error('Must have ruleset loaded');
       }
-      this.deleteRules(this.loadedRuleSet.id).then(resultData => {
+      try {
+        const resultData = await this.deleteRules(this.loadedRuleSet.id);
         let mustAuthenticate = false;
         let not_ok = false;
         let status = resultData.status;
@@ -261,11 +292,10 @@ export default {
           this.error = resultData.message;
           return;
         }
-        router.replace({ name: 'TransactionDetail' });
-      }).catch(reason => {
-        this.error = reason.message;
-      });
-
+        router.replace({name: 'TransactionDetail'});
+      } catch(ex) {
+        this.error = ex.message;
+      }
     },
     saveRuleSet() {
       const name = this.ruleSet.name.trim();
@@ -305,7 +335,7 @@ export default {
             }
             return;
           }
-          router.replace({ name: 'TransactionDetail' });
+          router.replace({name: 'TransactionDetail'});
         }).catch(reason => {
           this.error = reason.message;
         })
@@ -424,6 +454,7 @@ export default {
     },
     async selectCategory() {
       this.showCategorySelectionDialog = true;
+      this.categoryPreselection = this.selectedCategory;
       const res = await new Promise((resolve, reject) => {
         this.dialogResolve = resolve;
       });
@@ -436,6 +467,31 @@ export default {
     categorySelectionDialogButtonClicked(btnId, categoryId) {
       this.showCategorySelectionDialog = false;
       this.dialogResolve({btnId: btnId, categoryId: categoryId});
+    },
+    async deleteRuleSetWithConfirmation() {
+      if (!this.loadedRuleSet.id) {
+        return;
+      }
+      this.confirmationDialog.text = 'Regel wirklich löschen?';
+      this.confirmationDialog.button1.key = 'no';
+      this.confirmationDialog.button1.label = 'Nein';
+      this.confirmationDialog.button2.key = 'yes';
+      this.confirmationDialog.button2.label = 'Ja';
+      this.confirmationDialog.show = true;
+      const res = await new Promise((resolve, reject) => {
+        this.dialogResolve = resolve;
+      });
+      switch (res) {
+        case 'yes':
+          await this.deleteRuleSet()
+          break;
+        case 'no':
+          break;
+      }
+    },
+    confirmDialogButtonClicked(btnId) {
+      this.confirmationDialog.show = false;
+      this.dialogResolve(btnId);
     },
   },
   created() {
@@ -466,7 +522,7 @@ export default {
     this.loading = true;
 
     if (!this.transactionId) {
-      router.replace({ name: 'home' });
+      router.replace({name: 'home'});
       return;
     }
 
