@@ -85,6 +85,18 @@
         <div class="label">Zahlungsempfänger:</div>
         <div class="value">{{ transaction.t_payeePayerAcctNo }}</div>
       </div>
+      <div v-if="transaction.t_EREF" class="label-value in-row">
+        <div class="label">EREF:</div>
+        <div class="value">{{ transaction.t_EREF }}</div>
+      </div>
+      <div v-if="transaction.t_CRED" class="label-value in-row">
+        <div class="label">Gläubiger:</div>
+        <div class="value">{{ transaction.t_CRED }}</div>
+      </div>
+      <div v-if="transaction.t_MREF" class="label-value in-row">
+        <div class="label">Mandatsreferenz:</div>
+        <div class="value">{{ transaction.t_MREF }}</div>
+      </div>
       <div class="label-value in-row">
         <div class="label">Buchungsart:</div>
         <div class="value">{{
