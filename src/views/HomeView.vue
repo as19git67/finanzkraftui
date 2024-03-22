@@ -151,6 +151,7 @@ export default {
     ...mapActions(MasterDataStore, ["getTimespans"]),
     ...mapActions(TransactionStore, ["getTransactions", "setLastScrollTop"]),
     ...mapActions(AccountStore, ["getAccounts"]),
+    ...mapActions(UserStore, ["setNotAuthenticated"]),
     tableScroll(ev) {
       this.setLastScrollTop(ev.srcElement.scrollTop);
     },
@@ -222,6 +223,7 @@ export default {
         results.forEach((result) => {
           switch (result) {
             case 401:
+            case 403:
             case 404:
               mustAuthenticate = true;
               break;
@@ -232,6 +234,7 @@ export default {
           }
         });
         if (mustAuthenticate || not_ok) {
+          this.setNotAuthenticated();
           router.replace("/login");
           return;
         }

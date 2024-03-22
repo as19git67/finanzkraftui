@@ -51,6 +51,9 @@
                   {{ transaction.t_payee ? transaction.textShortened : '' }}
                 </div>
                 <div class="td-text-item item--is-notes">{{ transaction.t_notes }}</div>
+                <div class="td-text-item item--is-text">{{ transaction.t_EREF ? `Ende zu Ende Referenz: ${transaction.t_EREF}` : '' }}</div>
+                <div class="td-text-item item--is-text">{{ transaction.t_MREF ? `Mandatsreferenz: ${transaction.t_MREF}` : '' }}</div>
+                <div class="td-text-item item--is-text">{{ transaction.t_CRED ? `Gläubiger ID: ${transaction.t_CRED}` : '' }}</div>
               </div>
             </td>
             <td class="transaction-amount"><span v-if="transaction.currency_id">
@@ -80,6 +83,10 @@
         <label class="label" for="maxAmountInput">größter:</label>
         <input class="value" type="text" v-model="maxAmount" placeholder="größter Betrag" id="maxAmountInput">
         {{ transaction.currencyShort }}
+      </div>
+      <div class="label-value in-column">
+        <div class="label">Mandatsreferenz:</div>
+        <label><input class="selectionInput" type="checkbox" v-model="useMREF">{{ transaction.t_MREF }}</label>
       </div>
 
       <div class="label-value in-column">
@@ -126,6 +133,9 @@
                       <div class="td-text-item item--is-category">{{ item.category_name }}</div>
                       <div class="td-text-item item--is-text">{{ item.t_payee ? item.textShortened : '' }}</div>
                       <div class="td-text-item item--is-notes">{{ item.t_notes }}</div>
+                      <div class="td-text-item item--is-text">{{ item.t_EREF ? `Ende zu Ende Referenz: ${item.t_EREF}` : '' }}</div>
+                      <div class="td-text-item item--is-text">{{ item.t_MREF ? `Mandatsreferenz: ${item.t_MREF}` : '' }}</div>
+                      <div class="td-text-item item--is-text">{{ item.t_CRED ? `Gläubiger ID: ${item.t_CRED}` : '' }}</div>
                     </div>
                   </td>
                   <td class="transaction-amount">
@@ -218,6 +228,8 @@ export default {
       maxAmount: this.maxAmount,
       useMinAmount: this.useMinAmount,
       useMaxAmount: this.useMaxAmount,
+      useMREF: this.useMREF,
+      isMREF: this.isMREF,
       error: this.error,
       includeProcessed: this.includeProcessed,
       loadedRuleSet: this.loadedRuleSet,
@@ -230,6 +242,14 @@ export default {
       } else {
         this.selectedCategoryName = 'keine';
       }
+    },
+    useMREF: function(val, oldVal) {
+      if (val) {
+        this.isMREF = this.transaction.t_MREF;
+      } else {
+        this.isMREF = '';
+      }
+      this._runRules();
     }
   },
   computed: {
@@ -303,6 +323,7 @@ export default {
         const ruleInfo = {
           name: name,
           idSetCategory: this.selectedCategory,
+          is_MREF: this.isMREF ? this.isMREF : undefined,
           textRules: this._getSelectedTextToken(),
         };
         if (this.loadedRuleSet.id) {
@@ -353,11 +374,11 @@ export default {
       });
       return textRules;
     },
-    async _setMatchingTransactionsForTextToken(selectedTextToken) {
+    async _setMatchingTransactions(selectedTextToken, mRefToken) {
       this.matchingTransactions = [];
-      if (selectedTextToken.length > 0) {
+      if (selectedTextToken.length > 0 || mRefToken) {
         this.loading = true;
-        const resultData = await this.getMatchingTransactions({maxItems: 15, textToken: selectedTextToken});
+        const resultData = await this.getMatchingTransactions({maxItems: 15, textToken: selectedTextToken, mRefToken: mRefToken});
         this.loading = false;
         let mustAuthenticate = false;
         let not_ok = false;
@@ -404,7 +425,7 @@ export default {
     },
     async _runRules() {
       const selectedTextToken = this._getSelectedTextToken();
-      await this._setMatchingTransactionsForTextToken(selectedTextToken);
+      await this._setMatchingTransactions(selectedTextToken, this.isMREF);
       if (!this.manuallyChangedMinMaxAmount) {
         if (this.matchingTransactions.length > 0) {
           this.minAmount = Number.MAX_VALUE;
@@ -510,6 +531,8 @@ export default {
     this.maxAmount = 0;
     this.useMinAmount = true;
     this.useMaxAmount = true;
+    this.useMREF = false;
+    this.isMREF = '';
     this.filteredCategories = [];
     this.unfilteredCategories = [];
     this.ruleSetId = 0;

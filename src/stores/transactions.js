@@ -132,6 +132,7 @@ export const TransactionStore = defineStore('transaction', {
             'dateFilterFrom',
             'dateFilterTo',
             'textToken',
+            'mRefToken',
           );
         }
         try {
