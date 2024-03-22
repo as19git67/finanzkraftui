@@ -270,6 +270,9 @@ export default {
         if (this.selectedCategory && this.selectedCategory !== this.loadedRuleSet.idSetCategory) {
           return true;
         }
+        if (this.isMREF && this.isMREF !== this.loadedRuleSet.isMREF) {
+          return true;
+        }
         const textToken = this._getSelectedTextToken();
         const textTokenHash = textToken.toSorted().join(',');
         if (this.loadedTextTokenHash && textTokenHash !== this.loadedTextTokenHash) {
