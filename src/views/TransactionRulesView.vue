@@ -243,6 +243,12 @@ export default {
         this.selectedCategoryName = 'keine';
       }
     },
+    useMinAmount: function(val, oldVal) {
+      this._runRules();
+    },
+    useMaxAmount: function(val, oldVal) {
+      this._runRules();
+    },
     useMREF: function(val, oldVal) {
       if (val) {
         this.isMREF = this.transaction.t_MREF;
@@ -270,12 +276,16 @@ export default {
         if (this.selectedCategory && this.selectedCategory !== this.loadedRuleSet.idSetCategory) {
           return true;
         }
-        if (this.isMREF && this.isMREF !== this.loadedRuleSet.isMREF) {
-          return true;
-        }
+
         const textToken = this._getSelectedTextToken();
         const textTokenHash = textToken.toSorted().join(',');
-        if (this.loadedTextTokenHash && textTokenHash !== this.loadedTextTokenHash) {
+        if (!this.isMREF && textToken.length === 0) {
+          return false; // can't save if neither MREF nor text token is selected
+        }
+        if (this.isMREF !== this.loadedRuleSet.is_MREF) {
+          return true;
+        }
+        if (textTokenHash !== this.loadedTextTokenHash) {
           return true;
         }
         return false;
@@ -326,7 +336,7 @@ export default {
         const ruleInfo = {
           name: name,
           idSetCategory: this.selectedCategory,
-          is_MREF: this.isMREF ? this.isMREF : undefined,
+          is_MREF: this.isMREF ? this.isMREF : null,
           textRules: this._getSelectedTextToken(),
         };
         if (this.loadedRuleSet.id) {
@@ -429,23 +439,29 @@ export default {
     async _runRules() {
       const selectedTextToken = this._getSelectedTextToken();
       await this._setMatchingTransactions(selectedTextToken, this.isMREF);
-      if (!this.manuallyChangedMinMaxAmount) {
-        if (this.matchingTransactions.length > 0) {
-          this.minAmount = Number.MAX_VALUE;
-          this.maxAmount = -Number.MAX_VALUE;
-          this.matchingTransactions.forEach(t => {
-            const amount = t.t_amount;
-            if (amount < this.minAmount) {
-              this.minAmount = amount;
-            }
-            if (amount > this.maxAmount) {
-              this.maxAmount = amount;
-            }
-          });
-          this.minAmount = this._decimalFormatter.format(this.minAmount);
-          this.maxAmount = this._decimalFormatter.format(this.maxAmount);
-        } else {
+      if (this.matchingTransactions.length > 0) {
+        let minAmount = Number.MAX_VALUE;
+        let maxAmount = -Number.MAX_VALUE;
+        this.matchingTransactions.forEach(t => {
+          const amount = t.t_amount;
+          if (amount < minAmount) {
+            minAmount = amount;
+          }
+          if (amount > maxAmount) {
+            maxAmount = amount;
+          }
+        });
+        if (!this.useMinAmount) {
+          this.minAmount = this._decimalFormatter.format(minAmount);
+        }
+        if (!this.useMaxAmount) {
+          this.maxAmount = this._decimalFormatter.format(maxAmount);
+        }
+      } else {
+        if (!this.useMinAmount) {
           this.minAmount = '';
+        }
+        if (!this.useMaxAmount) {
           this.maxAmount = '';
         }
       }
@@ -529,11 +545,10 @@ export default {
     this.textToken = {};
     this.matchingTransactions = [];
     this.matchingTransactionsByDate = [];
-    this.manuallyChangedMinMaxAmount = false;
     this.minAmount = 0;
     this.maxAmount = 0;
-    this.useMinAmount = true;
-    this.useMaxAmount = true;
+    this.useMinAmount = false;
+    this.useMaxAmount = false;
     this.useMREF = false;
     this.isMREF = '';
     this.filteredCategories = [];
@@ -599,6 +614,7 @@ export default {
       "name": "O2 Mobilfunk",
       "set_note": null,
       "idSetCategory": 226,
+      "is_MREF": "OKF100000003062",
       "textRules": [
         {
           "idRuleSet": 9,
@@ -623,6 +639,15 @@ export default {
         accountRules: [],
       }
     }
+    if (!this.loadedRuleSet.textRules) {
+      this.loadedRuleSet.textRules = [];
+    }
+    if (!this.loadedRuleSet.accountRules) {
+      this.loadedRuleSet.accountRules = [];
+    }
+    if (!this.loadedRuleSet.is_MREF) {
+      this.loadedRuleSet.is_MREF = '';
+    }
 
     this.transaction = {...(results[0].data)};
     this.selectedCategory = this.transaction.category_id;
@@ -630,6 +655,9 @@ export default {
     this.ruleSet.name = this.loadedRuleSet.name;
     if (!this.ruleSet.name && this.transaction.t_payee) {
       this.ruleSet.name = this.transaction.t_payee;
+    }
+    if (this.loadedRuleSet.is_MREF && this.loadedRuleSet.is_MREF === this.transaction.t_MREF) {
+      this.useMREF = true;
     }
 
     this.textToken = {};
@@ -644,7 +672,10 @@ export default {
     this.loadedTextTokenHash = tokenList.toSorted().join(',');
     if (this.transaction.t_text) {
       this.transaction.t_text.split(' ').forEach(token => {
-        const to = token.trim();
+        let to = token.trim();
+        if (to.endsWith(',')) {
+          to = to.substring(0, to.length -1);
+        }
         if (to.length > 1 && !this.textToken[to]) {
           this.textToken[to] = {
             text: to,
