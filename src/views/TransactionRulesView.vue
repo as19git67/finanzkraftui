@@ -15,7 +15,6 @@
         <label v-if="loadedRuleSet.id"><input type="checkbox" v-model="includeProcessed">Buchungen aktualisieren</label>
       </div>
 
-      <div v-if="error" class="error">{{ error }}</div>
 
       <div class="title">Regel</div>
       <div class="label-value in-row">
@@ -34,6 +33,7 @@
     </div>
 
     <div class="section section--is-scrollable">
+      <div v-if="error" class="error">{{ error }}</div>
       <div class="title">Buchung</div>
       <div class="details">
         <table class="table--is-wide">
@@ -84,7 +84,7 @@
         <input class="value" type="text" v-model="maxAmount" placeholder="größter Betrag" id="maxAmountInput">
         {{ transaction.currencyShort }}
       </div>
-      <div class="label-value in-column">
+      <div v-if="transaction.t_MREF" class="label-value in-column">
         <div class="label">Mandatsreferenz:</div>
         <label><input class="selectionInput" type="checkbox" v-model="useMREF">{{ transaction.t_MREF }}</label>
       </div>
