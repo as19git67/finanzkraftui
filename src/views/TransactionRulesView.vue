@@ -12,7 +12,9 @@
         <button v-if="loadedRuleSet.id" @click="deleteRuleSetWithConfirmation" :disabled="!loadedRuleSet.id"
                 class="action btn btn--is-danger">Regel löschen
         </button>
-        <label v-if="loadedRuleSet.id"><input type="checkbox" v-model="includeProcessed">Buchungen aktualisieren</label>
+        <label v-if="loadedRuleSet.id"
+               title="Wenn ausgewählt, werden Buchungen, die bereits durch eine Regel bearbeitet wurden, nochmals durch die aktualisierte Regel bearbeitet"><input
+            type="checkbox" v-model="includeProcessed">Buchungen aktualisieren</label>
       </div>
 
 
@@ -51,9 +53,15 @@
                   {{ transaction.t_payee ? transaction.textShortened : '' }}
                 </div>
                 <div class="td-text-item item--is-notes">{{ transaction.t_notes }}</div>
-                <div class="td-text-item item--is-text">{{ transaction.t_EREF ? `Ende zu Ende Referenz: ${transaction.t_EREF}` : '' }}</div>
-                <div class="td-text-item item--is-text">{{ transaction.t_MREF ? `Mandatsreferenz: ${transaction.t_MREF}` : '' }}</div>
-                <div class="td-text-item item--is-text">{{ transaction.t_CRED ? `Gläubiger ID: ${transaction.t_CRED}` : '' }}</div>
+                <div class="td-text-item item--is-text">
+                  {{ transaction.t_EREF ? `Ende zu Ende Referenz: ${transaction.t_EREF}` : '' }}
+                </div>
+                <div class="td-text-item item--is-text">
+                  {{ transaction.t_MREF ? `Mandatsreferenz: ${transaction.t_MREF}` : '' }}
+                </div>
+                <div class="td-text-item item--is-text">
+                  {{ transaction.t_CRED ? `Gläubiger ID: ${transaction.t_CRED}` : '' }}
+                </div>
               </div>
             </td>
             <td class="transaction-amount"><span v-if="transaction.currency_id">
@@ -133,9 +141,17 @@
                       <div class="td-text-item item--is-category">{{ item.category_name }}</div>
                       <div class="td-text-item item--is-text">{{ item.t_payee ? item.textShortened : '' }}</div>
                       <div class="td-text-item item--is-notes">{{ item.t_notes }}</div>
-                      <div class="td-text-item item--is-text">{{ item.t_EREF ? `Ende zu Ende Referenz: ${item.t_EREF}` : '' }}</div>
-                      <div class="td-text-item item--is-text">{{ item.t_MREF ? `Mandatsreferenz: ${item.t_MREF}` : '' }}</div>
-                      <div class="td-text-item item--is-text">{{ item.t_CRED ? `Gläubiger ID: ${item.t_CRED}` : '' }}</div>
+                      <div class="td-text-item item--is-text">
+                        {{ item.t_EREF ? `Ende zu Ende Referenz: ${item.t_EREF}` : '' }}
+                      </div>
+                      <div class="td-text-item item--is-text">{{
+                          item.t_MREF ? `Mandatsreferenz: ${item.t_MREF}` : ''
+                        }}
+                      </div>
+                      <div class="td-text-item item--is-text">{{
+                          item.t_CRED ? `Gläubiger ID: ${item.t_CRED}` : ''
+                        }}
+                      </div>
                     </div>
                   </td>
                   <td class="transaction-amount">
@@ -243,13 +259,13 @@ export default {
         this.selectedCategoryName = 'keine';
       }
     },
-    useMinAmount: function(val, oldVal) {
+    useMinAmount: function (val, oldVal) {
       this._runRules();
     },
-    useMaxAmount: function(val, oldVal) {
+    useMaxAmount: function (val, oldVal) {
       this._runRules();
     },
-    useMREF: function(val, oldVal) {
+    useMREF: function (val, oldVal) {
       if (val) {
         this.isMREF = this.transaction.t_MREF;
       } else {
@@ -326,7 +342,7 @@ export default {
           return;
         }
         router.replace({name: 'TransactionDetail'});
-      } catch(ex) {
+      } catch (ex) {
         this.error = ex.message;
       }
     },
@@ -336,6 +352,8 @@ export default {
         const ruleInfo = {
           name: name,
           idSetCategory: this.selectedCategory,
+          is_amount_min: this.useMinAmount ? this.minAmount: null,
+          is_amount_max: this.useMaxAmount ? this.maxAmount: null,
           is_MREF: this.isMREF ? this.isMREF : null,
           textRules: this._getSelectedTextToken(),
         };
@@ -391,7 +409,11 @@ export default {
       this.matchingTransactions = [];
       if (selectedTextToken.length > 0 || mRefToken) {
         this.loading = true;
-        const resultData = await this.getMatchingTransactions({maxItems: 15, textToken: selectedTextToken, mRefToken: mRefToken});
+        const resultData = await this.getMatchingTransactions({
+          maxItems: 15,
+          textToken: selectedTextToken,
+          mRefToken: mRefToken
+        });
         this.loading = false;
         let mustAuthenticate = false;
         let not_ok = false;
@@ -458,10 +480,10 @@ export default {
           this.maxAmount = this._decimalFormatter.format(maxAmount);
         }
       } else {
-        if (!this.useMinAmount) {
+        if (!this.useMinAmount && this.loadedRuleSet.is_amount_min === undefined) {
           this.minAmount = '';
         }
-        if (!this.useMaxAmount) {
+        if (!this.useMaxAmount && this.loadedRuleSet.is_amount_max === undefined) {
           this.maxAmount = '';
         }
       }
@@ -659,6 +681,14 @@ export default {
     if (this.loadedRuleSet.is_MREF && this.loadedRuleSet.is_MREF === this.transaction.t_MREF) {
       this.useMREF = true;
     }
+    if (this.loadedRuleSet.is_amount_min) {
+      this.useMinAmount = true;
+      this.minAmount = this.loadedRuleSet.is_amount_min;
+    }
+    if (this.loadedRuleSet.is_amount_max) {
+      this.useMaxAmount = true;
+      this.maxAmount = this.loadedRuleSet.is_amount_max;
+    }
 
     this.textToken = {};
     const tokenList = [];
@@ -674,7 +704,7 @@ export default {
       this.transaction.t_text.split(' ').forEach(token => {
         let to = token.trim();
         if (to.endsWith(',')) {
-          to = to.substring(0, to.length -1);
+          to = to.substring(0, to.length - 1);
         }
         if (to.length > 1 && !this.textToken[to]) {
           this.textToken[to] = {
