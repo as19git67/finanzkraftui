@@ -131,6 +131,8 @@ export const TransactionStore = defineStore('transaction', {
             'accountsWhereIn',
             'dateFilterFrom',
             'dateFilterTo',
+            'amountMin',
+            'amountMax',
             'textToken',
             'mRefToken',
           );

@@ -265,6 +265,12 @@ export default {
     useMaxAmount: function (val, oldVal) {
       this._runRules();
     },
+    minAmount: function (val, oldVal) {
+      this._runRules();
+    },
+    maxAmount: function (val, oldVal) {
+      this._runRules();
+    },
     useMREF: function (val, oldVal) {
       if (val) {
         this.isMREF = this.transaction.t_MREF;
@@ -352,8 +358,8 @@ export default {
         const ruleInfo = {
           name: name,
           idSetCategory: this.selectedCategory,
-          is_amount_min: this.useMinAmount ? this.minAmount: null,
-          is_amount_max: this.useMaxAmount ? this.maxAmount: null,
+          is_amount_min: this.useMinAmount ? this.minAmount : null,
+          is_amount_max: this.useMaxAmount ? this.maxAmount : null,
           is_MREF: this.isMREF ? this.isMREF : null,
           textRules: this._getSelectedTextToken(),
         };
@@ -405,12 +411,14 @@ export default {
       });
       return textRules;
     },
-    async _setMatchingTransactions(selectedTextToken, mRefToken) {
+    async _setMatchingTransactions(amountMin, amountMax, selectedTextToken, mRefToken) {
       this.matchingTransactions = [];
       if (selectedTextToken.length > 0 || mRefToken) {
         this.loading = true;
         const resultData = await this.getMatchingTransactions({
           maxItems: 15,
+          amountMin: amountMin,
+          amountMax: amountMax,
           textToken: selectedTextToken,
           mRefToken: mRefToken
         });
@@ -460,7 +468,15 @@ export default {
     },
     async _runRules() {
       const selectedTextToken = this._getSelectedTextToken();
-      await this._setMatchingTransactions(selectedTextToken, this.isMREF);
+      if (this.useMinAmount && this.loadedRuleSet.is_amount_min === undefined) {
+        this.minAmount = '';
+      }
+      if (this.useMaxAmount && this.loadedRuleSet.is_amount_max === undefined) {
+        this.maxAmount = '';
+      }
+      await this._setMatchingTransactions(this.useMinAmount ? this.minAmount : undefined,
+          this.useMaxAmount ? this.maxAmount : undefined,
+          selectedTextToken, this.isMREF);
       if (this.matchingTransactions.length > 0) {
         let minAmount = Number.MAX_VALUE;
         let maxAmount = -Number.MAX_VALUE;
@@ -478,13 +494,6 @@ export default {
         }
         if (!this.useMaxAmount) {
           this.maxAmount = this._decimalFormatter.format(maxAmount);
-        }
-      } else {
-        if (!this.useMinAmount && this.loadedRuleSet.is_amount_min === undefined) {
-          this.minAmount = '';
-        }
-        if (!this.useMaxAmount && this.loadedRuleSet.is_amount_max === undefined) {
-          this.maxAmount = '';
         }
       }
     },
