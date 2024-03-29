@@ -302,7 +302,7 @@ button:hover svg .metaphor {
 }
 
 .label-value.in-row > .label {
-    flex: 0 0 5em;
+    flex: 0 0 6em;
 }
 
 .label-value.in-row > .value,

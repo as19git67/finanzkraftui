@@ -81,16 +81,12 @@
         <div class="label">Betrag:</div>
       </div>
       <div class="label-value in-row">
-        <input type="checkbox" v-model="useMinAmount">
-        <label class="label" for="minAmount">kleinster:</label>
-        <input class="value" type="text" v-model="minAmount" placeholder="kleinster Betrag" id="minAmount">
-        {{ transaction.currencyShort }}
+        <label class="label"><input type="checkbox" v-model="useMinAmount">kleinster:</label>
+        <input class="value" type="text" v-model="minAmount" placeholder="kleinster Betrag">
       </div>
       <div class="label-value in-row">
-        <input type="checkbox" v-model="useMaxAmount">
-        <label class="label" for="maxAmountInput">größter:</label>
-        <input class="value" type="text" v-model="maxAmount" placeholder="größter Betrag" id="maxAmountInput">
-        {{ transaction.currencyShort }}
+        <label class="label"><input type="checkbox" v-model="useMaxAmount">größter:</label>
+        <input class="value" type="text" v-model="maxAmount" placeholder="größter Betrag">
       </div>
       <div v-if="transaction.t_MREF" class="label-value in-column">
         <div class="label">Mandatsreferenz:</div>
@@ -208,6 +204,7 @@ import {UserStore} from "@/stores/user";
 import router from "@/router";
 import _ from "lodash";
 import {DateTime} from "luxon";
+import NumberParser from "@/NumberParser";
 import {TransactionStore} from "@/stores/transactions";
 import {MasterDataStore} from "@/stores/masterdata";
 
@@ -288,28 +285,47 @@ export default {
       if (!this.selectedCategory) {
         return false;
       }
+
       if (this.loadedRuleSet) {
         if (this.includeProcessed) {
           return true;
         }
-        if (this.ruleSet.name && this.ruleSet.name !== this.loadedRuleSet.name) {
+        if (this.loadedRuleSet.name && this.ruleSet.name !== this.loadedRuleSet.name) {
           return true;
         }
-        if (this.selectedCategory && this.selectedCategory !== this.loadedRuleSet.idSetCategory) {
+        if (this.loadedRuleSet.idSetCategory && this.selectedCategory !== this.loadedRuleSet.idSetCategory) {
           return true;
         }
 
         const textToken = this._getSelectedTextToken();
         const textTokenHash = textToken.toSorted().join(',');
-        if (!this.isMREF && textToken.length === 0) {
-          return false; // can't save if neither MREF nor text token is selected
+        if (textTokenHash !== this.loadedTextTokenHash) {
+          return true;
+        }
+        if (this.useMinAmount !== (this.loadedRuleSet.is_amount_min != null)) {
+          return true;
+        }
+        if (this.useMaxAmount !== (this.loadedRuleSet.is_amount_max != null)) {
+          return true;
+        }
+        const minAmountAsDecimal = this._decimalParser.parse(this.minAmount);
+        if (Number.isNaN(minAmountAsDecimal)) {
+          return false;
+        }
+        if (this.useMinAmount && minAmountAsDecimal !== this.loadedRuleSet.is_amount_min) {
+          return true;
+        }
+        const maxAmountAsDecimal = this._decimalParser.parse(this.maxAmount);
+        if (Number.isNaN(maxAmountAsDecimal)) {
+          return false;
+        }
+        if (this.useMaxAmount && maxAmountAsDecimal !== this.loadedRuleSet.is_amount_max) {
+          return true;
         }
         if (this.isMREF !== this.loadedRuleSet.is_MREF) {
           return true;
         }
-        if (textTokenHash !== this.loadedTextTokenHash) {
-          return true;
-        }
+
         return false;
       }
       return true;
@@ -363,9 +379,28 @@ export default {
           is_MREF: this.isMREF ? this.isMREF : null,
           textRules: this._getSelectedTextToken(),
         };
+        let minAmount = null;
+        if (this.useMinAmount) {
+          const minAmountAsDecimal = this._decimalParser.parse(this.minAmount);
+          if (!Number.isNaN(minAmountAsDecimal)) {
+            minAmount = minAmountAsDecimal;
+          }
+        }
+        ruleInfo.is_amount_min = minAmount;
+
+        let maxAmount = null;
+        if (this.useMaxAmount) {
+          const maxAmountAsDecimal = this._decimalParser.parse(this.maxAmount);
+          if (!Number.isNaN(maxAmountAsDecimal)) {
+            maxAmount = maxAmountAsDecimal;
+          }
+        }
+        ruleInfo.is_amount_max = maxAmount;
+
         if (this.loadedRuleSet.id) {
           ruleInfo.id = this.loadedRuleSet.id;
         }
+
         this.setRules(ruleInfo, this.includeProcessed).then(resultData => {
           let mustAuthenticate = false;
           let not_ok = false;
@@ -468,18 +503,31 @@ export default {
     },
     async _runRules() {
       const selectedTextToken = this._getSelectedTextToken();
-      if (this.useMinAmount && this.loadedRuleSet.is_amount_min === undefined) {
-        this.minAmount = '';
+      // if (this.useMinAmount && this.loadedRuleSet.is_amount_min == null) {
+      //   this.minAmount = '';
+      // }
+      // if (this.useMaxAmount && this.loadedRuleSet.is_amount_max == null) {
+      //   this.maxAmount = '';
+      // }
+
+      let minAmount = undefined;
+      if (this.useMinAmount) {
+        const minAmountAsDecimal = this._decimalParser.parse(this.minAmount);
+        if (!Number.isNaN(minAmountAsDecimal)) {
+          minAmount = minAmountAsDecimal;
+        }
       }
-      if (this.useMaxAmount && this.loadedRuleSet.is_amount_max === undefined) {
-        this.maxAmount = '';
+      let maxAmount = undefined;
+      if (this.useMaxAmount) {
+        const maxAmountAsDecimal = this._decimalParser.parse(this.maxAmount);
+        if (!Number.isNaN(maxAmountAsDecimal)) {
+          maxAmount = maxAmountAsDecimal;
+        }
       }
-      await this._setMatchingTransactions(this.useMinAmount ? this.minAmount : undefined,
-          this.useMaxAmount ? this.maxAmount : undefined,
-          selectedTextToken, this.isMREF);
+      await this._setMatchingTransactions(minAmount, maxAmount, selectedTextToken, this.isMREF);
       if (this.matchingTransactions.length > 0) {
-        let minAmount = Number.MAX_VALUE;
-        let maxAmount = -Number.MAX_VALUE;
+        minAmount = Number.MAX_VALUE;
+        maxAmount = -Number.MAX_VALUE;
         this.matchingTransactions.forEach(t => {
           const amount = t.t_amount;
           if (amount < minAmount) {
@@ -566,6 +614,7 @@ export default {
     },
   },
   created() {
+    this._decimalParser = new NumberParser();
     this._decimalFormatter = new Intl.NumberFormat(undefined, {
       style: 'decimal',
       minimumFractionDigits: 2,
