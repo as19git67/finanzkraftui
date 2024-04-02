@@ -2,6 +2,7 @@ import axios from 'axios';
 import { defineStore } from 'pinia';
 import _ from 'lodash';
 import { UserStore } from '@/stores/user';
+import NumberParser from "@/NumberParser";
 
 export const TransactionStore = defineStore('transaction', {
   state: () => ({
@@ -125,17 +126,22 @@ export const TransactionStore = defineStore('transaction', {
       if (userStore.authenticated) {
         const config = userStore.getBearerAuthRequestHeader();
         if (options) {
+          const np = new NumberParser('en-US');
           config.params = _.pick(
             options,
             'maxItems',
             'accountsWhereIn',
             'dateFilterFrom',
             'dateFilterTo',
-            'amountMin',
-            'amountMax',
             'textToken',
             'mRefToken',
           );
+          if (options.amountMin != null) {
+            config.params.amountMin = np.parse(options.amountMin);
+          }
+          if (options.amountMax != null) {
+            config.params.amountMax = np.parse(options.amountMax);
+          }
         }
         try {
           const response = await axios.get('/api/transaction', config);
