@@ -382,7 +382,7 @@ export default {
         let minAmount = null;
         if (this.useMinAmount) {
           const minAmountAsDecimal = this._decimalParser.parse(this.minAmount);
-          if (!Number.isNaN(minAmountAsDecimal)) {
+          if (NumberParser.isNumber(minAmountAsDecimal)) {
             minAmount = minAmountAsDecimal;
           }
         }
@@ -391,7 +391,7 @@ export default {
         let maxAmount = null;
         if (this.useMaxAmount) {
           const maxAmountAsDecimal = this._decimalParser.parse(this.maxAmount);
-          if (!Number.isNaN(maxAmountAsDecimal)) {
+          if (NumberParser.isNumber(maxAmountAsDecimal)) {
             maxAmount = maxAmountAsDecimal;
           }
         }
@@ -513,14 +513,14 @@ export default {
       let minAmount = undefined;
       if (this.useMinAmount) {
         const minAmountAsDecimal = this._decimalParser.parse(this.minAmount);
-        if (!Number.isNaN(minAmountAsDecimal)) {
+        if (NumberParser.isNumber(minAmountAsDecimal)) {
           minAmount = minAmountAsDecimal;
         }
       }
       let maxAmount = undefined;
       if (this.useMaxAmount) {
         const maxAmountAsDecimal = this._decimalParser.parse(this.maxAmount);
-        if (!Number.isNaN(maxAmountAsDecimal)) {
+        if (NumberParser.isNumber(maxAmountAsDecimal)) {
           maxAmount = maxAmountAsDecimal;
         }
       }
