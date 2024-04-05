@@ -55,9 +55,6 @@
                       <div class="td-text-item item--is-category">{{ item.category_name }}</div>
                       <div class="td-text-item item--is-text">{{ item.textShortened ? item.textShortened : '' }}</div>
                       <div class="td-text-item item--is-notes">{{ item.t_notes }}</div>
-                      <div class="td-text-item item--is-text">{{ item.t_EREF ? `Ende zu Ende Referenz: ${item.t_EREF}` : '' }}</div>
-                      <div class="td-text-item item--is-text">{{ item.t_MREF ? `Mandatsreferenz: ${item.t_MREF}` : '' }}</div>
-                      <div class="td-text-item item--is-text">{{ item.t_CRED ? `Gläubiger ID: ${item.t_CRED}` : '' }}</div>
                     </router-link>
                   </td>
                   <td class="transaction-amount">
