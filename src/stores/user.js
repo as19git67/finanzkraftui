@@ -116,7 +116,7 @@ export const UserStore = defineStore('user', {
             'Content-Type': 'application/json',
           },
         };
-        await axios.post('/api/user', j, c);
+        await axios.put('/api/user', j, c);
         this.email = email;
         return true;
       } catch (ex) {
@@ -209,6 +209,27 @@ export const UserStore = defineStore('user', {
         return result[0];
       }
       // throw new Error(`Unknown user with id ${id}`);
+    },
+    async updateUser(updateData) {
+      const userId = updateData.id;
+      if (!userId) {
+        return { status: 404, message: 'Missing id in updateData for updateUser' };
+      }
+      const userStore = UserStore();
+      let resultData = {};
+      if (userStore.authenticated) {
+        const config = userStore.getBearerAuthRequestHeader();
+        try {
+          const response = await axios.post(`/api/user/${userId}`, { updateData }, config);
+          if (response.status === 200) {
+            resultData = response.data;
+          }
+          return { status: response.status, data: resultData };
+        } catch (ex) {
+          return this.handleAxiosException(ex, userStore, resultData);
+        }
+      }
+      return { status: 401, data: resultData };
     },
     async getRoles() {
       const userStore = UserStore();
