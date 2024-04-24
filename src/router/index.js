@@ -14,11 +14,17 @@ import RoleEditView from '../views/RoleEditView.vue';
 import UserEditView from '../views/UserEditView.vue';
 import RegistrationView1 from '../views/RegistrationView1.vue';
 import AboutView from '../views/AboutView.vue';
-import TransactionNewView from "@/views/TransactionNewView.vue";
+import TransactionNewView from '../views/TransactionNewView.vue';
+import NotAuthorizedView from '../views/NotAuthorizedView.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
+    {
+      path: '/notAuthorized',
+      name: 'notAuthorized',
+      component: NotAuthorizedView,
+    },
     {
       path: '/',
       name: 'home',

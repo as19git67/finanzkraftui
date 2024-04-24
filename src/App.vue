@@ -15,10 +15,10 @@ import IconAdd from "@/components/icons/IconAdd.vue";
   <header v-if="authenticated">
     <div class="wrapper">
       <nav>
-        <RouterLink to="/" v-if="authenticated" title="Buchungsliste"><IconFinance class="nav-icon"/></RouterLink>
+        <RouterLink to="/" v-if="authenticated && menuPermissions['admin.transactions']" title="Buchungsliste"><IconFinance class="nav-icon"/></RouterLink>
         <RouterLink to="/RuleSets" v-if="authenticated && menuPermissions['admin.rules']" title="Regeln"><IconRuleSettings class="nav-icon"/></RouterLink>
         <RouterLink to="/Accounts" v-if="authenticated && menuPermissions['admin.accounts']" title="Bankkonten"><IconBankAccounts class="nav-icon"/></RouterLink>
-        <RouterLink to="/addTransaction" v-if="authenticated" title="neue Buchung hinzufügen" class="nav-link--is-large"><IconAdd class="nav-icon"/></RouterLink>
+        <RouterLink to="/addTransaction" v-if="authenticated && menuPermissions['admin.transactions']" title="neue Buchung hinzufügen" class="nav-link--is-large"><IconAdd class="nav-icon"/></RouterLink>
         <RouterLink to="/Users" v-if="authenticated && menuPermissions['admin.users']" title="Benutzerverwaltung"><IconUserManagement class="nav-icon"/></RouterLink>
         <RouterLink to="/Roles" v-if="authenticated && menuPermissions['admin.roles']" title="Benutzerrollen"><IconRoles class="nav-icon"/></RouterLink>
         <RouterLink to="/logout" v-if="authenticated" title="ausloggen"><IconLogout class="nav-icon"/></RouterLink>

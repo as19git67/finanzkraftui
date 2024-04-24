@@ -2,7 +2,6 @@ import axios from 'axios';
 import _ from 'lodash';
 import { defineStore } from 'pinia';
 
-
 export const UserStore = defineStore('user', {
   state: () => {
     const authData = localStorage.getItem('auth');
@@ -11,6 +10,7 @@ export const UserStore = defineStore('user', {
       const auth = JSON.parse(authData);
       authObj = {
         authenticated: auth.authenticated,
+        idUser: auth.idUser,
         email: auth.email,
         accessToken: auth.accessToken,
         accessTokenExpiredAfter: auth.accessTokenExpiredAfter,
@@ -20,6 +20,7 @@ export const UserStore = defineStore('user', {
     } else {
       authObj = {
         authenticated: false,
+        idUser: undefined,
         email: '',
         accessToken: '',
         accessTokenExpiredAfter: '',
@@ -32,6 +33,12 @@ export const UserStore = defineStore('user', {
     };
   },
   getters: {
+    authenticatedUserEmail(state) {
+      if (state.authenticated) {
+        return state.email;
+      }
+      return undefined;
+    },
     isAuthenticated(state) {
       return state.authenticated;
     },
@@ -51,6 +58,7 @@ export const UserStore = defineStore('user', {
   actions: {
     setNotAuthenticated() {
       this.authenticated = false;
+      this.idUser = undefined;
       this.email = '';
       this.accessToken = '';
       this.accessTokenExpiredAfter = '';
@@ -59,6 +67,7 @@ export const UserStore = defineStore('user', {
     },
     setAuthenticated(
       authenticated,
+      idUser,
       email,
       accessToken,
       accessTokenExpiredAfter,
@@ -67,6 +76,7 @@ export const UserStore = defineStore('user', {
     ) {
       this._menuPermissions = {};
       if (authenticated) {
+        this.idUser = idUser;
         this.email = email;
         this.accessToken = accessToken;
         this.accessTokenExpiredAfter = accessTokenExpiredAfter;
@@ -77,6 +87,7 @@ export const UserStore = defineStore('user', {
           });
         }
       } else {
+        this.idUser = undefined;
         this.email = '';
         this.accessToken = '';
         this.accessTokenExpiredAfter = '';
@@ -85,6 +96,7 @@ export const UserStore = defineStore('user', {
       this.authenticated = authenticated;
       const auth = {
         authenticated: this.authenticated,
+        idUser: this.idUser,
         email: this.email,
         accessToken: this.accessToken,
         accessTokenExpiredAfter: this.accessTokenExpiredAfter,
@@ -137,6 +149,7 @@ export const UserStore = defineStore('user', {
         if (response.status === 200) {
           this.setAuthenticated(
             true,
+            response.data.idUser,
             email,
             response.data.AccessToken,
             response.data.AccessTokenExpiredAfter,
@@ -202,7 +215,7 @@ export const UserStore = defineStore('user', {
     getUser(id) {
       let userId = id;
       if (_.isString(id)) {
-        userId = parseInt(id);
+        userId = parseInt(id, 10);
       }
       const result = this._users.filter((user) => user.id === userId);
       if (result.length > 0) {

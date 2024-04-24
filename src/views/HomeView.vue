@@ -216,11 +216,14 @@ export default {
         const results = await Promise.all(promises);
         this.loading = false;
         let mustAuthenticate = false;
+        let notAuthorized = false;
         let not_ok = false;
         results.forEach((result) => {
           switch (result) {
-            case 401:
             case 403:
+              notAuthorized = true;
+              break;
+            case 401:
             case 404:
               mustAuthenticate = true;
               break;
@@ -232,7 +235,11 @@ export default {
         });
         if (mustAuthenticate || not_ok) {
           this.setNotAuthenticated();
-          router.replace("/login");
+          router.replace({name: 'login'});
+          return;
+        }
+        if (notAuthorized) {
+          router.replace({name: 'notAuthorized'});
           return;
         }
         await this.prepareDataForList();

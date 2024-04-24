@@ -77,6 +77,7 @@ export default {
       error: this.error,
       allRoles: this.allRoles,
       updateData: this.updateData,
+      roleAssigmentChanged: this.roleAssigmentChanged,
       Email: this.Email,
       EmailConfirmed: this.EmailConfirmed,
       ExpiredAfter: this.ExpiredAfter,
