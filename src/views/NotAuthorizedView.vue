@@ -2,7 +2,7 @@
   <div class="page page--has-no-overflow">
     <h1 class="title">Keine Berechtigung</h1>
     <div class="section">
-      <div>{{email}} hat keine Berechtigung</div>
+      <div class="title">{{email}} hat keine Berechtigung</div>
     </div>
   </div>
 </template>
