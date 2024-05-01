@@ -121,13 +121,22 @@ export default {
   },
   methods: {
     ...mapActions(UserStore, ["getUser", "fillRoles", "getRolesOfUser", "setRoleAssignmentsForUser", "updateUser"]),
+    cancelChanges() {
+      router.back();
+    },
     async saveChanges() {
-      let updateUserOk = true;
-      if (Object.keys(this.updateData).length > 0) {
-        updateUserOk = await this.saveUser();
-      }
-      if (updateUserOk) {
-        await this.updateRoleAssignment();
+      try {
+        let updateUserOk = true;
+        if (Object.keys(this.updateData).length > 0) {
+          updateUserOk = await this.saveUser();
+        }
+        if (updateUserOk) {
+          await this.updateRoleAssignment();
+        }
+        router.back();
+      } catch (ex) {
+        this.error = ex.message;
+        console.log(ex);
       }
     },
     async updateRoleAssignment() {
