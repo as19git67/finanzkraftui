@@ -66,6 +66,12 @@ export const TransactionStore = defineStore('transaction', {
       if (transactionData.t_payee && transactionData.t_text
         && transactionData.t_text.indexOf(transactionData.t_payee) === 0) {
         res.textShortened = transactionData.t_text.substring(transactionData.t_payee.length);
+        res.textShortened = res.textShortened.trim();
+        if (res.textShortened.at(0) === ',') {
+          res.textShortened = res.textShortened.substring(1);
+        } else if (res.textShortened.startsWith(', ')) {
+          res.textShortened = res.textShortened.substring(2);
+        }
       } else {
         res.textShortened = transactionData.t_text;
       }

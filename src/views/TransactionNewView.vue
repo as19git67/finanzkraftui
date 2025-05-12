@@ -1,7 +1,49 @@
 <template>
   <div class="page">
     <div class="section">
-      <div class="top-links">
+      <div class="title">Neue Buchung eingeben:</div>
+      <div class="label-value in-row">
+        <input class="value" type="text" v-model="transactionAmountCent" placeholder="Betrag in 0,01€"/>
+        <span class="value">{{ transactionAmount }}</span>
+      </div>
+    </div>
+    <div class="section">
+      <div class="label-value in-row">
+        <input class="value" type="text" v-model="transactionText" placeholder="Name"/>
+      </div>
+    </div>
+    <div class="section">
+      <div class="label-value in-row">
+        <span class="chiclet">Bäcker</span>
+        <span class="chiclet">Feuerwehr</span>
+        <span class="chiclet">Döner</span>
+        <span class="chiclet">Eisdiele</span>
+        <span class="chiclet">Metzgerei</span>
+      </div>
+    </div>
+    <div class="section">
+      <div class="label-value in-row">
+        <select class="category-selection" name="categories" id="categories">
+          <option value="" disabled selected>Kategorie wählen:</option>
+          <option value="k1">Essen</option>
+          <option value="k2">Restaurant</option>
+          <option value="k3">Mobilität:ÖPNV</option>
+          <option value="k4">Urlaub</option>
+        </select>
+      </div>
+    </div>
+    <div class="section">
+      <div class="label-value in-row">
+        <button class="action btn btn--is-primary">Heute</button>
+        <button class="action btn btn--is-secondary">Gestern</button>
+        <button class="action btn btn--is-secondary">Anderes Datum</button>
+      </div>
+    </div>
+    <div v-if="error" class="section">
+      <div class="error">{{ error }}</div>
+    </div>
+    <div class="section">
+      <div class="bottom-links">
         <button v-if="dirty" @click="cancelChanges" class="action btn btn--is-secondary">Abbrechen
         </button>
         <button :disabled="!dirty" @click="saveTransaction" class="action btn btn--is-primary">
@@ -10,12 +52,6 @@
       </div>
     </div>
 
-    <div v-if="error" class="section">
-      <div class="error">{{ error }}</div>
-    </div>
-
-    <div class="section">
-    </div>
   </div>
 </template>
 
@@ -24,19 +60,21 @@
 </script>
 
 <script>
-import {mapActions, mapState, mapStores} from "pinia";
-import {UserStore} from "@/stores/user";
-import router from "@/router";
-import _ from "lodash";
-import {DateTime} from "luxon";
-import {TransactionStore} from "@/stores/transactions";
-import {MasterDataStore} from "@/stores/masterdata";
+import {mapActions, mapState, mapStores} from 'pinia';
+import {UserStore} from '@/stores/user';
+import router from '@/router';
+import _ from 'lodash';
+import {DateTime} from 'luxon';
+import {TransactionStore} from '@/stores/transactions';
+import {MasterDataStore} from '@/stores/masterdata';
 
 export default {
-  name: "TransactionNewView",
+  name: 'TransactionNewView',
   components: {},
   data() {
     return {
+      transactionAmountCent: '',
+      transactionAmount: 0,
       transactionNotes: this.transactionNotes,
       transactionPayee: this.transactionPayee,
       categoryId: this.categoryId,
@@ -46,14 +84,19 @@ export default {
     };
   },
   watch: {
-    transactionNotes: function (val, oldVal) {
+    transactionAmountCent: function(newVal, oldVal) {
+      this.transactionAmount = new Intl.NumberFormat('de-DE', {style: 'currency', currency: 'EUR'}).format(
+          newVal / 100);
+      console.log(this.transactionAmount);
+    },
+    transactionNotes: function(val, oldVal) {
       if (oldVal === undefined || this.transaction === undefined) {
         return;
       }
       this.updateData.t_notes = val;
       this.transaction.t_notes = val;
     },
-    categoryId: function (val, oldVal) {
+    categoryId: function(val, oldVal) {
       if (oldVal === undefined || this.transaction === undefined) {
         return;
       }
@@ -68,7 +111,7 @@ export default {
         this.transaction.category_name = '';
       }
     },
-    transactionPayee: function (val, oldVal) {
+    transactionPayee: function(val, oldVal) {
       if (oldVal === undefined || this.transaction === undefined) {
         return;
       }
@@ -76,7 +119,7 @@ export default {
         return;
       }
       this.updateData.t_payee = val;
-    }
+    },
   },
   computed: {
     dirty() {
@@ -87,12 +130,12 @@ export default {
       return keyCount > 0;
     },
     ...mapStores(UserStore, MasterDataStore),
-    ...mapState(UserStore, ["authenticated"]),
-    ...mapState(MasterDataStore, ["categories"]),
+    ...mapState(UserStore, ['authenticated']),
+    ...mapState(MasterDataStore, ['categories']),
   },
   methods: {
-    ...mapActions(TransactionStore, ["addTransaction"]),
-    ...mapActions(MasterDataStore, ["getCategoryById", "getCategories"]),
+    ...mapActions(TransactionStore, ['addTransaction']),
+    ...mapActions(MasterDataStore, ['getCategoryById', 'getCategories']),
     goToTransactionList() {
       router.replace({name: 'home'});
     },
@@ -200,13 +243,12 @@ export default {
       this.transaction = {};
     }
     if (mustAuthenticate) {
-      router.replace("/login");
+      router.replace('/login');
       return;
     }
     if (not_ok) {
       return;
     }
-
 
     const selectedCategory = parseInt(router.currentRoute.value.query.selectedCategory);
     if (selectedCategory) {
@@ -220,4 +262,15 @@ export default {
 </script>
 
 <style scoped>
+  .chiclet {
+    padding-inline: 0.25em;
+    background-color: gold;
+    border-radius: 4px;
+  }
+  .category-selection {
+    display: flex;
+    width: 100%;
+    padding-block: 3px;
+    font-size: medium;
+  }
 </style>
