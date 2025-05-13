@@ -3,8 +3,8 @@
     <div class="section">
       <div class="title">Neue Buchung eingeben:</div>
       <div class="label-value in-row">
-        <input class="value" type="text" v-model="transactionAmountCent" placeholder="Betrag in 0,01€"/>
-        <span class="value">{{ transactionAmount }}</span>
+        <input class="value currency" type="text" v-model="transactionAmountText" @blur="onBlur" @focus="onFocus"
+               placeholder="Betrag in 0,01€"/>
       </div>
     </div>
     <div class="section">
@@ -43,9 +43,7 @@
       <div class="error">{{ error }}</div>
     </div>
     <div class="section">
-      <div class="bottom-links">
-        <button v-if="dirty" @click="cancelChanges" class="action btn btn--is-secondary">Abbrechen
-        </button>
+      <div class="btn-save">
         <button :disabled="!dirty" @click="saveTransaction" class="action btn btn--is-primary">
           Speichern
         </button>
@@ -73,8 +71,8 @@ export default {
   components: {},
   data() {
     return {
-      transactionAmountCent: '',
-      transactionAmount: 0,
+      transactionAmountText: '',
+      transactionText: this.transactionText,
       transactionNotes: this.transactionNotes,
       transactionPayee: this.transactionPayee,
       categoryId: this.categoryId,
@@ -84,42 +82,6 @@ export default {
     };
   },
   watch: {
-    transactionAmountCent: function(newVal, oldVal) {
-      this.transactionAmount = new Intl.NumberFormat('de-DE', {style: 'currency', currency: 'EUR'}).format(
-          newVal / 100);
-      console.log(this.transactionAmount);
-    },
-    transactionNotes: function(val, oldVal) {
-      if (oldVal === undefined || this.transaction === undefined) {
-        return;
-      }
-      this.updateData.t_notes = val;
-      this.transaction.t_notes = val;
-    },
-    categoryId: function(val, oldVal) {
-      if (oldVal === undefined || this.transaction === undefined) {
-        return;
-      }
-      if (this.transaction.category_id === val) {
-        return;
-      }
-      this.updateData.category_id = val;
-      this.transaction.category_id = val;
-      if (val && this.categories.length > 0) {
-        this.transaction.category_name = this.getCategoryById(val).full_name;
-      } else {
-        this.transaction.category_name = '';
-      }
-    },
-    transactionPayee: function(val, oldVal) {
-      if (oldVal === undefined || this.transaction === undefined) {
-        return;
-      }
-      if (this.transaction.t_payee === val) {
-        return;
-      }
-      this.updateData.t_payee = val;
-    },
   },
   computed: {
     dirty() {
@@ -138,6 +100,56 @@ export default {
     ...mapActions(MasterDataStore, ['getCategoryById', 'getCategories']),
     goToTransactionList() {
       router.replace({name: 'home'});
+    },
+    currencyStringToNumber(currencyString) {
+      // Get the user's locale
+      const userLocale = navigator.language || navigator.userLanguage || 'de-DE';
+
+      // Remove any currency symbols and whitespace
+      const cleanedString = currencyString.trim().replace(/^[^\d-]+/, '').replace(/[^\d.,\-]+$/, '');
+
+      // Create a NumberFormat instance for parsing
+      const numberFormat = new Intl.NumberFormat(userLocale);
+
+      // Get the formatting options to determine decimal and group separators
+      const formatParts = numberFormat.formatToParts(1234.5);
+      const decimalSeparator = formatParts.find(part => part.type === 'decimal')?.value || '.';
+      const groupSeparator = formatParts.find(part => part.type === 'group')?.value || ',';
+
+      // Replace group separators and normalize decimal separator
+      const normalizedString = cleanedString
+          .replace(new RegExp(`\\${groupSeparator}`, 'g'), '')
+          .replace(decimalSeparator, '.');
+
+      // Parse the string to a number
+      const number = parseFloat(normalizedString);
+
+      // Check if the result is a valid number
+      if (isNaN(number)) {
+        throw new Error('Invalid number format');
+      }
+
+      return number;
+    },
+    onFocus(e) {
+      const value = e.target.value;
+      console.log(String(value));
+      e.target.value = value ? this.currencyStringToNumber(value) : '';
+    },
+    onBlur(e) {
+      const currency = 'EUR';
+      const value = e.target.value;
+
+      const options = {
+        maximumFractionDigits: 2,
+        currency: currency,
+        style: "currency",
+        currencyDisplay: "symbol"
+      };
+
+      e.target.value = (value || value === 0)
+          ? this.currencyStringToNumber(value).toLocaleString(undefined, options)
+          : '';
     },
     async cancelChanges() {
       this.confirmText = 'Änderungen verwerfen und zurück zur Liste?';
@@ -211,66 +223,25 @@ export default {
   },
   async mounted() {
     this.error = undefined;
-    this.loading = true;
-
-    const promises = [];
-    promises.push(this.getCategories());
-    const results = await Promise.all(promises);
     this.loading = false;
-
-    let mustAuthenticate = false;
-    let not_ok = false;
-    results.forEach((result, index) => {
-      let status = result;
-      if (_.isObject(result)) {
-        status = result.status;
-      }
-      switch (status) {
-        case 401:
-          mustAuthenticate = true;
-          break;
-        case 403:
-          this.error = 'Die Berechtigung zum Laden der Kategorien fehlt.';
-          not_ok = true;
-          break;
-        case 200:
-          break;
-        default:
-          not_ok = true;
-      }
-    });
-    if (mustAuthenticate || not_ok) {
-      this.transaction = {};
-    }
-    if (mustAuthenticate) {
-      router.replace('/login');
-      return;
-    }
-    if (not_ok) {
-      return;
-    }
-
-    const selectedCategory = parseInt(router.currentRoute.value.query.selectedCategory);
-    if (selectedCategory) {
-      // back from category selection
-      this.categoryId = selectedCategory;
-    } else {
-      this.categoryId = this.transaction.category_id;
-    }
   },
 };
 </script>
 
 <style scoped>
-  .chiclet {
-    padding-inline: 0.25em;
-    background-color: gold;
-    border-radius: 4px;
-  }
-  .category-selection {
-    display: flex;
-    width: 100%;
-    padding-block: 3px;
-    font-size: medium;
-  }
+.value.currency {
+  font-size: x-large;
+}
+.chiclet {
+  padding-inline: 0.25em;
+  background-color: gold;
+  border-radius: 4px;
+}
+
+.category-selection {
+  display: flex;
+  width: 100%;
+  padding-block: 3px;
+  font-size: medium;
+}
 </style>
