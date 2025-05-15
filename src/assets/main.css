@@ -6,13 +6,11 @@ a {
 }
 
 .all-transactions-table > tbody > tr > td {
-  padding-inline-start: 0.5em;
-  padding-inline-end: 0.5em;
+  padding-inline: 0.5em;
 }
 
 .all-transactions-table.table--is-wide > tbody > tr > td {
-  padding-inline-start: 0.25em;
-  padding-inline-end: 0.25em;
+  padding-inline: 0.25em;
 }
 
 .transaction-date {
@@ -24,17 +22,14 @@ a {
 }
 .transaction-date td {
   font-weight: bold;
-  padding-left: 0.5em;
-  padding-right: 0.5em;
+  padding-inline: 0.5em;
 }
 .table--is-wide .transaction-date td {
-  padding-left: 0;
-  padding-right: 0;
+  padding-inline: 0;
 }
 
 .details {
-  padding-left: 0.5em;
-  padding-right: 0.5em;
+  padding-inline: 0.5em;
 }
 
 .tr-not-confirmed {

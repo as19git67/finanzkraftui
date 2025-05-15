@@ -265,6 +265,7 @@ button:hover svg .metaphor {
 .label-value-group.in-row,
 .label-value.in-row {
     flex-direction: row;
+    flex-wrap: wrap;
     align-items: center;
 }
 

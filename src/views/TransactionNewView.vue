@@ -1,5 +1,5 @@
 <template>
-  <div class="page">
+  <div class="page transaction-new-view">
     <div class="section">
       <div class="title">Neue Buchung eingeben:</div>
       <div class="label-value in-row">
@@ -14,11 +14,9 @@
     </div>
     <div class="section">
       <div class="label-value in-row">
-        <span class="chiclet">Bäcker</span>
-        <span class="chiclet">Feuerwehr</span>
-        <span class="chiclet">Döner</span>
-        <span class="chiclet">Eisdiele</span>
-        <span class="chiclet">Metzgerei</span>
+        <button v-for="(item, index) in shortcuts" :key="item.id" :id="item.id"
+              class="chiclet" @click="clickedShortcut(item.id)">{{item.name}}
+        </button>
       </div>
     </div>
     <div class="section">
@@ -79,6 +77,7 @@ export default {
       transaction: this.transaction,
       error: this.error,
       updateData: this.updateData,
+      shortcuts: this.shortcuts,
     };
   },
   watch: {
@@ -129,7 +128,10 @@ export default {
         throw new Error('Invalid number format');
       }
 
-      return number;
+      return number/100;
+    },
+    clickedShortcut(e) {
+      console.log(e.target.id);
     },
     onFocus(e) {
       const value = e.target.value;
@@ -220,6 +222,10 @@ export default {
     this.updateData = {};
     this.transaction = {};
     this.categoryId = 0;
+    this.shortcuts = [
+      {id: 1, name: 'Bäckerei', categoryId: 1, tags: ['Urlaub', '2025 Köln']},
+      {id: 1, name: 'Metzgerei', categoryId: 2, tags: []},
+    ];
   },
   async mounted() {
     this.error = undefined;
@@ -233,15 +239,29 @@ export default {
   font-size: x-large;
 }
 .chiclet {
-  padding-inline: 0.25em;
+  padding-inline: 6px;
+  padding-block: 3px;
   background-color: gold;
+  border-width: 0;
   border-radius: 4px;
 }
-
 .category-selection {
   display: flex;
   width: 100%;
   padding-block: 3px;
   font-size: medium;
+}
+.transaction-new-view {
+  gap: 1em;
+}
+
+.transaction-new-view .btn-save {
+  padding-inline: 0.5em;
+  display: flex;
+  justify-content: center;
+}
+.transaction-new-view .btn-save button {
+  width: 100%;
+  font-size: larger;
 }
 </style>
