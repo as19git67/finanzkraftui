@@ -3,7 +3,7 @@
     <div class="section">
       <div class="title">Neue Buchung eingeben:</div>
       <div class="label-value in-row">
-        <input class="value currency" type="text" v-model="transactionAmountText" @blur="onBlur" @focus="onFocus"
+        <input class="value currency" type="text" inputmode="decimal" v-model="transactionAmountText" @blur="onBlur" @focus="onFocus"
                placeholder="Betrag in 0,01€"/>
       </div>
     </div>
@@ -62,6 +62,7 @@ import router from '@/router';
 import _ from 'lodash';
 import {DateTime} from 'luxon';
 import {TransactionStore} from '@/stores/transactions';
+import {PreferencesStore} from '@/stores/preferences';
 import {MasterDataStore} from '@/stores/masterdata';
 
 export default {
@@ -90,15 +91,61 @@ export default {
       }
       return keyCount > 0;
     },
-    ...mapStores(UserStore, MasterDataStore),
+    ...mapStores(UserStore, MasterDataStore, PreferencesStore),
     ...mapState(UserStore, ['authenticated']),
+    ...mapState(PreferencesStore, ['newTransactionPresets']),
     ...mapState(MasterDataStore, ['categories']),
   },
   methods: {
     ...mapActions(TransactionStore, ['addTransaction']),
+    ...mapActions(PreferencesStore, ['getNewTransactionPresets']),
     ...mapActions(MasterDataStore, ['getCategoryById', 'getCategories']),
-    goToTransactionList() {
-      router.replace({name: 'home'});
+    ...mapActions(UserStore, ["setNotAuthenticated"]),
+    async loadDataFromServer() {
+      this.error = "";
+      this.loading = true;
+      try {
+        const promises = [];
+        promises.push(this.getNewTransactionPresets());
+        promises.push(this.getCategories());
+        const results = await Promise.all(promises);
+        this.loading = false;
+        let mustAuthenticate = false;
+        let notAuthorized = false;
+        let not_ok = false;
+        results.forEach((result) => {
+          let status = result;
+          if (_.isObject(result)) {
+            status = result.status;
+          }
+
+          switch (status) {
+            case 403:
+              notAuthorized = true;
+              break;
+            case 401:
+            case 404:
+              mustAuthenticate = true;
+              break;
+            case 200:
+              break;
+            default:
+              not_ok = true;
+          }
+        });
+        if (mustAuthenticate || not_ok) {
+          this.setNotAuthenticated();
+          router.replace({name: 'login'});
+          return;
+        }
+        if (notAuthorized) {
+          router.replace({name: 'notAuthorized'});
+          return;
+        }
+      } catch (ex) {
+        this.error = ex.message;
+        this.loading = false;
+      }
     },
     currencyStringToNumber(currencyString) {
       // Get the user's locale
@@ -152,24 +199,6 @@ export default {
       e.target.value = (value || value === 0)
           ? this.currencyStringToNumber(value).toLocaleString(undefined, options)
           : '';
-    },
-    async cancelChanges() {
-      this.confirmText = 'Änderungen verwerfen und zurück zur Liste?';
-      this.showConfirmDialog = true;
-      const res = await new Promise((resolve, reject) => {
-        this.dialogResolve = resolve;
-      });
-      switch (res) {
-        case 'yes':
-          this.goToTransactionList();
-          break;
-        case 'no':
-          break;
-      }
-    },
-    confirmDialogButtonClicked(btnId) {
-      this.showConfirmDialog = false;
-      this.dialogResolve(btnId);
     },
     async saveTransaction() {
       this.updateData.confirmed = true;
@@ -230,7 +259,9 @@ export default {
   async mounted() {
     this.error = undefined;
     this.loading = false;
+    await this.loadDataFromServer();
   },
+
 };
 </script>
 
