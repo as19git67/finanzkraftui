@@ -3,7 +3,7 @@
     <div class="section">
       <div class="title">Neue Buchung eingeben:</div>
       <div class="label-value in-row">
-        <input class="value currency" type="text" inputmode="decimal" v-model="transactionAmountText" @blur="onBlur" @focus="onFocus"
+        <input class="value currency" type="text" inputmode="decimal" v-focus v-model="amountText" @blur="onBlur" @focus="onFocus"
                placeholder="Betrag in 0,01€"/>
       </div>
     </div>
@@ -32,9 +32,10 @@
     </div>
     <div class="section">
       <div class="label-value in-row">
-        <button class="action btn btn--is-primary">Heute</button>
-        <button class="action btn btn--is-secondary">Gestern</button>
+        <button class="action btn btn--is-primary" @click="setDateToday">Heute</button>
+        <button class="action btn btn--is-secondary" @click="setDateYesterday">Gestern</button>
         <button class="action btn btn--is-secondary">Anderes Datum</button>
+        <span class="value">{{ transactionDateFormatted }}</span>
       </div>
     </div>
     <div v-if="error" class="section">
@@ -42,7 +43,7 @@
     </div>
     <div class="section">
       <div class="btn-save">
-        <button :disabled="!dirty" @click="saveTransaction" class="action btn btn--is-primary">
+        <button :disabled="!saveEnabled" @click="saveTransaction" class="action btn btn--is-primary">
           Speichern
         </button>
       </div>
@@ -56,11 +57,11 @@
 </script>
 
 <script>
+import {DateTime} from "luxon";
 import {mapActions, mapState, mapStores} from 'pinia';
 import {UserStore} from '@/stores/user';
 import router from '@/router';
 import _ from 'lodash';
-import {DateTime} from 'luxon';
 import {TransactionStore} from '@/stores/transactions';
 import {PreferencesStore} from '@/stores/preferences';
 import {MasterDataStore} from '@/stores/masterdata';
@@ -70,26 +71,34 @@ export default {
   components: {},
   data() {
     return {
-      transactionAmountText: '',
+      amountText: '',
+      transactionDate: this.transactionDate,
       transactionText: this.transactionText,
       transactionNotes: this.transactionNotes,
       transactionPayee: this.transactionPayee,
       categoryId: this.categoryId,
-      transaction: this.transaction,
       error: this.error,
-      updateData: this.updateData,
       shortcuts: this.shortcuts,
     };
   },
   watch: {
+    transactionAmountText: function(val, oldVal) {
+      this.amount = this.currencyStringToNumber(val);
+    },
+    // transactionDate: function(val, oldVal) {
+    //   this.transactionDateFormatted = DateTime.fromISO(this.transactionDate).toLocaleString();
+    // }
   },
   computed: {
-    dirty() {
-      const keyCount = Object.keys(this.updateData).length;
-      if (keyCount === 1 && this.updateData.confirmed) {
-        return false;
+    saveEnabled() {
+      return this.amount && this.transactionText && this.transactionDate;
+    },
+    transactionDateFormatted() {
+      if (this.transactionDate) {
+        return DateTime.fromISO(this.transactionDate).toLocaleString();
+      } else {
+        return '';
       }
-      return keyCount > 0;
     },
     ...mapStores(UserStore, MasterDataStore, PreferencesStore),
     ...mapState(UserStore, ['authenticated']),
@@ -182,8 +191,7 @@ export default {
     },
     onFocus(e) {
       const value = e.target.value;
-      console.log(String(value));
-      e.target.value = value ? this.currencyStringToNumber(value) : '';
+      e.target.value = value ? (this.currencyStringToNumber(value) * 100) : '';
     },
     onBlur(e) {
       const currency = 'EUR';
@@ -199,12 +207,6 @@ export default {
       e.target.value = (value || value === 0)
           ? this.currencyStringToNumber(value).toLocaleString(undefined, options)
           : '';
-    },
-    async saveTransaction() {
-      this.updateData.confirmed = true;
-      if (await this.handleDataChanged()) {
-        this.goToTransactionList();
-      }
     },
     async handleDataChanged() {
       this.error = undefined;
@@ -246,11 +248,17 @@ export default {
       this.updateData = {};
       return true;
     },
+    setDateYesterday() {
+      this.transactionDate = DateTime.now().plus({ days: -1 });
+    },
+    setDateToday() {
+      this.transactionDate = DateTime.now();
+    },
   },
   created() {
+    this.amount = 0;
     this.updateData = {};
-    this.transaction = {};
-    this.categoryId = 0;
+    this.tansactionDate = DateTime.now();
     this.shortcuts = [
       {id: 1, name: 'Bäckerei', categoryId: 1, tags: ['Urlaub', '2025 Köln']},
       {id: 1, name: 'Metzgerei', categoryId: 2, tags: []},
