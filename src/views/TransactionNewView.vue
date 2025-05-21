@@ -32,9 +32,9 @@
     </div>
     <div class="section">
       <div class="label-value in-row">
-        <button class="action btn btn--is-primary" @click="setDateToday">Heute</button>
-        <button class="action btn btn--is-secondary" @click="setDateYesterday">Gestern</button>
-        <button class="action btn btn--is-secondary">Anderes Datum</button>
+        <Button size="small" @click="setDateToday" label="Heute"></Button>
+        <Button size="small" severity="secondary" @click="setDateYesterday">Gestern</Button>
+        <Button size="small" severity="secondary">Anderes Datum</Button>
         <span class="value">{{ transactionDateFormatted }}</span>
       </div>
     </div>
@@ -43,9 +43,8 @@
     </div>
     <div class="section">
       <div class="btn-save">
-        <button :disabled="!saveEnabled" @click="saveTransaction" class="action btn btn--is-primary">
-          Speichern
-        </button>
+        <Button label="Speichern" :disabled="!saveEnabled" @click="saveTransaction" size="large">
+        </Button>
       </div>
     </div>
 
@@ -258,7 +257,6 @@ export default {
   created() {
     this.amount = 0;
     this.updateData = {};
-    this.tansactionDate = DateTime.now();
     this.shortcuts = [
       {id: 1, name: 'Bäckerei', categoryId: 1, tags: ['Urlaub', '2025 Köln']},
       {id: 1, name: 'Metzgerei', categoryId: 2, tags: []},
@@ -267,6 +265,7 @@ export default {
   async mounted() {
     this.error = undefined;
     this.loading = false;
+    this.transactionDate = DateTime.now();
     await this.loadDataFromServer();
   },
 
@@ -295,12 +294,10 @@ export default {
 }
 
 .transaction-new-view .btn-save {
-  padding-inline: 0.5em;
   display: flex;
   justify-content: center;
 }
 .transaction-new-view .btn-save button {
   width: 100%;
-  font-size: larger;
 }
 </style>

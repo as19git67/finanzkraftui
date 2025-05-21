@@ -1,8 +1,11 @@
 import { createApp } from "vue";
+import PrimeVue from 'primevue/config';
+import Aura from '@primeuix/themes/aura';
 import App from "./App.vue";
 import router from "./router";
 import { createPinia } from 'pinia'
 import axios from 'axios'
+import Button from "primevue/button"
 
 import "./assets/main.css";
 
@@ -29,4 +32,10 @@ app.directive('focus', {
 
 app.use(router);
 app.use(pinia);
+app.use(PrimeVue, {
+  theme: {
+    preset: Aura
+  }
+});
+app.component('Button', Button);
 app.mount("#app");
