@@ -2,14 +2,24 @@
   <div class="page transaction-new-view">
     <div class="section">
       <div class="title">Neue Buchung eingeben:</div>
-      <div class="label-value in-row">
-        <input class="value currency" type="text" inputmode="decimal" v-focus v-model="amountText" @blur="onBlur" @focus="onFocus"
-               placeholder="Betrag in 0,01€"/>
+      <div class="label-value in-column">
+        <div class="input-amount">
+          <FloatLabel variant="in" class="fl">
+                <InputNumber id="transactionAmount" locale="de-DE"
+                             class="value currency" inputmode="decimal" currency="EUR"
+                             mode="currency" v-model=amountText variant="filled" size="large"/>
+            <label for="transactionAmount">Betrag</label>
+          </FloatLabel>
+          <Button icon="pi pi-minus" severity="danger" rounded aria-label="minus" />
+        </div>
       </div>
     </div>
     <div class="section">
-      <div class="label-value in-row">
-        <input class="value" type="text" v-model="transactionText" placeholder="Name"/>
+      <div class="label-value in-row tr-text">
+        <FloatLabel variant="in" class="fl">
+          <InputText id="transactionText" class="value" v-model=transactionText variant="filled" size="small"></InputText>
+          <label for="transactionText">Name</label>
+        </FloatLabel>
       </div>
     </div>
     <div class="section">
@@ -32,10 +42,19 @@
     </div>
     <div class="section">
       <div class="label-value in-row">
+        <Fluid>
+          <FloatLabel variant="in">
+            <InputText id="transactionDateFormatted" v-model=transactionDateFormatted readonly variant="filled"></InputText>
+            <label for="transactionDateFormatted">Datum</label>
+          </FloatLabel>
+        </Fluid>
+      </div>
+    </div>
+    <div class="section">
+      <div class="label-value in-row">
         <Button size="small" @click="setDateToday" label="Heute"></Button>
         <Button size="small" severity="secondary" @click="setDateYesterday">Gestern</Button>
         <Button size="small" severity="secondary">Anderes Datum</Button>
-        <span class="value">{{ transactionDateFormatted }}</span>
       </div>
     </div>
     <div v-if="error" class="section">
@@ -82,11 +101,8 @@ export default {
   },
   watch: {
     transactionAmountText: function(val, oldVal) {
-      this.amount = this.currencyStringToNumber(val);
+      //this.amount = this.currencyStringToNumber(val);
     },
-    // transactionDate: function(val, oldVal) {
-    //   this.transactionDateFormatted = DateTime.fromISO(this.transactionDate).toLocaleString();
-    // }
   },
   computed: {
     saveEnabled() {
@@ -94,7 +110,7 @@ export default {
     },
     transactionDateFormatted() {
       if (this.transactionDate) {
-        return DateTime.fromISO(this.transactionDate).toLocaleString();
+        return DateTime.fromISO(this.transactionDate).toRelativeCalendar();
       } else {
         return '';
       }
@@ -188,11 +204,15 @@ export default {
     clickedShortcut(e) {
       console.log(e.target.id);
     },
+    onClickMinus(e) {
+      console.log(e.target.id);
+    },
     onFocus(e) {
-      const value = e.target.value;
-      e.target.value = value ? (this.currencyStringToNumber(value) * 100) : '';
+      // const value = e.target.value;
+      //e.target.value = value ? (this.currencyStringToNumber(value) * 100) : '';
     },
     onBlur(e) {
+      return;
       const currency = 'EUR';
       const value = e.target.value;
 
@@ -203,9 +223,7 @@ export default {
         currencyDisplay: "symbol"
       };
 
-      e.target.value = (value || value === 0)
-          ? this.currencyStringToNumber(value).toLocaleString(undefined, options)
-          : '';
+      e.target.value = (value || value === 0) ? this.currencyStringToNumber(value).toLocaleString(undefined, options) : '';
     },
     async handleDataChanged() {
       this.error = undefined;
@@ -273,8 +291,17 @@ export default {
 </script>
 
 <style scoped>
-.value.currency {
-  font-size: x-large;
+.input-amount {
+  gap: 0.5em;
+  display: flex;
+  align-items: center;
+}
+.input-amount .fl,
+.tr-text .fl {
+  flex: 1 1 auto;
+}
+.input-amount .value.currency {
+  display: flex;
 }
 .chiclet {
   padding-inline: 6px;

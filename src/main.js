@@ -5,9 +5,18 @@ import App from "./App.vue";
 import router from "./router";
 import { createPinia } from 'pinia'
 import axios from 'axios'
+import Fluid from 'primevue/fluid';
 import Button from "primevue/button"
+import InputText from "primevue/inputtext"
+import InputNumber from "primevue/inputnumber"
+import FloatLabel from "primevue/floatlabel";
+import IconField from 'primevue/iconfield';
+import InputIcon from 'primevue/inputicon';
+import "primeicons/primeicons.css";
+
 
 import "./assets/main.css";
+import NotAuthorizedView from "@/views/NotAuthorizedView.vue";
 
 let originUrl = new URL(location.origin);
 const baseServerUrlFromConfig = import.meta.env.VITE_APP_API_BASE_URL;
@@ -37,5 +46,11 @@ app.use(PrimeVue, {
     preset: Aura
   }
 });
+app.component('Fluid', Fluid);
 app.component('Button', Button);
+app.component('InputText', InputText);
+app.component('InputIcon', InputIcon);
+app.component('IconField', IconField);
+app.component('InputNumber', InputNumber);
+app.component('FloatLabel', FloatLabel);
 app.mount("#app");
