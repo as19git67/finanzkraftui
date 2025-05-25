@@ -1,36 +1,31 @@
 <template>
-  <div class="page transaction-new-view">
-    <div class="section">
+  <div class="page page--is-transaction-new-view">
+    <div class="page--header">
       <div class="title">Neue Buchung eingeben:</div>
-      <div class="label-value in-column">
-        <div class="input-amount">
-          <FloatLabel variant="in" class="fl">
-                <InputNumber id="transactionAmount" locale="de-DE"
-                             class="value currency" inputmode="decimal" currency="EUR"
-                             mode="currency" v-model=amountText variant="filled" size="large"/>
-            <label for="transactionAmount">Betrag</label>
-          </FloatLabel>
-          <Button icon="pi pi-minus" severity="danger" rounded aria-label="minus" />
-        </div>
-      </div>
     </div>
-    <div class="section">
-      <div class="label-value in-row tr-text">
-        <FloatLabel variant="in" class="fl">
-          <InputText id="transactionText" class="value" v-model=transactionText variant="filled" size="small"></InputText>
+    <div class="page--content">
+      <div class="page--content--row">
+        <FloatLabel variant="in" class="row--item row--item--is-grow">
+          <InputNumber id="transactionAmount" locale="de-DE"
+                       inputmode="decimal" currency="EUR"
+                       mode="currency" v-model=amountText variant="filled" size="large"/>
+          <label for="transactionAmount">Betrag</label>
+        </FloatLabel>
+        <ToggleButton v-model="isSpending" onLabel="Ausgabe" offLabel="Einnahme" onIcon="pi pi-minus"
+                      offIcon="pi pi-plus" />
+      </div>
+      <div class="page--content--row">
+        <FloatLabel variant="in" class="row--item row--item--is-grow">
+          <InputText id="transactionText" class="value" v-model=transactionText variant="filled"
+                     size="small"></InputText>
           <label for="transactionText">Name</label>
         </FloatLabel>
       </div>
-    </div>
-    <div class="section">
-      <div class="label-value in-row">
-        <button v-for="(item, index) in shortcuts" :key="item.id" :id="item.id"
-              class="chiclet" @click="clickedShortcut(item.id)">{{item.name}}
-        </button>
+      <div class="page--content--row">
+        <Button v-for="(item, index) in shortcuts" :key="item.id" :id="item.id" @click="clickedShortcut(item.id)"
+                :label="item.name" severity="info" rounded size="small"/>
       </div>
-    </div>
-    <div class="section">
-      <div class="label-value in-row">
+      <div class="page--content--row">
         <select class="category-selection" name="categories" id="categories">
           <option value="" disabled selected>Kategorie wählen:</option>
           <option value="k1">Essen</option>
@@ -44,38 +39,113 @@
       <div class="label-value in-row">
         <Fluid>
           <FloatLabel variant="in">
-            <InputText id="transactionDateFormatted" v-model=transactionDateFormatted readonly variant="filled"></InputText>
+            <InputText id="transactionDateFormatted" v-model=transactionDateFormatted readonly
+                       variant="filled"></InputText>
             <label for="transactionDateFormatted">Datum</label>
           </FloatLabel>
         </Fluid>
       </div>
-    </div>
-    <div class="section">
-      <div class="label-value in-row">
+      <div class="page--content--row">
         <Button size="small" @click="setDateToday" label="Heute"></Button>
         <Button size="small" severity="secondary" @click="setDateYesterday">Gestern</Button>
         <Button size="small" severity="secondary">Anderes Datum</Button>
       </div>
+      <div class="page--content--row" v-if="error">
+        <div class="error">{{ error }}</div>
+      </div>
     </div>
-    <div v-if="error" class="section">
-      <div class="error">{{ error }}</div>
-    </div>
-    <div class="section">
+    <div class="page--footer footer--is-sticky">
       <div class="btn-save">
         <Button label="Speichern" :disabled="!saveEnabled" @click="saveTransaction" size="large">
         </Button>
       </div>
     </div>
-
   </div>
 </template>
+
+
+<style scoped>
+.page {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.page--header {
+  display: flex;
+  justify-content: start;
+  background-color: var(--color-background-soft);
+  color: var(--color-text-soft);
+  font-size: 18px;
+  padding-inline: 0.5em;
+  margin-bottom: 0.25em;
+}
+
+.page--content {
+  display: flex;
+  flex-direction: column;
+  padding-inline: 0.5em;
+  gap: 0.5em;
+}
+
+.page--content--row {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}
+
+.row--item {
+  display: flex;
+}
+
+.row--item--is-grow, .row--item--is-grow > * {
+  flex-grow: 1;
+  flex-basis: auto;
+}
+
+.page--title {
+
+}
+
+.value.currency {
+  font-size: x-large;
+}
+
+.chiclet {
+  padding-inline: 6px;
+  padding-block: 3px;
+  background-color: gold;
+  border-width: 0;
+  border-radius: 4px;
+}
+
+.category-selection {
+  display: flex;
+  width: 100%;
+  padding-block: 3px;
+  font-size: medium;
+}
+
+.xpage--is-transaction-new-view {
+  gap: 1em;
+}
+
+.xpage--is-transaction-new-view .btn-save {
+  display: flex;
+  justify-content: center;
+}
+
+.xpage--is-transaction-new-view .btn-save button {
+  width: 100%;
+}
+</style>
 
 
 <script setup>
 </script>
 
 <script>
-import {DateTime} from "luxon";
+import {DateTime} from 'luxon';
 import {mapActions, mapState, mapStores} from 'pinia';
 import {UserStore} from '@/stores/user';
 import router from '@/router';
@@ -90,6 +160,7 @@ export default {
   data() {
     return {
       amountText: '',
+      isSpending: true,
       transactionDate: this.transactionDate,
       transactionText: this.transactionText,
       transactionNotes: this.transactionNotes,
@@ -124,9 +195,9 @@ export default {
     ...mapActions(TransactionStore, ['addTransaction']),
     ...mapActions(PreferencesStore, ['getNewTransactionPresets']),
     ...mapActions(MasterDataStore, ['getCategoryById', 'getCategories']),
-    ...mapActions(UserStore, ["setNotAuthenticated"]),
+    ...mapActions(UserStore, ['setNotAuthenticated']),
     async loadDataFromServer() {
-      this.error = "";
+      this.error = '';
       this.loading = true;
       try {
         const promises = [];
@@ -187,9 +258,8 @@ export default {
       const groupSeparator = formatParts.find(part => part.type === 'group')?.value || ',';
 
       // Replace group separators and normalize decimal separator
-      const normalizedString = cleanedString
-          .replace(new RegExp(`\\${groupSeparator}`, 'g'), '')
-          .replace(decimalSeparator, '.');
+      const normalizedString = cleanedString.replace(new RegExp(`\\${groupSeparator}`, 'g'), '').
+          replace(decimalSeparator, '.');
 
       // Parse the string to a number
       const number = parseFloat(normalizedString);
@@ -199,7 +269,7 @@ export default {
         throw new Error('Invalid number format');
       }
 
-      return number/100;
+      return number / 100;
     },
     clickedShortcut(e) {
       console.log(e.target.id);
@@ -219,11 +289,13 @@ export default {
       const options = {
         maximumFractionDigits: 2,
         currency: currency,
-        style: "currency",
-        currencyDisplay: "symbol"
+        style: 'currency',
+        currencyDisplay: 'symbol',
       };
 
-      e.target.value = (value || value === 0) ? this.currencyStringToNumber(value).toLocaleString(undefined, options) : '';
+      e.target.value = (value || value === 0) ?
+          this.currencyStringToNumber(value).toLocaleString(undefined, options) :
+          '';
     },
     async handleDataChanged() {
       this.error = undefined;
@@ -266,7 +338,7 @@ export default {
       return true;
     },
     setDateYesterday() {
-      this.transactionDate = DateTime.now().plus({ days: -1 });
+      this.transactionDate = DateTime.now().plus({days: -1});
     },
     setDateToday() {
       this.transactionDate = DateTime.now();
@@ -289,42 +361,3 @@ export default {
 
 };
 </script>
-
-<style scoped>
-.input-amount {
-  gap: 0.5em;
-  display: flex;
-  align-items: center;
-}
-.input-amount .fl,
-.tr-text .fl {
-  flex: 1 1 auto;
-}
-.input-amount .value.currency {
-  display: flex;
-}
-.chiclet {
-  padding-inline: 6px;
-  padding-block: 3px;
-  background-color: gold;
-  border-width: 0;
-  border-radius: 4px;
-}
-.category-selection {
-  display: flex;
-  width: 100%;
-  padding-block: 3px;
-  font-size: medium;
-}
-.transaction-new-view {
-  gap: 1em;
-}
-
-.transaction-new-view .btn-save {
-  display: flex;
-  justify-content: center;
-}
-.transaction-new-view .btn-save button {
-  width: 100%;
-}
-</style>

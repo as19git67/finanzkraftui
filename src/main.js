@@ -7,11 +7,13 @@ import { createPinia } from 'pinia'
 import axios from 'axios'
 import Fluid from 'primevue/fluid';
 import Button from "primevue/button"
+import ToggleButton from "primevue/togglebutton"
 import InputText from "primevue/inputtext"
 import InputNumber from "primevue/inputnumber"
 import FloatLabel from "primevue/floatlabel";
 import IconField from 'primevue/iconfield';
 import InputIcon from 'primevue/inputicon';
+import AutoComplete from 'primevue/autocomplete';
 import "primeicons/primeicons.css";
 
 
@@ -46,8 +48,10 @@ app.use(PrimeVue, {
     preset: Aura
   }
 });
+app.component('AutoComplete', AutoComplete);
 app.component('Fluid', Fluid);
 app.component('Button', Button);
+app.component('ToggleButton', ToggleButton);
 app.component('InputText', InputText);
 app.component('InputIcon', InputIcon);
 app.component('IconField', IconField);
