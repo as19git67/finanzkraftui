@@ -26,18 +26,13 @@
                 :label="item.name" severity="info" rounded size="small"/>
       </div>
       <div class="page--content--row">
-        <select class="category-selection" name="categories" id="categories">
-          <option value="" disabled selected>Kategorie wählen:</option>
-          <option value="k1">Essen</option>
-          <option value="k2">Restaurant</option>
-          <option value="k3">Mobilität:ÖPNV</option>
-          <option value="k4">Urlaub</option>
-        </select>
+        <FloatLabel variant="in" class="row--item row--item--is-grow">
+          <AutoComplete id="catSelection" v-model="selectedCategory" optionLabel="full_name" :suggestions="filteredCategories" @complete="searchCategory" />
+          <label for="catSelection">Kategorie</label>
+        </FloatLabel>
       </div>
-    </div>
-    <div class="section">
-      <div class="label-value in-row">
-        <Fluid>
+      <div class="page--content--row">
+        <Fluid class="row--item row--item--is-grow">
           <FloatLabel variant="in">
             <InputText id="transactionDateFormatted" v-model=transactionDateFormatted readonly
                        variant="filled"></InputText>
@@ -46,9 +41,9 @@
         </Fluid>
       </div>
       <div class="page--content--row">
-        <Button size="small" @click="setDateToday" label="Heute"></Button>
-        <Button size="small" severity="secondary" @click="setDateYesterday">Gestern</Button>
-        <Button size="small" severity="secondary">Anderes Datum</Button>
+          <Button size="small" @click="setDateToday" label="Heute"></Button>
+          <Button size="small" severity="secondary" @click="setDateYesterday">Gestern</Button>
+          <Button size="small" severity="secondary">Anderes Datum</Button>
       </div>
       <div class="page--content--row" v-if="error">
         <div class="error">{{ error }}</div>
@@ -69,6 +64,9 @@
   display: flex;
   flex-direction: column;
   width: 100%;
+  flex-grow: 1;
+  position: relative;
+  overflow-y: hidden;
 }
 
 .page--header {
@@ -84,8 +82,10 @@
 .page--content {
   display: flex;
   flex-direction: column;
+  flex-grow: 1;
   padding-inline: 0.5em;
   gap: 0.5em;
+  overflow-y: scroll;
 }
 
 .page--content--row {
@@ -98,13 +98,36 @@
   display: flex;
 }
 
-.row--item--is-grow, .row--item--is-grow > * {
+.row--item--is-grow, .row--item--is-grow > *, .row--item--is-grow > * > * {
+  display: flex;
   flex-grow: 1;
   flex-basis: auto;
 }
 
 .page--title {
 
+}
+
+.page--footer {
+  display: flex;
+  padding-inline: 0.5em;
+  gap: 0.5em;
+}
+
+.footer--is-sticky {
+  position: sticky;
+  bottom: 0;
+}
+
+.page--footer .btn-save {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  flex: 1 1 auto;
+}
+
+.page--footer .btn-save button {
+  flex-grow: 1;
 }
 
 .value.currency {
@@ -159,6 +182,8 @@ export default {
   components: {},
   data() {
     return {
+      selectedCategory: undefined,
+      filteredCategories: this.filteredCategories,
       amountText: '',
       isSpending: true,
       transactionDate: this.transactionDate,
@@ -176,6 +201,10 @@ export default {
     },
   },
   computed: {
+    ...mapStores(UserStore, MasterDataStore, PreferencesStore),
+    ...mapState(UserStore, ['authenticated']),
+    ...mapState(PreferencesStore, ['newTransactionPresets']),
+    ...mapState(MasterDataStore, ['categories']),
     saveEnabled() {
       return this.amount && this.transactionText && this.transactionDate;
     },
@@ -186,16 +215,23 @@ export default {
         return '';
       }
     },
-    ...mapStores(UserStore, MasterDataStore, PreferencesStore),
-    ...mapState(UserStore, ['authenticated']),
-    ...mapState(PreferencesStore, ['newTransactionPresets']),
-    ...mapState(MasterDataStore, ['categories']),
   },
   methods: {
     ...mapActions(TransactionStore, ['addTransaction']),
     ...mapActions(PreferencesStore, ['getNewTransactionPresets']),
     ...mapActions(MasterDataStore, ['getCategoryById', 'getCategories']),
     ...mapActions(UserStore, ['setNotAuthenticated']),
+    saveTransaction() {
+    },
+    searchCategory(event) {
+      if (!event.query.trim().length) {
+        this.filteredCategories = [...this.categories];
+      } else {
+        this.filteredCategories = this.categories.filter((category) => {
+          return category.full_name.toLowerCase().indexOf(event.query.toLowerCase()) >= 0;
+        });
+      }
+    },
     async loadDataFromServer() {
       this.error = '';
       this.loading = true;
@@ -282,7 +318,6 @@ export default {
       //e.target.value = value ? (this.currencyStringToNumber(value) * 100) : '';
     },
     onBlur(e) {
-      return;
       const currency = 'EUR';
       const value = e.target.value;
 
@@ -347,6 +382,7 @@ export default {
   created() {
     this.amount = 0;
     this.updateData = {};
+    this.filteredCategories = [];
     this.shortcuts = [
       {id: 1, name: 'Bäckerei', categoryId: 1, tags: ['Urlaub', '2025 Köln']},
       {id: 1, name: 'Metzgerei', categoryId: 2, tags: []},
