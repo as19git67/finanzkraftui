@@ -27,18 +27,17 @@
       </div>
       <div class="page--content--row">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <AutoComplete id="catSelection" v-model="selectedCategory" optionLabel="full_name" :suggestions="filteredCategories" @complete="searchCategory" />
+          <AutoComplete id="catSelection" class="transactionCategorySelection" v-model="selectedCategory" optionLabel="full_name"
+                        :suggestions="filteredCategories" @complete="searchCategory" />
           <label for="catSelection">Kategorie</label>
         </FloatLabel>
       </div>
       <div class="page--content--row">
-        <Fluid class="row--item row--item--is-grow">
-          <FloatLabel variant="in">
-            <InputText id="transactionDateFormatted" v-model=transactionDateFormatted readonly
-                       variant="filled"></InputText>
-            <label for="transactionDateFormatted">Datum</label>
-          </FloatLabel>
-        </Fluid>
+        <FloatLabel variant="in" class="row--item row--item--is-grow">
+          <InputText id="transactionDateFormatted" v-model=transactionDateFormatted readonly
+                     variant="filled"></InputText>
+          <label for="transactionDateFormatted">Datum</label>
+        </FloatLabel>
       </div>
       <div class="page--content--row">
           <Button size="small" @click="setDateToday" label="Heute"></Button>
@@ -98,10 +97,23 @@
   display: flex;
 }
 
-.row--item--is-grow, .row--item--is-grow > *, .row--item--is-grow > * > * {
+.row--item--is-grow, .row--item--is-grow > * {
   display: flex;
   flex-grow: 1;
   flex-basis: auto;
+}
+
+.transactionCategorySelection {
+  display: flex;
+  flex-grow: 1;
+  flex-basis: 100%;
+}
+
+.transactionCategorySelection > * {
+  display: flex;
+  flex-grow: 1;
+  flex-basis: 100%;
+  width: 100%;
 }
 
 .page--title {
