@@ -96,7 +96,10 @@
 }
 
 body {
-    min-height: 100dvh;
+    overflow: hidden;   /* stop scrolling body */
+    width: 100%;
+    height: var(--100vh, 100vh);
+    padding: env(safe-area-inset-top, 20px) env(safe-area-inset-right, 20px) env(safe-area-inset-bottom, 20px) env(safe-area-inset-left, 20px);
     color: var(--color-text);
     background: var(--color-background);
     transition: color 0.5s, background-color 0.5s;
@@ -131,9 +134,8 @@ button:hover svg .metaphor {
 }
 
 #app {
+    height: 100%;
     font-weight: normal;
-    width: 100vw;
-    height: 100dvh;
     overflow: hidden;
     display: flex;
     flex-direction: column;

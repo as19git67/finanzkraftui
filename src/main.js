@@ -1,9 +1,9 @@
-import { createApp } from "vue";
+import {createApp} from "vue";
 import PrimeVue from 'primevue/config';
 import Aura from '@primeuix/themes/aura';
 import App from "./App.vue";
 import router from "./router";
-import { createPinia } from 'pinia'
+import {createPinia} from 'pinia'
 import axios from 'axios'
 import Fluid from 'primevue/fluid';
 import Button from "primevue/button"
@@ -18,7 +18,6 @@ import "primeicons/primeicons.css";
 
 
 import "./assets/main.css";
-import NotAuthorizedView from "@/views/NotAuthorizedView.vue";
 
 let originUrl = new URL(location.origin);
 const baseServerUrlFromConfig = import.meta.env.VITE_APP_API_BASE_URL;
@@ -29,6 +28,30 @@ if (baseServerUrlFromConfig) {
 } else {
   axios.defaults.baseURL = originUrl.origin;
 }
+
+function calculateViewport() {
+  return {
+    width: window.visualViewport.width,
+    height: window.visualViewport.height,
+    visual: {
+      width: Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0),
+      height: Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0),
+    }
+  };
+}
+
+function setViewPortStyleSheet() {
+  const vp = calculateViewport();
+  const sheet = new CSSStyleSheet();
+  sheet.replaceSync(`:root { --100vvw: ${vp.visual.width}px; --100vvh: ${vp.visual.height}px; --100vw: ${vp.width}px; --100vh: ${vp.height}px;}`);
+  document.adoptedStyleSheets = [sheet];
+}
+
+window.visualViewport.addEventListener('resize', () => {
+  setViewPortStyleSheet()
+});
+
+setViewPortStyleSheet();
 
 const pinia = createPinia();
 const app = createApp(App);
