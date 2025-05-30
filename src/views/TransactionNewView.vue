@@ -101,12 +101,14 @@
   display: flex;
   flex-grow: 1;
   flex-basis: auto;
+  width: 100%;
 }
 
 .transactionCategorySelection {
   display: flex;
   flex-grow: 1;
   flex-basis: 100%;
+  width: 100%;
 }
 
 .transactionCategorySelection > * {
