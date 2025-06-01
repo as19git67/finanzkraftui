@@ -243,12 +243,13 @@ export const TransactionStore = defineStore('transaction', {
         const config = userStore.getBearerAuthRequestHeader();
         try {
           const tr = {
-            t_notes: transactionData.t_notes,
-            t_payee: transactionData.t_payee,
-            t_amount: transactionData.t_amount,
-            t_value_date: transactionData.t_value_date,
-            t_category_id: transactionData.t_category_id,
-            confirmed: true,
+            idAccount: transactionData.idAccount,
+            text: transactionData.t_text,
+            notes: transactionData.t_notes,
+            payee: transactionData.t_payee,
+            amount: transactionData.t_amount,
+            valueDate: transactionData.t_value_date,
+            idCategory: transactionData.t_category_id,
           };
           const response = await axios.put('/api/transaction', tr, config);
           if (response.status === 200) {
