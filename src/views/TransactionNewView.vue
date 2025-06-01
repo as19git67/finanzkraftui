@@ -101,7 +101,6 @@
   display: flex;
   flex-grow: 1;
   flex-basis: auto;
-  width: 100%;
 }
 
 .transactionCategorySelection {
