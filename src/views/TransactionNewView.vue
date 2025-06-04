@@ -263,50 +263,6 @@ export default {
 </script>
 
 <style scoped>
-.page {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  flex-grow: 1;
-  position: relative;
-  overflow-y: hidden;
-}
-
-.page--header {
-  display: flex;
-  justify-content: start;
-  background-color: var(--color-background-soft);
-  color: var(--color-text-soft);
-  font-size: 18px;
-  padding-inline: 0.5em;
-  margin-bottom: 0.25em;
-}
-
-.page--content {
-  display: flex;
-  flex-direction: column;
-  flex-grow: 1;
-  padding-inline: 0.5em;
-  gap: 0.5em;
-  overflow-y: scroll;
-}
-
-.page--content--row {
-  display: flex;
-  align-items: center;
-  gap: 0.5em;
-}
-
-.row--item {
-  display: flex;
-}
-
-.row--item--is-grow, .row--item--is-grow > * {
-  display: flex;
-  flex-grow: 1;
-  flex-basis: auto;
-}
-
 .transactionCategorySelection {
   display: flex;
   flex-grow: 1;
@@ -319,21 +275,6 @@ export default {
   flex-grow: 1;
   flex-basis: 100%;
   width: 100%;
-}
-
-.page--title {
-
-}
-
-.page--footer {
-  display: flex;
-  padding-inline: 0.5em;
-  gap: 0.5em;
-}
-
-.footer--is-sticky {
-  position: sticky;
-  bottom: 0;
 }
 
 .page--footer .btn-save {

@@ -27,6 +27,7 @@ export const AccountStore = defineStore('account', {
                   name: account.name,
                   iban: account.iban,
                   currency: account.currency_id,
+                  type: account.account_type_id,
                   currencyName: account.currency_name,
                   currencyShort: account.currency_short,
                   closedAt: account.closedAt,
