@@ -14,7 +14,9 @@
                   <span>{{ item.name }}</span>
                   <span>{{ item.type }}</span>
                 </div>
-                <div class="data-list--item__main__row">Zusätzliche Daten</div>
+                <div class="data-list--item__main__row">{{
+                    item.closedAt !== null ? `geschlossen am : ${DateTime.fromISO(item.closedAt).toLocaleString()}` : ''
+                  }}</div>
               </div>
               <div class="data-list-item__caret">
                 <Button icon="pi pi-caret-right" severity="contrast" variant="text" rounded aria-label="Ändern" />
