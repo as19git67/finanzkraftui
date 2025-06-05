@@ -183,13 +183,12 @@ button:hover svg .metaphor {
 }
 
 .row--item {
-    display: flex;
 }
 
-.row--item--is-grow, .row--item--is-grow > * {
+.row--item.row--item--is-grow,
+.row--item.row--item--is-grow > * {
     display: flex;
-    flex-grow: 1;
-    flex-basis: auto;
+    flex: 1 1 auto;
 }
 
 .page--title {

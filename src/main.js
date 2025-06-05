@@ -14,6 +14,8 @@ import FloatLabel from "primevue/floatlabel";
 import IconField from 'primevue/iconfield';
 import InputIcon from 'primevue/inputicon';
 import AutoComplete from 'primevue/autocomplete';
+import Select from 'primevue/select';
+import MultiSelect from 'primevue/multiselect';
 import "primeicons/primeicons.css";
 
 
@@ -80,4 +82,6 @@ app.component('InputIcon', InputIcon);
 app.component('IconField', IconField);
 app.component('InputNumber', InputNumber);
 app.component('FloatLabel', FloatLabel);
+app.component('Select', Select);
+app.component('MultiSelect', MultiSelect);
 app.mount("#app");

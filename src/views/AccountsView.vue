@@ -25,31 +25,6 @@
           </div>
         </div>
       </div>
-      <div class="section section--is-scrollable">
-        <table class="data-table" v-if="accounts.length">
-          <thead>
-          <tr>
-            <th>Name</th>
-            <th>IBAN</th>
-            <th><span class="only-wide">Währung</span><span class="only-small" aria-label="Währung"></span></th>
-            <th><span class="only-wide">Geschlossen</span><span class="only-small" aria-label="Geschlossen"></span></th>
-          </tr>
-          </thead>
-          <tbody>
-          <tr v-for="(item, index) of accounts" :key="item"
-              :class="{ 'account-closed': !!item.closedAt, 'alternate-row-background': index % 2 }">
-            <td>{{ item.name }}</td>
-            <td>{{ item.iban }}</td>
-            <td><span class="only-wide">{{ item.currencyName }}</span><span class="only-small">{{ item.currencyShort }}</span></td>
-            <td class="right-aligned">{{
-                item.closedAt !== null ? DateTime.fromISO(item.closedAt).toLocaleString() : ''
-              }}
-            </td>
-          </tr>
-          </tbody>
-        </table>
-        <p v-else>Keine Accounts vom Server geladen</p>
-      </div>
       <div class="page--content--row" v-if="error">
         <div class="error">{{ error }}</div>
       </div>
