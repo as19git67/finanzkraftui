@@ -19,7 +19,7 @@
                   }}</div>
               </div>
               <div class="data-list-item__caret">
-                <Button icon="pi pi-caret-right" severity="contrast" variant="text" rounded aria-label="Ändern" />
+                <Button @click="navigateToAccountDetail(item.id)" @keydown.enter="navigateToAccountDetail(item.id)" icon="pi pi-caret-right" severity="contrast" variant="text" rounded aria-label="Ändern" />
               </div>
             </div>
           </div>
@@ -169,6 +169,9 @@ export default {
             this.error = error.message;
           });
     },
+    navigateToAccountDetail(idAccount) {
+      router.push({ name: 'AccountDetail', params: { accountId: idAccount } });
+    }
   },
   mounted() {
     this.error = null;

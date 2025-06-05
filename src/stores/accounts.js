@@ -13,6 +13,19 @@ export const AccountStore = defineStore('account', {
     },
   },
   actions: {
+    async getAccountById(accountId) {
+      return new Promise((resolve, reject) => {
+        const id = parseInt(accountId);
+        const account = _.find(this._accounts, function (item) {
+          return item.id === id;
+        });
+        if (account) {
+          resolve(account);
+        } else {
+          reject(new Error('Account not found'));
+        }
+      });
+    },
     async getAccounts(force) {
       if (force || this.accounts.length === 0) {
         const userStore = UserStore();

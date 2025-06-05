@@ -6,6 +6,7 @@ import TransactionDetailView from '../views/TransactionDetailView.vue';
 import TransactionRulesView from '../views/TransactionRulesView.vue';
 import CategorySelectionView from '../views/CategorySelectionView.vue';
 import AccountsView from '../views/AccountsView.vue';
+import AccountView from '../views/AccountView.vue';
 import RuleSetsView from '../views/RuleSetsView.vue';
 import RuleSetEditView from '../views/RuleSetEditView.vue';
 import UsersView from '../views/UsersView.vue';
@@ -77,6 +78,12 @@ const router = createRouter({
       path: '/accounts',
       name: 'Accounts',
       component: AccountsView,
+    },
+    {
+      path: '/account/:accountId',
+      name: 'AccountDetail',
+      props: true,
+      component: AccountView,
     },
     {
       path: '/users',
