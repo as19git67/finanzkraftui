@@ -28,6 +28,7 @@ export default {
       readers: this.readers,
       writer: [],
       accountTypes: this.accountTypes,
+      userAccounts: this.userAccounts,
     };
   },
   computed: {
@@ -130,6 +131,9 @@ export default {
       this.currencyObj = _.find(this.currencies, (item) => {
         return item.id === this.data.currency;
       });
+      this.userAccounts = _.map(this.users, (user) => {
+        return {id: user.id, Email: user.Email};
+      })
       this.readers =  [1];
       this.iban = this.data.iban;
       this.closedAt = this.data.closedAt;
@@ -177,7 +181,7 @@ export default {
       </div>
       <div class="page--content--row">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <MultiSelect id="accountReader" fluid v-model="readers" :options="users" optionValue="id" optionLabel="Email" />
+          <MultiSelect id="accountReader" fluid filter v-model="readers" :options="userAccounts" optionValue="id" optionLabel="Email" />
           <label for="accountReader">Benutzer mit Leserechten</label>
         </FloatLabel>
       </div>
