@@ -19,16 +19,15 @@ export default {
   data() {
     return {
       id: this.accountId,
-      name: '',
+      name: this.name,
+      accountTypeObj: this.accountTypeObj,
       currencyObj: this.currencyObj,
       typeObj: this.typeObj,
       bank: '',
       iban: '',
       closedAt: undefined,
       readers: this.readers,
-      writer: [],
-      accountTypes: this.accountTypes,
-      userAccounts: this.userAccounts,
+      writers: this.writers,
     };
   },
   computed: {
@@ -36,8 +35,16 @@ export default {
     ...mapStores(AccountStore),
     ...mapStores(MasterDataStore),
     ...mapState(UserStore, ["authenticated", "users"]),
-    ...mapState(MasterDataStore, ["currencies"]),
+    ...mapState(MasterDataStore, ["currencies", "accountTypes"]),
     ...mapState(AccountStore, ["accounts"]),
+    dirty() {
+      return this.originalData.name !== this.name ||
+          this.originalData.iban !== this.iban ||
+          this.originalData.type !== this.typeObj.id ||
+          this.originalData.currency !== this.currencyObj.id ||
+          !_.isEqual(this.originalData.readers, this.integerSort(this.readers)) ||
+          !_.isEqual(this.originalData.writers, this.integerSort(this.writers));
+    },
     type() {
       if (this.typeObj) {
         return this.typeObj.code;
@@ -64,9 +71,14 @@ export default {
     },
   },
   methods: {
-    ...mapActions(UserStore, ["getUsers"]),
+    ...mapActions(UserStore, ["setNotAuthenticated", "getUsers"]),
     ...mapActions(AccountStore, ["getAccounts", "getAccountById"]),
-    ...mapActions(MasterDataStore, ["getCurrencies"]),
+    ...mapActions(MasterDataStore, ["getCurrencies", "getAccountTypes"]),
+    integerSort(arr) {
+      return arr.sort(function(a, b) {
+        return a - b;
+      });
+    },
     async loadDataFromServer() {
       this.error = '';
       this.loading = true;
@@ -74,6 +86,7 @@ export default {
       promises.push(this.getUsers());
       promises.push(this.getAccounts());
       promises.push(this.getCurrencies());
+      promises.push(this.getAccountTypes());
       const results = await Promise.all(promises);
       this.loading = false;
       let mustAuthenticate = false;
@@ -109,6 +122,11 @@ export default {
         return;
       }
     },
+    async saveAccount() {
+    }
+  },
+  created() {
+    this.originalData = {};
   },
   async mounted() {
     this.error = undefined;
@@ -116,25 +134,18 @@ export default {
     try {
       await this.loadDataFromServer();
       this.data = await this.getAccountById(this.accountId);
-      this.accountTypes = ref([
-        {code: "cash", name: "Bargeld", order: 0},
-        {code: "checking", name: "Girokonto", order: 1},
-        {code: "credit", name: "Kreditkarte", order: 2},
-        {code: "daily", name: "Tagesgeld", order: 3},
-        {code: "savings", name: "Sparkonto", order: 4},
-      ]);
-
+      this.integerSort(this.data.readers);
+      this.integerSort(this.data.writers);
+      this.originalData = _.cloneDeep(this.data);
       this.name = this.data.name;
       this.typeObj = _.find(this.accountTypes, (item) => {
-        return item.code === this.data.type;
+        return item.id === this.data.type;
       });
       this.currencyObj = _.find(this.currencies, (item) => {
         return item.id === this.data.currency;
       });
-      this.userAccounts = _.map(this.users, (user) => {
-        return {id: user.id, Email: user.Email};
-      })
-      this.readers =  [1];
+      this.readers = this.data.readers;
+      this.writers = this.data.writers;
       this.iban = this.data.iban;
       this.closedAt = this.data.closedAt;
     } catch (ex) {
@@ -186,10 +197,19 @@ export default {
         </FloatLabel>
       </div>
       <div class="page--content--row">
-        Reader: {{readers}}
+        <FloatLabel variant="in" class="row--item row--item--is-grow">
+          <MultiSelect id="accountWriter" fluid v-model="writers" :options="users" optionValue="id" optionLabel="Email" />
+          <label for="accountWriter">Benutzer mit Recht zum Ändern</label>
+        </FloatLabel>
       </div>
       <div class="page--content--row" v-if="closedAt">
         Geschlossen: {{closedAt !== null ? DateTime.fromISO(closedAt).toLocaleString() : ''}}
+      </div>
+    </div>
+    <div class="page--footer">
+      <div class="btn-save">
+        <Button label="Speichern" :disabled="!dirty" @click="saveAccount" size="large">
+        </Button>
       </div>
     </div>
   </div>

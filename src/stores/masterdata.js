@@ -5,12 +5,16 @@ import { UserStore } from '@/stores/user';
 
 export const MasterDataStore = defineStore('masterdata', {
   state: () => ({
+    _accountTypes: [],
     _currencies: [],
     _timespans: [],
     _categories: [],
     _categoriesById: {},
   }),
   getters: {
+    accountTypes(state) {
+      return state._accountTypes;
+    },
     currencies(state) {
       return state._currencies;
     },
@@ -22,6 +26,45 @@ export const MasterDataStore = defineStore('masterdata', {
     },
   },
   actions: {
+    async getAccountTypes(force) {
+      if (force || this._accountTypes.length === 0) {
+        const userStore = UserStore();
+        if (userStore.authenticated) {
+          const config = userStore.getBearerAuthRequestHeader();
+          try {
+            const response = await axios.get('/api/accounttypes', config);
+            if (response.status === 200) {
+              if (_.isArray(response.data)) {
+                this._accountTypes = _.map(response.data, (c) => ({
+                  id: c.id,
+                  name: c.name,
+                  order: c.order,
+                }));
+              } else {
+                this._accountTypes = [];
+              }
+            } else {
+              this._accountTypes = [];
+            }
+            return response.status;
+          } catch (ex) {
+            this._accountTypes = [];
+            if (ex.response && ex.response.status) {
+              if (ex.response.status === 401) {
+                userStore.setNotAuthenticated();
+              }
+              return ex.response.status;
+            }
+            throw ex;
+          }
+        } else {
+          this._accountTypes = [];
+          return 401;
+        }
+      } else {
+        return 200; // status ok
+      }
+    },
     async getCurrencies(force) {
       if (force || this._currencies.length === 0) {
         const userStore = UserStore();
