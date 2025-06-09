@@ -44,7 +44,7 @@ export const AccountStore = defineStore('account', {
                   currencyName: account.currency_name,
                   currencyShort: account.currency_short,
                   closedAt: account.closedAt,
-                  readers: account.readers ? account.readers : [2,1],
+                  readers: account.readers ? account.readers : [],
                   writers: account.writers ? account.writers : [],
                 }));
               } else {

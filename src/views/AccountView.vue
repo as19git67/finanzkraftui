@@ -192,13 +192,13 @@ export default {
       </div>
       <div class="page--content--row">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <MultiSelect id="accountReader" fluid filter v-model="readers" :options="userAccounts" optionValue="id" optionLabel="Email" />
+          <MultiSelect id="accountReader" fluid filter v-model="readers" :options="users" optionValue="id" optionLabel="Email" />
           <label for="accountReader">Benutzer mit Leserechten</label>
         </FloatLabel>
       </div>
       <div class="page--content--row">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <MultiSelect id="accountWriter" fluid v-model="writers" :options="users" optionValue="id" optionLabel="Email" />
+          <MultiSelect id="accountWriter" fluid filter v-model="writers" :options="users" optionValue="id" optionLabel="Email" />
           <label for="accountWriter">Benutzer mit Recht zum Ändern</label>
         </FloatLabel>
       </div>
