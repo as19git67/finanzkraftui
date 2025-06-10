@@ -25,6 +25,8 @@ export default {
       typeObj: this.typeObj,
       bank: '',
       iban: '',
+      startBalance: this.startBalance,
+      closed: this.closed,
       closedAt: undefined,
       readers: this.readers,
       writers: this.writers,
@@ -38,7 +40,10 @@ export default {
     ...mapState(MasterDataStore, ["currencies", "accountTypes"]),
     ...mapState(AccountStore, ["accounts"]),
     dirty() {
+      const closedAt = this.closedAt ? (this.closed ? DateTime.fromJSDate(this.closedAt).toISO() : '') : '';
       return this.originalData.name !== this.name ||
+          (this.originalData.closedAt ? this.originalData.closedAt.substring(0, 10) : '') !==  closedAt.substring(0, 10) ||
+          this.originalData.startBalance !== this.startBalance ||
           this.originalData.iban !== this.iban ||
           this.originalData.type !== this.typeObj.id ||
           this.originalData.currency !== this.currencyObj.id ||
@@ -146,8 +151,12 @@ export default {
       });
       this.readers = this.data.readers;
       this.writers = this.data.writers;
+      this.startBalance = this.data.startBalance;
       this.iban = this.data.iban;
-      this.closedAt = this.data.closedAt;
+      this.closed = this.data.closedAt !== null;
+      if (this.closed) {
+        this.closedAt = DateTime.fromISO(this.data.closedAt).toJSDate();
+      }
     } catch (ex) {
       this.error = ex.message;
       this.loading = false;
@@ -192,6 +201,14 @@ export default {
       </div>
       <div class="page--content--row">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
+          <InputNumber id="accountStartBalance" locale="de-DE"
+                       inputmode="decimal" currency="EUR"
+                       mode="currency" v-model=startBalance variant="filled"/>
+          <label for="accountStartBalance">Anfangssaldo</label>
+        </FloatLabel>
+      </div>
+      <div class="page--content--row">
+        <FloatLabel variant="in" class="row--item row--item--is-grow">
           <MultiSelect id="accountReader" fluid filter v-model="readers" :options="users" optionValue="id" optionLabel="Email" />
           <label for="accountReader">Benutzer mit Leserechten</label>
         </FloatLabel>
@@ -202,8 +219,12 @@ export default {
           <label for="accountWriter">Benutzer mit Recht zum Ändern</label>
         </FloatLabel>
       </div>
-      <div class="page--content--row" v-if="closedAt">
-        Geschlossen: {{closedAt !== null ? DateTime.fromISO(closedAt).toLocaleString() : ''}}
+      <div class="page--content--row">
+        <FloatLabel variant="in" class="row--item row--item--is-grow">
+          <DatePicker v-model="closedAt" :disabled="!closed" inputId="closedAt" showIcon iconDisplay="input" variant="filled" />
+          <label for="closedAt">geschlossen am</label>
+        </FloatLabel>
+        <ToggleSwitch v-model="closed"/>
       </div>
     </div>
     <div class="page--footer">

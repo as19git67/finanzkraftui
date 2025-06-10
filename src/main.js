@@ -3,11 +3,12 @@ import PrimeVue from 'primevue/config';
 import Aura from '@primeuix/themes/aura';
 import App from "./App.vue";
 import router from "./router";
-import {createPinia} from 'pinia'
-import axios from 'axios'
+import {createPinia} from 'pinia';
+import axios from 'axios';
 import Fluid from 'primevue/fluid';
-import Button from "primevue/button"
-import ToggleButton from "primevue/togglebutton"
+import Button from "primevue/button";
+import ToggleButton from "primevue/togglebutton";
+import ToggleSwitch from 'primevue/toggleswitch';
 import InputText from "primevue/inputtext"
 import InputNumber from "primevue/inputnumber"
 import FloatLabel from "primevue/floatlabel";
@@ -16,6 +17,7 @@ import InputIcon from 'primevue/inputicon';
 import AutoComplete from 'primevue/autocomplete';
 import Select from 'primevue/select';
 import MultiSelect from 'primevue/multiselect';
+import DatePicker from 'primevue/datepicker';
 import "primeicons/primeicons.css";
 
 
@@ -77,6 +79,7 @@ app.component('AutoComplete', AutoComplete);
 app.component('Fluid', Fluid);
 app.component('Button', Button);
 app.component('ToggleButton', ToggleButton);
+app.component('ToggleSwitch', ToggleSwitch);
 app.component('InputText', InputText);
 app.component('InputIcon', InputIcon);
 app.component('IconField', IconField);
@@ -84,4 +87,6 @@ app.component('InputNumber', InputNumber);
 app.component('FloatLabel', FloatLabel);
 app.component('Select', Select);
 app.component('MultiSelect', MultiSelect);
+app.component('DatePicker', DatePicker);
+
 app.mount("#app");
