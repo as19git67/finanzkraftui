@@ -6,7 +6,6 @@ defineProps({
 
 <script>
 import _ from 'lodash';
-import {ref} from "vue";
 import {mapActions, mapState, mapStores} from "pinia";
 import {DateTime} from "luxon";
 import router from "@/router";
@@ -15,7 +14,7 @@ import {UserStore} from "@/stores/user";
 import {MasterDataStore} from "@/stores/masterdata";
 
 export default {
-  name: "Home",
+  name: "AccountView",
   data() {
     return {
       id: this.accountId,
@@ -23,8 +22,7 @@ export default {
       accountTypeObj: this.accountTypeObj,
       currencyObj: this.currencyObj,
       typeObj: this.typeObj,
-      bank: '',
-      iban: '',
+      iban: this.iban,
       startBalance: this.startBalance,
       closed: this.closed,
       closedAt: undefined,
@@ -42,23 +40,17 @@ export default {
     dirty() {
       const closedAt = this.closedAt ? (this.closed ? DateTime.fromJSDate(this.closedAt).toISO() : '') : '';
       return this.originalData.name !== this.name ||
-          (this.originalData.closedAt ? this.originalData.closedAt.substring(0, 10) : '') !==  closedAt.substring(0, 10) ||
-          this.originalData.startBalance !== this.startBalance ||
-          this.originalData.iban !== this.iban ||
           this.originalData.type !== this.typeObj.id ||
+          this.originalData.iban !== this.iban ||
           this.originalData.currency !== this.currencyObj.id ||
+          this.originalData.startBalance !== this.startBalance ||
+          (this.originalData.closedAt ? this.originalData.closedAt.substring(0, 10) : '') !==  closedAt.substring(0, 10) ||
           !_.isEqual(this.originalData.readers, this.integerSort(this.readers)) ||
           !_.isEqual(this.originalData.writers, this.integerSort(this.writers));
     },
     type() {
       if (this.typeObj) {
         return this.typeObj.code;
-      }
-      return '';
-    },
-    typeName() {
-      if (this.typeObj) {
-        return this.typeObj.name;
       }
       return '';
     },
@@ -77,7 +69,7 @@ export default {
   },
   methods: {
     ...mapActions(UserStore, ["setNotAuthenticated", "getUsers"]),
-    ...mapActions(AccountStore, ["getAccounts", "getAccountById"]),
+    ...mapActions(AccountStore, ["getAccounts", "getAccountById", "updateAccount"]),
     ...mapActions(MasterDataStore, ["getCurrencies", "getAccountTypes"]),
     integerSort(arr) {
       return arr.sort(function(a, b) {
@@ -126,18 +118,8 @@ export default {
         router.replace({name: 'notAuthorized'});
         return;
       }
-    },
-    async saveAccount() {
-    }
-  },
-  created() {
-    this.originalData = {};
-  },
-  async mounted() {
-    this.error = undefined;
-    this.loading = false;
-    try {
-      await this.loadDataFromServer();
+
+      // initialize view data
       this.data = await this.getAccountById(this.accountId);
       this.integerSort(this.data.readers);
       this.integerSort(this.data.writers);
@@ -157,6 +139,74 @@ export default {
       if (this.closed) {
         this.closedAt = DateTime.fromISO(this.data.closedAt).toJSDate();
       }
+    },
+    createUpdateData() {
+      const updateData = {
+        id: this.originalData.id,
+      };
+      if (this.originalData.name !== this.name) {
+        updateData.name = this.name;
+      }
+      if (this.originalData.type !== this.typeObj.id) {
+        updateData.idAccountType = this.typeObj.id;
+      }
+      if (this.originalData.iban !== this.iban) {
+        updateData.iban = this.iban;
+      }
+      if (this.originalData.currency !== this.currencyObj.id) {
+        updateData.idCurrency = this.currencyObj.id;
+      }
+      if (this.originalData.startBalance !== this.startBalance) {
+        updateData.startBalance = this.startBalance;
+      }
+      const closedAt = this.closedAt ? (this.closed ? DateTime.fromJSDate(this.closedAt).toISO() : '') : '';
+      if ((this.originalData.closedAt ? this.originalData.closedAt.substring(0, 10) : '') !==  closedAt.substring(0, 10)) {
+        if (closedAt === '') {
+          updateData.closedAt = null;
+        } else {
+          const d = new Date(Date.UTC(this.closedAt.getFullYear(), this.closedAt.getMonth(), this.closedAt.getDate(), 0, 0, 0));
+          updateData.closedAt = DateTime.fromJSDate(d);
+        }
+      }
+      if (!_.isEqual(this.originalData.readers, this.integerSort(this.readers))) {
+        updateData.readers = this.readers;
+      }
+      if (!_.isEqual(this.originalData.writers, this.integerSort(this.writers))) {
+        updateData.writers = this.readers;
+      }
+      return updateData;
+    },
+    async saveAccount() {
+      this.error = undefined;
+      this.loading = false;
+      try {
+        const updateData = this.createUpdateData();
+        await this.updateAccount(updateData);
+
+        await this.loadDataFromServer();
+        router.replace({name: 'Accounts'});
+      } catch (ex) {
+        this.error = ex.message;
+        this.loading = false;
+        console.log(this.error);
+      }
+    },
+    cancel() {
+      router.replace({name: 'Accounts'});
+    }
+  },
+  created() {
+    this.originalData = {};
+    this.typeObj = {};
+    this.currencyObj = {};
+    this.readers = [];
+    this.writers = [];
+  },
+  async mounted() {
+    this.error = undefined;
+    this.loading = false;
+    try {
+      await this.loadDataFromServer();
     } catch (ex) {
       this.error = ex.message;
       this.loading = false;
@@ -228,10 +278,8 @@ export default {
       </div>
     </div>
     <div class="page--footer">
-      <div class="btn-save">
-        <Button label="Speichern" :disabled="!dirty" @click="saveAccount" size="large">
-        </Button>
-      </div>
+      <Button label="Speichern" :disabled="!dirty" @click="saveAccount" size="large"/>
+      <Button label="Abbrechen" @click="cancel" size="large"/>
     </div>
   </div>
 </template>

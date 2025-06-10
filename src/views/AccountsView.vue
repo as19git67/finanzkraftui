@@ -1,3 +1,93 @@
+<script setup>
+import {DateTime} from "luxon";
+</script>
+
+<script>
+import { mapActions, mapState, mapStores } from "pinia";
+import { UserStore } from "@/stores/user";
+import { AccountStore } from "@/stores/accounts";
+import router from "@/router";
+import {MasterDataStore} from "@/stores/masterdata";
+import _ from "lodash";
+
+export default {
+  name: "AccountsView",
+  data() {
+    return {
+      loading: this.loading,
+      error: this.error,
+    };
+  },
+  computed: {
+    ...mapStores(UserStore),
+    ...mapStores(AccountStore),
+    ...mapState(UserStore, ["authenticated"]),
+    ...mapState(AccountStore, ["accounts"]),
+  },
+  methods: {
+    ...mapActions(UserStore, ["setNotAuthenticated", "getUsers"]),
+    ...mapActions(AccountStore, ["getAccounts"]),
+    ...mapActions(MasterDataStore, ["getCurrencies", "getCurrencyDetails", "getAccountTypes", "getAccountTypeDetails"]),
+    async loadDataFromServer() {
+      this.error = '';
+      this.loading = true;
+      const promises = [];
+      promises.push(this.getUsers());
+      promises.push(this.getAccounts(true));
+      promises.push(this.getCurrencies(true));
+      promises.push(this.getAccountTypes(true));
+      const results = await Promise.all(promises);
+      this.loading = false;
+      let mustAuthenticate = false;
+      let notAuthorized = false;
+      let not_ok = false;
+      results.forEach((result) => {
+        let status = result;
+        if (_.isObject(result)) {
+          status = result.status;
+        }
+
+        switch (status) {
+          case 403:
+            notAuthorized = true;
+            break;
+          case 401:
+          case 404:
+            mustAuthenticate = true;
+            break;
+          case 200:
+            break;
+          default:
+            not_ok = true;
+        }
+      });
+      if (mustAuthenticate || not_ok) {
+        this.setNotAuthenticated();
+        router.replace({name: 'login'});
+        return;
+      }
+      if (notAuthorized) {
+        router.replace({name: 'notAuthorized'});
+        return;
+      }
+    },
+    navigateToAccountDetail(idAccount) {
+      router.push({ name: 'AccountDetail', params: { accountId: idAccount } });
+    }
+  },
+  async mounted() {
+    this.error = undefined;
+    this.loading = false;
+    try {
+      await this.loadDataFromServer();
+    } catch (ex) {
+      this.error = ex.message;
+      this.loading = false;
+    }
+  },
+};
+</script>
+
 <template>
   <div class="page page--is-accounts-view">
     <div class="page--header">
@@ -7,13 +97,14 @@
       <div class="page--content--row">
         <div class="data-list" v-if="accounts.length">
           <div v-for="(item, index) of accounts" :key="item"
-              :class="{ 'account-closed': !!item.closedAt }">
+               :class="{ 'account-closed': !!item.closedAt }">
             <div class="data-list--item">
               <div class="data-list-item__main">
                 <div class="data-list--item__main__row">
                   <span>{{ item.name }}</span>
-                  <span>{{ item.type }}</span>
+                  <span>{{ item.type ? getAccountTypeDetails(item.type).name : '' }}</span>
                 </div>
+                <div class="data-list--item__main__row">Währung: {{ item.currency ? getCurrencyDetails(item.currency).name : ''}}</div>
                 <div class="data-list--item__main__row">{{
                     item.closedAt !== null ? `geschlossen am : ${DateTime.fromISO(item.closedAt).toLocaleString()}` : ''
                   }}</div>
@@ -102,55 +193,3 @@ th, td {
   color: var(--as-color-primary-4);
 }
 </style>
-
-<script>
-import { DateTime } from "luxon";
-import { mapActions, mapState, mapStores } from "pinia";
-import { UserStore } from "@/stores/user";
-import { AccountStore } from "@/stores/accounts";
-import router from "@/router";
-
-export default {
-  name: "Home",
-  data() {
-    return {
-      DateTime: DateTime,
-      error: this.error,
-    };
-  },
-  computed: {
-    ...mapStores(UserStore),
-    ...mapStores(AccountStore),
-    ...mapState(UserStore, ["authenticated"]),
-    ...mapState(AccountStore, ["accounts"]),
-  },
-  methods: {
-    ...mapActions(AccountStore, ["getAccounts"]),
-    fillAccounts() {
-      this.error = "";
-      this.getAccounts()
-          .then((result) => {
-            switch (result) {
-            case 200:
-              break; // all ok
-            case 401:
-              router.replace("/login");
-              break;
-            default:
-              this.error = `Fehler beim Abrufen der Konten: ${result}`;
-            }
-          })
-          .catch((error) => {
-            this.error = error.message;
-          });
-    },
-    navigateToAccountDetail(idAccount) {
-      router.push({ name: 'AccountDetail', params: { accountId: idAccount } });
-    }
-  },
-  mounted() {
-    this.error = null;
-    this.fillAccounts();
-  },
-};
-</script>

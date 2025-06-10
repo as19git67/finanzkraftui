@@ -170,7 +170,7 @@ button:hover svg .metaphor {
 .page--content {
     display: flex;
     flex-direction: column;
-    flex-grow: 1;
+    flex-grow: 0;
     padding-inline: 0.5em;
     gap: 0.5em;
     overflow-y: scroll;
@@ -192,16 +192,17 @@ button:hover svg .metaphor {
 }
 
 .page--title {
-
 }
 
 .page--footer {
     display: flex;
     padding-inline: 0.5em;
+    padding-top: 0.5em;
     gap: 0.5em;
 }
 
 .footer--is-sticky {
+    padding-top: 0.5em;
     position: sticky;
     bottom: 0;
 }

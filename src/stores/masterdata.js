@@ -65,6 +65,9 @@ export const MasterDataStore = defineStore('masterdata', {
         return 200; // status ok
       }
     },
+    getAccountTypeDetails(accountType) {
+      return _.find(this._accountTypes, (c) => c.id === accountType);
+    },
     async getCurrencies(force) {
       if (force || this._currencies.length === 0) {
         const userStore = UserStore();
@@ -103,6 +106,9 @@ export const MasterDataStore = defineStore('masterdata', {
       } else {
         return 200; // status ok
       }
+    },
+    getCurrencyDetails(currency) {
+      return _.find(this._currencies, (c) => c.id === currency);
     },
     async getTimespans(force) {
       if (force || this._timespans.length === 0) {

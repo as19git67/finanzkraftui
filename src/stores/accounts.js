@@ -73,5 +73,29 @@ export const AccountStore = defineStore('account', {
         return 200; // status ok
       }
     },
+    async updateAccount(updateData) {
+      const resultData = {};
+      const userStore = UserStore();
+      if (userStore.authenticated) {
+        const config = userStore.getBearerAuthRequestHeader();
+        if (updateData.id === undefined) {
+          throw new Error('Account id missing in updateAccount call');
+        }
+        try {
+          const response = await axios.post(`/api/accounts/${updateData.id}`, updateData, config);
+          if (response.status === 200) {
+            const id = parseInt(updateData.id, 10);
+            const account = this._accounts.filter((tr) => {
+              return tr.t_id === id;
+            });
+            _.assign(account[0], updateData);
+          }
+          return { status: response.status, data: resultData };
+        } catch (ex) {
+          return userStore.handleAxiosException(ex, userStore, resultData);
+        }
+      }
+      return { status: 401, data: resultData };
+    },
   },
 });
