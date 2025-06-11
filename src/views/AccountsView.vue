@@ -9,6 +9,7 @@ import { AccountStore } from "@/stores/accounts";
 import router from "@/router";
 import {MasterDataStore} from "@/stores/masterdata";
 import _ from "lodash";
+import {DateTime} from "luxon";
 
 export default {
   name: "AccountsView",
@@ -29,16 +30,24 @@ export default {
       return this.accounts.map(account => {
         const currencyDetails = this.getCurrencyDetails(account.currency);
         const typeDetails = this.getAccountTypeDetails(account.type);
+        const balanceDateStr = account.balanceDate ? DateTime.fromISO(account.balanceDate).toLocaleString() : '';
+        const closedDateStr = account.closedAt ? DateTime.fromISO(account.closedAt).toLocaleString() : '';
+        const readerNames = this.mapToUserEmail(account.readers);
+        const writerNames = this.mapToUserEmail(account.writers);
         return {
           ...account,
           currencyStr: currencyDetails ? currencyDetails.short : '',
-          accountTypeStr: typeDetails ? typeDetails.type : '',
+          accountTypeStr: typeDetails ? typeDetails.name : '',
+          balanceDateStr,
+          closedDateStr,
+          readerNames,
+          writerNames,
         }
       });
     }
   },
   methods: {
-    ...mapActions(UserStore, ["setNotAuthenticated", "getUsers"]),
+    ...mapActions(UserStore, ["setNotAuthenticated", "getUsers", "getUser"]),
     ...mapActions(AccountStore, ["getAccounts"]),
     ...mapActions(MasterDataStore, ["getCurrencies", "getCurrencyDetails", "getAccountTypes", "getAccountTypeDetails"]),
     async loadDataFromServer() {
@@ -84,6 +93,18 @@ export default {
         return;
       }
     },
+    mapToUserEmail(userIds) {
+      return userIds.map(userId => {
+        const user = this.getUser(userId);
+        if (user) {
+          return {
+            email : user.Email,
+            initials: user.Initials ? user.Initials : user.Email,
+          };
+        }
+        return '';
+      });
+    },
     navigateToAccountDetail(idAccount) {
       router.push({ name: 'AccountDetail', params: { accountId: idAccount } });
     }
@@ -114,14 +135,22 @@ export default {
             <div class="data-list--item">
               <div class="data-list-item__main">
                 <div class="data-list--item__main__row">
-                  <span>{{ item.name }}</span>
-                  <span>{{ item.accountTypeStr }}</span>
+                  <span class="element--is-grow">{{ item.name }}</span>
+                  <span class="element--is-right-aligned">{{ item.accountTypeStr }}</span>
                 </div>
-                <div class="data-list--item__main__row">Saldo: {{ item.balance }}{{item.currencyStr}}</div>
-                <div class="data-list--item__main__row">Anfangsbestand: {{ item.startBalance }}{{item.currencyStr}}</div>
-                <div class="data-list--item__main__row">{{
-                    item.closedAt !== null ? `geschlossen am : ${DateTime.fromISO(item.closedAt).toLocaleString()}` : ''
-                  }}</div>
+                <div class="data-list--item__main__row" v-if="item.closedAt">{{ `Konto geschlossen: ${item.closedDateStr}` }}</div>
+                <div class="data-list--item__main__row">
+                  <span v-if="item.balance">Saldo: {{ item.balance }}{{item.currencyStr}}</span>
+                  <span v-if="item.balanceDateStr">aktualisiert: {{item.balanceDateStr}}</span>
+                </div>
+                <div class="data-list--item__main__row">
+                  <span v-for="(reader, index) of item.readerNames" :key="reader" >
+                    <Chip :label="reader.initials" icon="pi pi-eye" :title="reader.email"/>
+                  </span>
+                  <span v-for="(writer, index) of item.writerNames" :key="writer" >
+                    <Chip :label="writer.initials" icon="pi pi-pencil" :title="writer.email"/>
+                  </span>
+                </div>
               </div>
               <div class="data-list-item__caret">
                 <Button @click="navigateToAccountDetail(item.id)" @keydown.enter="navigateToAccountDetail(item.id)" icon="pi pi-caret-right" severity="contrast" variant="text" rounded aria-label="Ändern" />
@@ -138,7 +167,6 @@ export default {
 </template>
 
 <style scoped>
-
 .data-list {
   display: flex;
   flex-direction: column;
@@ -151,9 +179,14 @@ export default {
 .data-list--item {
   display: flex;
   padding: 0.5em;
-  background-color: var(--as-color-primary-5);
+  background-color: var(--as-color-primary-6);
   flex-direction: row;
   gap: 1em;
+  --p-chip-padding-x: 0.5em;
+  --p-chip-padding-y: 0.1em;
+  --p-chip-color: var(--as-color-primary-6);
+  --p-chip-icon-color: var(--as-color-primary-6);
+  --p-chip-background: var(--as-color-secondary-2-0);
 }
 .data-list-item__main {
   display: flex;
@@ -170,13 +203,15 @@ export default {
 }
 .data-list--item__main__row > * {
   display: flex;
-  flex: 1 1 auto;
   font-weight: inherit;
 }
 .data-list--item__main__row:first-child {
   font-weight: bold;
 }
-.data-list--item__main__row > *:last-child {
+.data-list--item__main__row > .element--is-grow {
+  flex-grow: 1;
+}
+.data-list--item__main__row > .element--is-right-aligned {
   display: flex;
   align-content: flex-end;
   justify-content: flex-end;

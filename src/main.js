@@ -18,6 +18,7 @@ import AutoComplete from 'primevue/autocomplete';
 import Select from 'primevue/select';
 import MultiSelect from 'primevue/multiselect';
 import DatePicker from 'primevue/datepicker';
+import Chip from 'primevue/chip';
 import "primeicons/primeicons.css";
 
 
@@ -88,5 +89,6 @@ app.component('FloatLabel', FloatLabel);
 app.component('Select', Select);
 app.component('MultiSelect', MultiSelect);
 app.component('DatePicker', DatePicker);
+app.component('Chip', Chip);
 
 app.mount("#app");
