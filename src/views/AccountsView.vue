@@ -144,11 +144,11 @@ export default {
                   <span v-if="item.balanceDateStr">aktualisiert: {{item.balanceDateStr}}</span>
                 </div>
                 <div class="data-list--item__main__row">
-                  <span v-for="(reader, index) of item.readerNames" :key="reader" >
-                    <Chip :label="reader.initials" icon="pi pi-eye" :title="reader.email"/>
-                  </span>
                   <span v-for="(writer, index) of item.writerNames" :key="writer" >
-                    <Chip :label="writer.initials" icon="pi pi-pencil" :title="writer.email"/>
+                    <Chip class="element--is-chip" :label="writer.initials" icon="pi pi-pencil" :title="writer.email"/>
+                  </span>
+                  <span v-for="(reader, index) of item.readerNames" :key="reader" >
+                    <Chip class="element--is-chip" :label="reader.initials" icon="pi pi-eye" :title="reader.email"/>
                   </span>
                 </div>
               </div>
@@ -200,45 +200,34 @@ export default {
   display: inline-flex;
   flex: 1 1 auto;
   gap: 0.5em;
+  flex-wrap: wrap;
 }
-.data-list--item__main__row > * {
+.data-list-item__main > .data-list--item__main__row > * {
   display: flex;
   font-weight: inherit;
 }
-.data-list--item__main__row:first-child {
+.data-list-item__main > .data-list--item__main__row:first-child {
   font-weight: bold;
 }
-.data-list--item__main__row > .element--is-grow {
+.data-list-item__main > .data-list--item__main__row > .element--is-grow {
   flex-grow: 1;
 }
-.data-list--item__main__row > .element--is-right-aligned {
+.data-list-item__main > .data-list--item__main__row > .element--is-right-aligned {
   display: flex;
   align-content: flex-end;
   justify-content: flex-end;
 }
 
-table {
-  table-layout: initial;
+.element--is-chip {
+  --p-chip-icon-size: 12px;
+  font-size: 12px;
 }
-
-th {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  font-weight: bold;
-  text-align: start;
-}
-
-td {
-  font-family: "Verdana";
-}
-
-th, td {
-  padding-left: 0.5em;
-  padding-right: 0.5em;
-}
-
 .account-closed {
   color: var(--as-color-primary-4);
+}
+</style>
+
+<style>
+.element--is-chip {
 }
 </style>

@@ -172,7 +172,7 @@ export default {
         updateData.readers = this.readers;
       }
       if (!_.isEqual(this.originalData.writers, this.integerSort(this.writers))) {
-        updateData.writers = this.readers;
+        updateData.writers = this.writers;
       }
       return updateData;
     },
