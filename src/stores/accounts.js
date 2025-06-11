@@ -44,6 +44,8 @@ export const AccountStore = defineStore('account', {
                   currencyName: account.currency_name,
                   currencyShort: account.currency_short,
                   startBalance: account.startBalance,
+                  balance: account.balance,
+                  balanceDate: account.balanceDate,
                   closedAt: account.closedAt,
                   readers: account.readers ? account.readers : [],
                   writers: account.writers ? account.writers : [],

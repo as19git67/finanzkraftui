@@ -7,6 +7,7 @@
       <input v-focus v-model="email" class="user" id="username" name="Username"/>
       <label class="pass" for="password">Passwort:</label>
       <input type="password" v-model="password" class="pass" id="password" name="Password"/>
+      <div class="error-message">{{error}}</div>
       <button @click="loginClicked()" class="btn btn-login"
               :disabled="!email || email.length < 8 || !password || password.length < 8">Login
       </button>
@@ -43,7 +44,11 @@ export default {
         router.replace({name: 'home'});
       })
       .catch((error) => {
-        this.error = error.message;
+        if (error.response.data) {
+          this.error = error.response.data;
+        } else {
+          this.error = error.message;
+        }
       });
     },
     navigateToRegister() {
@@ -70,6 +75,7 @@ export default {
   grid-template-areas:
     "label-user      input-user"
     "label-pass      input-pass"
+    "error-message   error-message"
     "button-login    button-login"
     "divider         divider"
     "button-register button-register";
@@ -89,6 +95,11 @@ export default {
 
 .pass input {
   grid-area: input-pass;
+}
+
+.error-message {
+  grid-area: error-message;
+  width: auto;
 }
 
 .btn-login {

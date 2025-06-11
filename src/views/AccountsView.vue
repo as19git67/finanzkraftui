@@ -16,6 +16,8 @@ export default {
     return {
       loading: this.loading,
       error: this.error,
+      accountType: this.accountType,
+      currency: this.currency,
     };
   },
   computed: {
@@ -23,6 +25,17 @@ export default {
     ...mapStores(AccountStore),
     ...mapState(UserStore, ["authenticated"]),
     ...mapState(AccountStore, ["accounts"]),
+    accountsEnriched() {
+      return this.accounts.map(account => {
+        const currencyDetails = this.getCurrencyDetails(account.currency);
+        const typeDetails = this.getAccountTypeDetails(account.type);
+        return {
+          ...account,
+          currencyStr: currencyDetails ? currencyDetails.short : '',
+          accountTypeStr: typeDetails ? typeDetails.type : '',
+        }
+      });
+    }
   },
   methods: {
     ...mapActions(UserStore, ["setNotAuthenticated", "getUsers"]),
@@ -95,16 +108,17 @@ export default {
     </div>
     <div class="page--content">
       <div class="page--content--row">
-        <div class="data-list" v-if="accounts.length">
-          <div v-for="(item, index) of accounts" :key="item"
+        <div class="data-list" v-if="accountsEnriched.length">
+          <div v-for="(item, index) of accountsEnriched" :key="item"
                :class="{ 'account-closed': !!item.closedAt }">
             <div class="data-list--item">
               <div class="data-list-item__main">
                 <div class="data-list--item__main__row">
                   <span>{{ item.name }}</span>
-                  <span>{{ item.type ? getAccountTypeDetails(item.type).name : '' }}</span>
+                  <span>{{ item.accountTypeStr }}</span>
                 </div>
-                <div class="data-list--item__main__row">Währung: {{ item.currency ? getCurrencyDetails(item.currency).name : ''}}</div>
+                <div class="data-list--item__main__row">Saldo: {{ item.balance }}{{item.currencyStr}}</div>
+                <div class="data-list--item__main__row">Anfangsbestand: {{ item.startBalance }}{{item.currencyStr}}</div>
                 <div class="data-list--item__main__row">{{
                     item.closedAt !== null ? `geschlossen am : ${DateTime.fromISO(item.closedAt).toLocaleString()}` : ''
                   }}</div>

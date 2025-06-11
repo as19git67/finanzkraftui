@@ -201,16 +201,19 @@ export const UserStore = defineStore('user', {
       const userStore = UserStore();
       if (userStore.authenticated) {
         const config = userStore.getBearerAuthRequestHeader();
-        const response = await axios.get('/api/user', config);
-        if (response.status === 200) {
-          this._users = response.data;
-        } else {
-          this._users = [];
+        let resultData = {};
+        try {
+          const response = await axios.get('/api/user', config);
+          if (response.status === 200) {
+            this._users = response.data;
+          } else {
+            this._users = [];
+          }
+          return response.status;
+        } catch (ex) {
+          return this.handleAxiosException(ex, userStore, resultData);
         }
-        return response.status;
       }
-      this._users = [];
-      return 401;
     },
     getUser(id) {
       let userId = id;
