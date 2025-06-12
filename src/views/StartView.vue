@@ -3,13 +3,12 @@ import {DateTime} from "luxon";
 </script>
 
 <script>
+import _ from "lodash";
+import router from "@/router";
 import { mapActions, mapState, mapStores } from "pinia";
 import { UserStore } from "@/stores/user";
 import { AccountStore } from "@/stores/accounts";
-import router from "@/router";
-import {MasterDataStore} from "@/stores/masterdata";
-import _ from "lodash";
-import {DateTime} from "luxon";
+import { MasterDataStore } from "@/stores/masterdata";
 
 export default {
   name: "StartView",
@@ -98,6 +97,9 @@ export default {
         return;
       }
     },
+    navigateToAddTransaction(idAccount) {
+      router.push({ name: 'AddTransaction', params: { accountId: idAccount } });
+    },
   },
   async mounted() {
     this.error = undefined;
@@ -132,16 +134,19 @@ export default {
       <div class="page--content--row page--content--row__heading">Täglich</div>
       <div class="page--content--row">
         <div class="data-list" v-if="accountsDaily.length">
-          <div v-for="(item, index) of accountsDaily" :key="item">
+          <div v-for="(item, index) of accountsDaily" :key="item.id">
             <div class="data-list--item">
               <div class="data-list-item__main">
                 <div class="data-list--item__main__row">
-                  <span class="element--is-grow">{{ item.name }}</span>
-                  <span v-if="item.balance">{{ item.balance }}{{item.currencyStr}}</span>
+                  <span>{{ item.name }}</span>
                 </div>
                 <div class="data-list--item__main__row">
+                  <span v-if="item.balance">{{ item.balance }}{{item.currencyStr}}</span>
                   <span v-if="item.balanceDateStr">aktualisiert: {{item.balanceDateStr}}</span>
                 </div>
+              </div>
+              <div class="data-list-item__caret" v-if="item.type === 'cash'">
+                <Button @click="navigateToAddTransaction(item.id)" @keydown.enter="navigateToAddTransaction(item.id)"  icon="pi pi-plus" variant="text" aria-label="Buchung hinzufügen"/>
               </div>
             </div>
           </div>
@@ -150,7 +155,7 @@ export default {
       <div class="page--content--row page--content--row__heading">Sparen</div>
       <div class="page--content--row">
         <div class="data-list" v-if="accountsSavings.length">
-          <div v-for="(item, index) of accountsSavings" :key="item">
+          <div v-for="(item, index) of accountsSavings" :key="item.id">
             <div class="data-list--item">
               <div class="data-list-item__main">
                 <div class="data-list--item__main__row">
@@ -168,7 +173,7 @@ export default {
       <div class="page--content--row page--content--row__heading">Sonstige</div>
       <div class="page--content--row">
         <div class="data-list" v-if="accountsOther.length">
-          <div v-for="(item, index) of accountsOther" :key="item">
+          <div v-for="(item, index) of accountsOther" :key="item.id">
             <div class="data-list--item">
               <div class="data-list-item__main">
                 <div class="data-list--item__main__row">

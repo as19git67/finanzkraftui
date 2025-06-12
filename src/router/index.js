@@ -54,9 +54,10 @@ const router = createRouter({
       component: TransactionRulesView,
     },
     {
-      path: '/addTransaction',
+      path: '/addTransaction/:accountId',
       name: 'AddTransaction',
       component: TransactionNewView,
+      props: true,
     },
     {
       path: '/ruleSets',

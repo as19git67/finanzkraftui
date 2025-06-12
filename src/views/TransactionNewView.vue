@@ -1,80 +1,26 @@
-<template>
-  <div class="page page--is-transaction-new-view">
-    <div class="page--header">
-      <div class="title">Neue Buchung eingeben:</div>
-    </div>
-    <div class="page--content">
-      <div class="page--content--row">
-        <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <InputNumber id="idTransactionAmount" locale="de-DE"
-                       inputmode="decimal" currency="EUR"
-                       mode="currency" v-model=transactionAmount variant="filled" size="large"/>
-          <label for="idTransactionAmount">Betrag</label>
-        </FloatLabel>
-        <ToggleButton v-model="isSpending" onLabel="Ausgabe" offLabel="Einnahme" onIcon="pi pi-minus"
-                      offIcon="pi pi-plus" />
-      </div>
-      <div class="page--content--row">
-        <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <InputText id="idTransactionText" class="value" v-model=transactionText variant="filled"
-                     size="small"></InputText>
-          <label for="idTransactionText">Name</label>
-        </FloatLabel>
-      </div>
-      <div class="page--content--row">
-        <Button v-for="(item, index) in shortcuts" :key="item.id" :id="item.id" @click="clickedShortcut(item.id)"
-                :label="item.name" severity="info" rounded size="small"/>
-      </div>
-      <div class="page--content--row">
-        <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <AutoComplete id="catSelection" class="transactionCategorySelection" v-model="transactionCategory" optionLabel="full_name"
-                        :suggestions="filteredCategories" @complete="searchCategory" />
-          <label for="catSelection">Kategorie</label>
-        </FloatLabel>
-      </div>
-      <div class="page--content--row">
-        <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <InputText id="transactionDateFormatted" v-model=transactionDateFormatted readonly
-                     variant="filled"></InputText>
-          <label for="transactionDateFormatted">Datum</label>
-        </FloatLabel>
-      </div>
-      <div class="page--content--row">
-          <Button size="small" @click="setDateToday" label="Heute"></Button>
-          <Button size="small" severity="secondary" @click="setDateYesterday">Gestern</Button>
-          <Button size="small" severity="secondary">Anderes Datum</Button>
-      </div>
-      <div class="page--content--row" v-if="error">
-        <div class="error">{{ error }}</div>
-      </div>
-    </div>
-    <div class="page--footer footer--is-sticky">
-      <div class="btn-save">
-        <Button label="Speichern" :disabled="!saveEnabled" @click="saveTransaction" size="large">
-        </Button>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup>
+defineProps({
+  accountId: { type: String },
+});
 </script>
 
 <script>
 import {DateTime} from 'luxon';
 import {mapActions, mapState, mapStores} from 'pinia';
-import {UserStore} from '@/stores/user';
 import router from '@/router';
 import _ from 'lodash';
+import {UserStore} from '@/stores/user';
 import {TransactionStore} from '@/stores/transactions';
 import {PreferencesStore} from '@/stores/preferences';
 import {MasterDataStore} from '@/stores/masterdata';
+import {AccountStore} from "@/stores/accounts";
 
 export default {
   name: 'TransactionNewView',
   components: {},
   data() {
     return {
+      accountName: this.accountName,
       filteredCategories: this.filteredCategories,
       isSpending: true,
       transactionAmount: this.transactionAmount,
@@ -93,8 +39,9 @@ export default {
     // },
   },
   computed: {
-    ...mapStores(UserStore, MasterDataStore, PreferencesStore),
+    ...mapStores(UserStore, MasterDataStore, PreferencesStore, AccountStore),
     ...mapState(UserStore, ['authenticated']),
+    ...mapState(AccountStore, ["accounts"]),
     ...mapState(PreferencesStore, ['newTransactionPresets']),
     ...mapState(MasterDataStore, ['categories']),
     saveEnabled() {
@@ -113,6 +60,7 @@ export default {
     ...mapActions(PreferencesStore, ['getNewTransactionPresets']),
     ...mapActions(MasterDataStore, ['getCategoryById', 'getCategories']),
     ...mapActions(UserStore, ['setNotAuthenticated']),
+    ...mapActions(AccountStore, ["getAccounts", "getAccountById"]),
     searchCategory(event) {
       if (!event.query.trim().length) {
         this.filteredCategories = [...this.categories];
@@ -127,8 +75,9 @@ export default {
       this.loading = true;
       try {
         const promises = [];
+        promises.push(this.getAccounts(true));
         promises.push(this.getNewTransactionPresets());
-        promises.push(this.getCategories());
+        promises.push(this.getCategories(true));
         const results = await Promise.all(promises);
         this.loading = false;
         let mustAuthenticate = false;
@@ -206,7 +155,7 @@ export default {
         t_value_date: this.transactionDate,
         t_text: this.transactionText,
         t_category_id: this.transactionCategory.id,
-        idAccount: 9, // todo take account id from configuration
+        idAccount: parseInt(this.accountId),
       }
       const result = await this.addTransaction(transactionData);
       let not_ok = false;
@@ -244,7 +193,19 @@ export default {
       this.transactionDate = DateTime.now();
     },
   },
+  async mounted() {
+    try {
+      await this.loadDataFromServer();
+      this.account = await this.getAccountById(parseInt(this.accountId));
+      this.accountName = this.account.name;
+    } catch (ex) {
+      this.error = ex.message;
+      this.loading = false;
+    }
+  },
   created() {
+    this.error = undefined;
+    this.loading = false;
     this.transactionAmount = 0;
     this.transactionDate = DateTime.now();
     this.filteredCategories = [];
@@ -253,14 +214,67 @@ export default {
       {id: 1, name: 'Metzgerei', categoryId: 2, tags: []},
     ];
   },
-  async mounted() {
-    this.error = undefined;
-    this.loading = false;
-    await this.loadDataFromServer();
-  },
-
 };
 </script>
+
+<template>
+  <div class="page page--is-transaction-new-view">
+    <div class="page--header">
+      <div class="title">Neue Buchung für {{accountName}} eingeben:</div>
+    </div>
+    <div class="page--content">
+      <div class="page--content--row">
+        <FloatLabel variant="in" class="row--item row--item--is-grow">
+          <InputNumber id="idTransactionAmount" locale="de-DE"
+                       inputmode="decimal" currency="EUR"
+                       mode="currency" v-model=transactionAmount variant="filled" size="large"/>
+          <label for="idTransactionAmount">Betrag</label>
+        </FloatLabel>
+        <ToggleButton v-model="isSpending" onLabel="Ausgabe" offLabel="Einnahme" onIcon="pi pi-minus"
+                      offIcon="pi pi-plus" />
+      </div>
+      <div class="page--content--row">
+        <FloatLabel variant="in" class="row--item row--item--is-grow">
+          <InputText id="idTransactionText" class="value" v-model=transactionText variant="filled"
+                     size="small"></InputText>
+          <label for="idTransactionText">Name</label>
+        </FloatLabel>
+      </div>
+      <div class="page--content--row">
+        <Button v-for="(item, index) in shortcuts" :key="item.id" :id="item.id" @click="clickedShortcut(item.id)"
+                :label="item.name" severity="info" rounded size="small"/>
+      </div>
+      <div class="page--content--row">
+        <FloatLabel variant="in" class="row--item row--item--is-grow">
+          <AutoComplete id="catSelection" class="transactionCategorySelection" v-model="transactionCategory" optionLabel="full_name"
+                        :suggestions="filteredCategories" @complete="searchCategory" />
+          <label for="catSelection">Kategorie</label>
+        </FloatLabel>
+      </div>
+      <div class="page--content--row">
+        <FloatLabel variant="in" class="row--item row--item--is-grow">
+          <InputText id="transactionDateFormatted" v-model=transactionDateFormatted readonly
+                     variant="filled"></InputText>
+          <label for="transactionDateFormatted">Datum</label>
+        </FloatLabel>
+      </div>
+      <div class="page--content--row">
+          <Button size="small" @click="setDateToday" label="Heute"></Button>
+          <Button size="small" severity="secondary" @click="setDateYesterday">Gestern</Button>
+          <Button size="small" severity="secondary">Anderes Datum</Button>
+      </div>
+      <div class="page--content--row" v-if="error">
+        <div class="error">{{ error }}</div>
+      </div>
+    </div>
+    <div class="page--footer footer--is-sticky">
+      <div class="btn-save">
+        <Button label="Speichern" :disabled="!saveEnabled" @click="saveTransaction" size="large">
+        </Button>
+      </div>
+    </div>
+  </div>
+</template>
 
 <style scoped>
 .transactionCategorySelection {
