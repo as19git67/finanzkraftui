@@ -20,6 +20,7 @@ export default {
       error: this.error,
       accountsDaily: this.accountsDaily,
       accountsSavings: this.accountsSavings,
+      accountsOther: this.accountsOther,
     };
   },
   computed: {
@@ -103,8 +104,9 @@ export default {
     this.loading = false;
     try {
       await this.loadDataFromServer();
-      this.accountsDaily = this.createAccountListByTypes(['cash', 'credit', 'checking']);
-      this.accountsSavings = this.createAccountListByTypes(['savings']);
+      this.accountsDaily = this.createAccountListByTypes(['cash', 'checking', 'credit']);
+      this.accountsSavings = this.createAccountListByTypes(['daily', 'savings', 'security']);
+      this.accountsOther = this.createAccountListByTypes(['other']);
       this.myUsername = this.authenticatedUserEmail;
     } catch (ex) {
       this.error = ex.message;
@@ -116,6 +118,7 @@ export default {
     this.loading = false;
     this.accountsDaily = [];
     this.accountsSavings = [];
+    this.accountsOther = [];
   },
 };
 </script>
@@ -134,9 +137,9 @@ export default {
               <div class="data-list-item__main">
                 <div class="data-list--item__main__row">
                   <span class="element--is-grow">{{ item.name }}</span>
+                  <span v-if="item.balance">{{ item.balance }}{{item.currencyStr}}</span>
                 </div>
                 <div class="data-list--item__main__row">
-                  <span v-if="item.balance">Saldo: {{ item.balance }}{{item.currencyStr}}</span>
                   <span v-if="item.balanceDateStr">aktualisiert: {{item.balanceDateStr}}</span>
                 </div>
               </div>
@@ -152,9 +155,27 @@ export default {
               <div class="data-list-item__main">
                 <div class="data-list--item__main__row">
                   <span class="element--is-grow">{{ item.name }}</span>
+                  <span v-if="item.balance">{{ item.balance }}{{item.currencyStr}}</span>
                 </div>
                 <div class="data-list--item__main__row">
-                  <span v-if="item.balance">Saldo: {{ item.balance }}{{item.currencyStr}}</span>
+                  <span v-if="item.balanceDateStr">aktualisiert: {{item.balanceDateStr}}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="page--content--row page--content--row__heading">Sonstige</div>
+      <div class="page--content--row">
+        <div class="data-list" v-if="accountsOther.length">
+          <div v-for="(item, index) of accountsOther" :key="item">
+            <div class="data-list--item">
+              <div class="data-list-item__main">
+                <div class="data-list--item__main__row">
+                  <span class="element--is-grow">{{ item.name }}</span>
+                  <span v-if="item.balance">{{ item.balance }}{{item.currencyStr}}</span>
+                </div>
+                <div class="data-list--item__main__row">
                   <span v-if="item.balanceDateStr">aktualisiert: {{item.balanceDateStr}}</span>
                 </div>
               </div>
