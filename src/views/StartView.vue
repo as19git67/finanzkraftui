@@ -12,44 +12,48 @@ import _ from "lodash";
 import {DateTime} from "luxon";
 
 export default {
-  name: "AccountsView",
+  name: "StartView",
   data() {
     return {
+      myUsername: this.myUsername,
       loading: this.loading,
       error: this.error,
-      accountType: this.accountType,
-      currency: this.currency,
+      accountsDaily: this.accountsDaily,
+      accountsSavings: this.accountsSavings,
     };
   },
   computed: {
     ...mapStores(UserStore),
     ...mapStores(AccountStore),
-    ...mapState(UserStore, ["authenticated"]),
+    ...mapState(UserStore, ["authenticated", "authenticatedUserId", "authenticatedUserEmail"]),
     ...mapState(AccountStore, ["accounts"]),
-    accountsEnriched() {
-      return this.accounts.map(account => {
-        const currencyDetails = this.getCurrencyDetails(account.currency);
-        const typeDetails = this.getAccountTypeDetails(account.type);
-        const balanceDateStr = account.balanceDate ? DateTime.fromISO(account.balanceDate).toLocaleString() : '';
-        const closedDateStr = account.closedAt ? DateTime.fromISO(account.closedAt).toLocaleString() : '';
-        const readerNames = this.mapToUserEmail(account.readers);
-        const writerNames = this.mapToUserEmail(account.writers);
-        return {
-          ...account,
-          currencyStr: currencyDetails ? currencyDetails.short : '',
-          accountTypeStr: typeDetails ? typeDetails.name : '',
-          balanceDateStr,
-          closedDateStr,
-          readerNames,
-          writerNames,
-        }
-      });
-    }
   },
   methods: {
     ...mapActions(UserStore, ["setNotAuthenticated", "getUsers", "getUser"]),
     ...mapActions(AccountStore, ["getAccounts"]),
     ...mapActions(MasterDataStore, ["getCurrencies", "getCurrencyDetails", "getAccountTypes", "getAccountTypeDetails"]),
+    createAccountListByTypes(accountTypes) {
+      let accounts = [];
+      const userId = this.authenticatedUserId;
+      const active = this.accounts.filter(account => {
+        return !account.closedAt;
+      });
+      for (const accountType of accountTypes) {
+        const filteredAccounts = active.filter(account => {
+          return account.type === accountType && (account.writers.includes(userId) || account.readers.includes(userId));
+        });
+        accounts = accounts.concat(filteredAccounts).map(account => {
+          const currencyDetails = this.getCurrencyDetails(account.currency);
+          const balanceDateStr = account.balanceDate ? DateTime.fromISO(account.balanceDate).toLocaleString() : '';
+          return {
+            ...account,
+            currencyStr: currencyDetails ? currencyDetails.short : '',
+            balanceDateStr,
+          }
+        });
+      }
+      return accounts;
+    },
     async loadDataFromServer() {
       this.error = '';
       this.loading = true;
@@ -93,31 +97,25 @@ export default {
         return;
       }
     },
-    mapToUserEmail(userIds) {
-      return userIds.map(userId => {
-        const user = this.getUser(userId);
-        if (user) {
-          return {
-            email : user.Email,
-            initials: user.Initials ? user.Initials : user.Email,
-          };
-        }
-        return '';
-      });
-    },
-    navigateToAccountDetail(idAccount) {
-      router.push({ name: 'AccountDetail', params: { accountId: idAccount } });
-    }
   },
   async mounted() {
     this.error = undefined;
     this.loading = false;
     try {
       await this.loadDataFromServer();
+      this.accountsDaily = this.createAccountListByTypes(['cash', 'credit', 'checking']);
+      this.accountsSavings = this.createAccountListByTypes(['savings']);
+      this.myUsername = this.authenticatedUserEmail;
     } catch (ex) {
       this.error = ex.message;
       this.loading = false;
     }
+  },
+  created() {
+    this.error = undefined;
+    this.loading = false;
+    this.accountsDaily = [];
+    this.accountsSavings = [];
   },
 };
 </script>
@@ -125,35 +123,40 @@ export default {
 <template>
   <div class="page page--is-accounts-view">
     <div class="page--header">
-      <div class="title">Konten</div>
+      <div class="title">Übersicht für {{myUsername}}</div>
     </div>
     <div class="page--content">
+      <div class="page--content--row page--content--row__heading">Täglich</div>
       <div class="page--content--row">
-        <div class="data-list" v-if="accountsEnriched.length">
-          <div v-for="(item, index) of accountsEnriched" :key="item"
-               :class="{ 'account-closed': !!item.closedAt }">
+        <div class="data-list" v-if="accountsDaily.length">
+          <div v-for="(item, index) of accountsDaily" :key="item">
             <div class="data-list--item">
               <div class="data-list-item__main">
                 <div class="data-list--item__main__row">
                   <span class="element--is-grow">{{ item.name }}</span>
-                  <span class="element--is-right-aligned">{{ item.accountTypeStr }}</span>
                 </div>
-                <div class="data-list--item__main__row" v-if="item.closedAt">{{ `Konto geschlossen: ${item.closedDateStr}` }}</div>
                 <div class="data-list--item__main__row">
                   <span v-if="item.balance">Saldo: {{ item.balance }}{{item.currencyStr}}</span>
                   <span v-if="item.balanceDateStr">aktualisiert: {{item.balanceDateStr}}</span>
                 </div>
-                <div class="data-list--item__main__row">
-                  <span v-for="(writer, index) of item.writerNames" :key="writer" >
-                    <Chip class="element--is-chip" :label="writer.initials" icon="pi pi-pencil" :title="writer.email"/>
-                  </span>
-                  <span v-for="(reader, index) of item.readerNames" :key="reader" >
-                    <Chip class="element--is-chip" :label="reader.initials" icon="pi pi-eye" :title="reader.email"/>
-                  </span>
-                </div>
               </div>
-              <div class="data-list-item__caret">
-                <Button @click="navigateToAccountDetail(item.id)" @keydown.enter="navigateToAccountDetail(item.id)" icon="pi pi-caret-right" severity="contrast" variant="text" rounded aria-label="Ändern" />
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="page--content--row page--content--row__heading">Sparen</div>
+      <div class="page--content--row">
+        <div class="data-list" v-if="accountsSavings.length">
+          <div v-for="(item, index) of accountsSavings" :key="item">
+            <div class="data-list--item">
+              <div class="data-list-item__main">
+                <div class="data-list--item__main__row">
+                  <span class="element--is-grow">{{ item.name }}</span>
+                </div>
+                <div class="data-list--item__main__row">
+                  <span v-if="item.balance">Saldo: {{ item.balance }}{{item.currencyStr}}</span>
+                  <span v-if="item.balanceDateStr">aktualisiert: {{item.balanceDateStr}}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -167,7 +170,4 @@ export default {
 </template>
 
 <style scoped>
-.account-closed {
-  color: var(--as-color-primary-4);
-}
 </style>

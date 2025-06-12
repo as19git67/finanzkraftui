@@ -50,6 +50,8 @@
     --as-color-complement-5: hsl(187, 68%, 95%);
 
     --as-font-size-small: 12px;
+    --as-font-size-heading: 18px;
+    --as-font-weight-heading: bold;
 }
 
 
@@ -81,6 +83,8 @@
     --color-button-danger-text: var(--as-color-primary-6);
 
     --section-gap: 160px;
+    --page-padding-inline: 0.5em;
+    --page-min-width: 375px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -173,15 +177,20 @@ button:hover svg .metaphor {
     display: flex;
     flex-direction: column;
     flex-grow: 0;
-    padding-inline: 0.5em;
+    padding-inline: var(--page-padding-inline);
     gap: 0.5em;
     overflow-y: scroll;
 }
 
 .page--content--row {
     display: flex;
-    align-items: center;
     gap: 0.5em;
+}
+
+.page--content--row__heading {
+    display: flex;
+    font-size: var(--as-font-size-heading);
+    font-weight: var(--as-font-weight-heading);
 }
 
 .row--item {
@@ -209,6 +218,61 @@ button:hover svg .metaphor {
     bottom: 0;
 }
 
+.data-list {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--as-color-primary-0);
+    background-color: var(--as-color-primary-0);
+    border-radius: 6px;
+    gap: 1px;
+    overflow: hidden;
+    min-width: calc(var(--page-min-width) - (2 * var(--page-padding-inline)));
+}
+.data-list--item {
+    display: flex;
+    padding: 0.5em;
+    background-color: var(--as-color-primary-6);
+    flex-direction: row;
+    gap: 1em;
+    --p-chip-padding-x: 0.5em;
+    --p-chip-padding-y: 0.1em;
+    --p-chip-color: var(--as-color-primary-6);
+    --p-chip-icon-color: var(--as-color-primary-6);
+    --p-chip-background: var(--as-color-secondary-2-0);
+}
+.data-list-item__main {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+}
+.data-list-item__caret {
+    display: flex;
+}
+.data-list-item__main > .data-list--item__main__row {
+    display: inline-flex;
+    flex: 1 1 auto;
+    gap: 0.5em;
+    flex-wrap: wrap;
+}
+.data-list-item__main > .data-list--item__main__row > * {
+    display: flex;
+    font-weight: inherit;
+}
+.data-list-item__main > .data-list--item__main__row:first-child {
+    font-weight: bold;
+}
+.data-list-item__main > .data-list--item__main__row > .element--is-grow {
+    flex-grow: 1;
+}
+.data-list-item__main > .data-list--item__main__row > .element--is-right-aligned {
+    display: flex;
+    align-content: flex-end;
+    justify-content: flex-end;
+}
+.data-list-item__main > .data-list--item__main__row .element--is-chip {
+    --p-chip-icon-size: 12px;
+    font-size: 12px;
+}
 
 /*  O L D  */
 

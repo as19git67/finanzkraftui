@@ -33,6 +33,12 @@ export const UserStore = defineStore('user', {
     };
   },
   getters: {
+    authenticatedUserId(state) {
+      if (state.authenticated) {
+        return state.idUser;
+      }
+      return undefined;
+    },
     authenticatedUserEmail(state) {
       if (state.authenticated) {
         return state.email;

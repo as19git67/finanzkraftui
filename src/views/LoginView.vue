@@ -100,6 +100,8 @@ export default {
 .error-message {
   grid-area: error-message;
   width: auto;
+  font-weight: bold;
+  color: var(--color-text-error);
 }
 
 .btn-login {
