@@ -43,11 +43,15 @@ export default {
           return account.type === accountType && (account.writers.includes(userId) || account.readers.includes(userId));
         });
         accounts = accounts.concat(filteredAccounts).map(account => {
-          const currencyDetails = this.getCurrencyDetails(account.currency);
+          // const currencyDetails = this.getCurrencyDetails(account.currency);
           const balanceDateStr = account.balanceDate ? DateTime.fromISO(account.balanceDate).toLocaleString() : '';
+          const balanceStr = new Intl.NumberFormat(undefined, {
+            style: 'currency',
+            currency: account.currency
+          }).format(account.balance)
           return {
             ...account,
-            currencyStr: currencyDetails ? currencyDetails.short : '',
+            balanceStr,
             balanceDateStr,
           }
         });
@@ -136,16 +140,19 @@ export default {
         <div class="data-list" v-if="accountsDaily.length">
           <div v-for="(item, index) of accountsDaily" :key="item.id">
             <div class="data-list--item">
-              <div class="data-list-item__main">
-                <div class="data-list--item__main__row">
-                  <span>{{ item.name }}</span>
+              <router-link class="data-list--item-link" replace
+                           :to="{ name: 'Transactions',  params: { accountId: item.id }}">
+                <div class="data-list--item__main">
+                  <div class="data-list--item__main__row">
+                    <span>{{ item.name }}</span>
+                  </div>
+                  <div class="data-list--item__main__row">
+                    <span v-if="item.balanceStr">{{ item.balanceStr }}</span>
+                    <span v-if="item.balanceDateStr">aktualisiert: {{item.balanceDateStr}}</span>
+                  </div>
                 </div>
-                <div class="data-list--item__main__row">
-                  <span v-if="item.balance">{{ item.balance }}{{item.currencyStr}}</span>
-                  <span v-if="item.balanceDateStr">aktualisiert: {{item.balanceDateStr}}</span>
-                </div>
-              </div>
-              <div class="data-list-item__caret" v-if="item.type === 'cash'">
+              </router-link>
+              <div class="data-list--item__caret" v-if="item.type === 'cash'">
                 <Button @click="navigateToAddTransaction(item.id)" @keydown.enter="navigateToAddTransaction(item.id)"  icon="pi pi-plus" variant="text" aria-label="Buchung hinzufügen"/>
               </div>
             </div>
@@ -157,14 +164,20 @@ export default {
         <div class="data-list" v-if="accountsSavings.length">
           <div v-for="(item, index) of accountsSavings" :key="item.id">
             <div class="data-list--item">
-              <div class="data-list-item__main">
-                <div class="data-list--item__main__row">
-                  <span class="element--is-grow">{{ item.name }}</span>
-                  <span v-if="item.balance">{{ item.balance }}{{item.currencyStr}}</span>
+              <router-link class="data-list--item-link" replace
+                           :to="{ name: 'Transactions',  params: { accountId: item.id }}">
+                <div class="data-list--item__main">
+                  <div class="data-list--item__main__row">
+                    <span>{{ item.name }}</span>
+                  </div>
+                  <div class="data-list--item__main__row">
+                    <span v-if="item.balanceStr">{{ item.balanceStr }}</span>
+                    <span v-if="item.balanceDateStr">aktualisiert: {{item.balanceDateStr}}</span>
+                  </div>
                 </div>
-                <div class="data-list--item__main__row">
-                  <span v-if="item.balanceDateStr">aktualisiert: {{item.balanceDateStr}}</span>
-                </div>
+              </router-link>
+              <div class="data-list--item__caret" v-if="item.type === 'cash'">
+                <Button @click="navigateToAddTransaction(item.id)" @keydown.enter="navigateToAddTransaction(item.id)"  icon="pi pi-plus" variant="text" aria-label="Buchung hinzufügen"/>
               </div>
             </div>
           </div>
@@ -175,14 +188,20 @@ export default {
         <div class="data-list" v-if="accountsOther.length">
           <div v-for="(item, index) of accountsOther" :key="item.id">
             <div class="data-list--item">
-              <div class="data-list-item__main">
-                <div class="data-list--item__main__row">
-                  <span class="element--is-grow">{{ item.name }}</span>
-                  <span v-if="item.balance">{{ item.balance }}{{item.currencyStr}}</span>
+              <router-link class="data-list--item-link" replace
+                           :to="{ name: 'Transactions',  params: { accountId: item.id }}">
+                <div class="data-list--item__main">
+                  <div class="data-list--item__main__row">
+                    <span>{{ item.name }}</span>
+                  </div>
+                  <div class="data-list--item__main__row">
+                    <span v-if="item.balanceStr">{{ item.balanceStr }}</span>
+                    <span v-if="item.balanceDateStr">aktualisiert: {{item.balanceDateStr}}</span>
+                  </div>
                 </div>
-                <div class="data-list--item__main__row">
-                  <span v-if="item.balanceDateStr">aktualisiert: {{item.balanceDateStr}}</span>
-                </div>
+              </router-link>
+              <div class="data-list--item__caret" v-if="item.type === 'cash'">
+                <Button @click="navigateToAddTransaction(item.id)" @keydown.enter="navigateToAddTransaction(item.id)"  icon="pi pi-plus" variant="text" aria-label="Buchung hinzufügen"/>
               </div>
             </div>
           </div>

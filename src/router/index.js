@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import StartView from '../views/StartView.vue';
+import HomeView from '../views/HomeView.vue';
 import LoginView from '../views/LoginView.vue';
 import LogoutView from '../views/LogoutView.vue';
 import TransactionDetailView from '../views/TransactionDetailView.vue';
@@ -40,6 +41,12 @@ const router = createRouter({
       path: '/logout',
       name: 'logout',
       component: LogoutView,
+    },
+    {
+      path: '/transactionsOfAccount/:accountId',
+      name: 'Transactions',
+      component: HomeView,
+      props: true,
     },
     {
       path: '/transactionDetail/:transactionId',

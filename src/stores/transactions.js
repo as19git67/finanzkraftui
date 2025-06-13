@@ -91,6 +91,9 @@ export const TransactionStore = defineStore('transaction', {
             'dateFilterTo',
           );
         }
+        if (_.isArray(config.params.accountsWhereIn)) {
+          config.params.accountsWhereIn = config.params.accountsWhereIn.join(',');
+        }
         try {
           const response = await axios.get('/api/transaction', config);
           if (response.status === 200) {
@@ -326,6 +329,8 @@ export const TransactionStore = defineStore('transaction', {
       }
       return { status: 401, data: resultData };
     },
-
+    clearTransactions() {
+      this._transactions = [];
+    }
   },
 });

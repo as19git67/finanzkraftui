@@ -133,7 +133,7 @@ export default {
           <div v-for="(item, index) of accountsEnriched" :key="item"
                :class="{ 'account-closed': !!item.closedAt }">
             <div class="data-list--item">
-              <div class="data-list-item__main">
+              <div class="data-list--item__main">
                 <div class="data-list--item__main__row">
                   <span class="element--is-grow">{{ item.name }}</span>
                   <span class="element--is-right-aligned">{{ item.accountTypeStr }}</span>
@@ -152,7 +152,7 @@ export default {
                   </span>
                 </div>
               </div>
-              <div class="data-list-item__caret">
+              <div class="data-list--item__caret">
                 <Button @click="navigateToAccountDetail(item.id)" @keydown.enter="navigateToAccountDetail(item.id)" icon="pi pi-caret-right" severity="contrast" variant="text" rounded aria-label="Ändern" />
               </div>
             </div>

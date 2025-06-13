@@ -47,13 +47,6 @@ export default {
     saveEnabled() {
       return this.transactionAmount && this.transactionText && this.transactionDate && this.transactionCategory;
     },
-    transactionDateFormatted() {
-      if (this.transactionDate) {
-        return DateTime.fromISO(this.transactionDate).toRelativeCalendar();
-      } else {
-        return '';
-      }
-    },
   },
   methods: {
     ...mapActions(TransactionStore, ['addTransaction']),
@@ -184,13 +177,17 @@ export default {
         }
         return false;
       }
+      router.replace({name: 'home'});
       return true;
     },
+    cancel() {
+      router.replace({name: 'home'});
+    },
     setDateYesterday() {
-      this.transactionDate = DateTime.now().plus({days: -1});
+      this.transactionDate = DateTime.now().plus({days: -1}).toJSDate();
     },
     setDateToday() {
-      this.transactionDate = DateTime.now();
+      this.transactionDate = DateTime.now().toJSDate();
     },
   },
   async mounted() {
@@ -207,7 +204,7 @@ export default {
     this.error = undefined;
     this.loading = false;
     this.transactionAmount = 0;
-    this.transactionDate = DateTime.now();
+    this.transactionDate = DateTime.now().toJSDate();
     this.filteredCategories = [];
     this.shortcuts = [
       {id: 1, name: 'Bäckerei', categoryId: 1, tags: ['Urlaub', '2025 Köln']},
@@ -253,25 +250,21 @@ export default {
       </div>
       <div class="page--content--row">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <InputText id="transactionDateFormatted" v-model=transactionDateFormatted readonly
-                     variant="filled"></InputText>
-          <label for="transactionDateFormatted">Datum</label>
+          <DatePicker v-model="transactionDate" inputId="transactionDate" showIcon iconDisplay="input" variant="filled" />
+          <label for="transactionDate">Buchungsdatum</label>
         </FloatLabel>
-      </div>
-      <div class="page--content--row">
-          <Button size="small" @click="setDateToday" label="Heute"></Button>
-          <Button size="small" severity="secondary" @click="setDateYesterday">Gestern</Button>
-          <Button size="small" severity="secondary">Anderes Datum</Button>
+        <Button size="small" @click="setDateToday" label="Heute"></Button>
+        <Button size="small" @click="setDateYesterday">Gestern</Button>
       </div>
       <div class="page--content--row" v-if="error">
         <div class="error">{{ error }}</div>
       </div>
     </div>
     <div class="page--footer footer--is-sticky">
-      <div class="btn-save">
         <Button label="Speichern" :disabled="!saveEnabled" @click="saveTransaction" size="large">
         </Button>
-      </div>
+        <Button label="Abbrechen" @click="cancel" size="large">
+        </Button>
     </div>
   </div>
 </template>
@@ -291,46 +284,14 @@ export default {
   width: 100%;
 }
 
-.page--footer .btn-save {
+.page--footer .p-button {
   display: flex;
   flex-direction: row;
   justify-content: center;
   flex: 1 1 auto;
 }
 
-.page--footer .btn-save button {
+.page--footer .p-button button {
   flex-grow: 1;
-}
-
-.value.currency {
-  font-size: x-large;
-}
-
-.chiclet {
-  padding-inline: 6px;
-  padding-block: 3px;
-  background-color: gold;
-  border-width: 0;
-  border-radius: 4px;
-}
-
-.category-selection {
-  display: flex;
-  width: 100%;
-  padding-block: 3px;
-  font-size: medium;
-}
-
-.xpage--is-transaction-new-view {
-  gap: 1em;
-}
-
-.xpage--is-transaction-new-view .btn-save {
-  display: flex;
-  justify-content: center;
-}
-
-.xpage--is-transaction-new-view .btn-save button {
-  width: 100%;
 }
 </style>

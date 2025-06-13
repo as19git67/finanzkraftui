@@ -1,90 +1,8 @@
-<template>
-  <div class="page page--has-no-overflow">
-    <h1 class="title title--is-status">
-      <span v-if="loading">Buchungen laden...</span>
-      <span v-if="!loading">{{ `${transactions.length} Buchungen` }}</span>
-    </h1>
-
-    <div class="section">
-      <form class="label-value-group in-row transaction-filter" v-on:submit.prevent
-            v-on:keyup.enter="searchTransactions">
-        <div class="label-value in-row">
-          <label class="label" for="accountFilter">Bankkonten:</label>
-          <select class="value" name="accountFilter" id="accountFilter" v-model="accountFilter"
-                  @change="accountChanged">
-            <option v-for="item of accountList" :key="item.id" :value="item.id">{{ item.name }}</option>
-          </select>
-        </div>
-        <div class="label-value in-row">
-          <label class="label" for="dateFilter">Zeitspanne:</label>
-          <select class="value" name="dateFilter" id="dateFilter" v-model="dateFilter"
-                  @change="dateFilterChanged">
-            <option v-for="item of timespanList" :key="item.id" :value="item.id">{{
-                item.name
-              }}
-            </option>
-          </select>
-        </div>
-        <div class="label-value in-row">
-          <input class="value" type="search" autofocus v-model="searchTerm" placeholder="Suchbegriff">
-          <button class="btn btn--is-primary" @click="searchTransactions">Suchen</button>
-        </div>
-      </form>
-    </div>
-    <div class="section section--is-scrollable transaction-list" @scroll="tableScroll">
-      <table class="all-transactions-table table--is-wide" v-if="transactionsByDate.length">
-        <tbody>
-        <template v-for="(trOfDate, index) in transactionsByDate" :key="trOfDate">
-          <tr class="transaction-date">
-            <td>{{ DateTime.fromISO(trOfDate.valueDate).toLocaleString() }}</td>
-          </tr>
-          <tr>
-            <td>
-              <table class="table--is-wide">
-                <tbody>
-                <tr v-for="(item, index) in trOfDate.transactions" :key="item.t_id" :id="'transaction-' + item.t_id"
-                    class="transaction-details" :class="{'alternate-row-background': index % 2 }">
-                  <td class="transaction-text">
-                    <router-link class="transaction-data action" replace
-                                 :to="{ path:'/transaction/:transactionId', name: 'TransactionDetail',  params: { transactionId: item.t_id }}">
-                      <div class="td-text-item" :class="{'tr-not-confirmed': !item.confirmed }">
-                        {{
-                          item.t_payee ? item.t_payee : item.textShortened ? item.textShortened : item.t_entry_text
-                        }}
-                      </div>
-                      <div class="td-text-item item--is-category">{{ item.category_name }}</div>
-                      <div class="td-text-item item--is-text">{{ item.textShortened ? item.textShortened : '' }}</div>
-                      <div class="td-text-item item--is-notes">{{ item.t_notes }}</div>
-                    </router-link>
-                  </td>
-                  <td class="transaction-amount">
-                    <router-link class="action" replace
-                                 :to="{ path:'/transaction/:transactionId', name: 'TransactionDetail', params: { transactionId: item.t_id }}">
-                      {{
-                        `${new Intl.NumberFormat(undefined, {
-                          style: 'currency',
-                          currency: item.currency_id
-                        }).format(item.t_amount)}`
-                      }}
-                    </router-link>
-                  </td>
-                </tr>
-                </tbody>
-              </table>
-            </td>
-          </tr>
-        </template>
-        </tbody>
-      </table>
-
-    </div>
-    <div class="section">
-      <div class="footer" v-if="!transactionsByDate.length"><span
-          v-if="!loading">Keine Buchungen vom Server geladen</span></div>
-      <div class="footer" v-if="incompleteTransactionList">Hinweis: es gibt mehr Ergebnisse als dargestellt</div>
-    </div>
-  </div>
-</template>
+<script setup>
+defineProps({
+  accountId: { type: String },
+});
+</script>
 
 <script>
 import {DateTime} from "luxon";
@@ -134,6 +52,12 @@ export default {
     this.dateFilterTo = undefined;
   },
   async mounted() {
+    if (this.accountId !== undefined) {
+      this.accountFilter = this.accountId;
+    }
+    if (this.accountId !== undefined) {
+      this.clearTransactions(); // allways load the transactions
+    }
     if (this.transactions.length) {
       await this.prepareDataForList();
     } else {
@@ -146,7 +70,7 @@ export default {
   },
   methods: {
     ...mapActions(MasterDataStore, ["getTimespans"]),
-    ...mapActions(TransactionStore, ["getTransactions", "setLastScrollTop"]),
+    ...mapActions(TransactionStore, ["getTransactions", "setLastScrollTop", "clearTransactions"]),
     ...mapActions(AccountStore, ["getAccounts"]),
     ...mapActions(UserStore, ["setNotAuthenticated"]),
     tableScroll(ev) {
@@ -289,11 +213,11 @@ export default {
     },
     _fillAccountList() {
       const accountGroups = [
-        {id: "g1", name: "Alle"},
-        {id: "g2", name: "Martinas Konten"},
-        {id: "g3", name: "Antons Konten"},
-        {id: "g4", name: "Sparkonten"},
-        {id: "g5", name: "Geschlossene Konten"},
+        // {id: "g1", name: "Alle"},
+        // {id: "g2", name: "Martinas Konten"},
+        // {id: "g3", name: "Antons Konten"},
+        // {id: "g4", name: "Sparkonten"},
+        // {id: "g5", name: "Geschlossene Konten"},
       ]
       this.accountList = accountGroups.concat(this.accounts.filter((account) => {
         return account.closedAt === null;
@@ -314,6 +238,94 @@ export default {
   },
 };
 </script>
+
+<template>
+  <div class="page page--has-no-overflow">
+    <h1 class="title title--is-status">
+      <span v-if="loading">Buchungen laden...</span>
+      <span v-if="!loading">{{ `${transactions.length} Buchungen` }}</span>
+    </h1>
+
+    <div class="section">
+      <form class="label-value-group in-row transaction-filter" v-on:submit.prevent
+            v-on:keyup.enter="searchTransactions">
+        <div class="label-value in-row">
+          <label class="label" for="accountFilterId">Bankkonten:</label>
+          <select class="value" name="accountFilterN" id="accountFilterId" v-model="accountFilter"
+                  @change="accountChanged">
+            <option v-for="item of accountList" :key="item.id" :value="item.id">{{ item.name }}</option>
+          </select>
+        </div>
+        <div class="label-value in-row">
+          <label class="label" for="dateFilter">Zeitspanne:</label>
+          <select class="value" name="dateFilter" id="dateFilter" v-model="dateFilter"
+                  @change="dateFilterChanged">
+            <option v-for="item of timespanList" :key="item.id" :value="item.id">{{
+                item.name
+              }}
+            </option>
+          </select>
+        </div>
+        <div class="label-value in-row">
+          <input class="value" type="search" autofocus v-model="searchTerm" placeholder="Suchbegriff">
+          <button class="btn btn--is-primary" @click="searchTransactions">Suchen</button>
+        </div>
+      </form>
+    </div>
+    <div class="section section--is-scrollable transaction-list" @scroll="tableScroll">
+      <table class="all-transactions-table table--is-wide" v-if="transactionsByDate.length">
+        <tbody>
+        <template v-for="(trOfDate, index) in transactionsByDate" :key="trOfDate">
+          <tr class="transaction-date">
+            <td>{{ DateTime.fromISO(trOfDate.valueDate).toLocaleString() }}</td>
+          </tr>
+          <tr>
+            <td>
+              <table class="table--is-wide">
+                <tbody>
+                <tr v-for="(item, index) in trOfDate.transactions" :key="item.t_id" :id="'transaction-' + item.t_id"
+                    class="transaction-details" :class="{'alternate-row-background': index % 2 }">
+                  <td class="transaction-text">
+                    <router-link class="transaction-data action" replace
+                                 :to="{ path:'/transaction/:transactionId', name: 'TransactionDetail',  params: { transactionId: item.t_id }}">
+                      <div class="td-text-item" :class="{'tr-not-confirmed': !item.confirmed }">
+                        {{
+                          item.t_payee ? item.t_payee : item.textShortened ? item.textShortened : item.t_entry_text
+                        }}
+                      </div>
+                      <div class="td-text-item item--is-category">{{ item.category_name }}</div>
+                      <div class="td-text-item item--is-text">{{ item.textShortened ? item.textShortened : '' }}</div>
+                      <div class="td-text-item item--is-notes">{{ item.t_notes }}</div>
+                    </router-link>
+                  </td>
+                  <td class="transaction-amount">
+                    <router-link class="action" replace
+                                 :to="{ path:'/transaction/:transactionId', name: 'TransactionDetail', params: { transactionId: item.t_id }}">
+                      {{
+                        `${new Intl.NumberFormat(undefined, {
+                          style: 'currency',
+                          currency: item.currency_id
+                        }).format(item.t_amount)}`
+                      }}
+                    </router-link>
+                  </td>
+                </tr>
+                </tbody>
+              </table>
+            </td>
+          </tr>
+        </template>
+        </tbody>
+      </table>
+
+    </div>
+    <div class="section">
+      <div class="footer" v-if="!transactionsByDate.length"><span
+          v-if="!loading">Keine Buchungen vom Server geladen</span></div>
+      <div class="footer" v-if="incompleteTransactionList">Hinweis: es gibt mehr Ergebnisse als dargestellt</div>
+    </div>
+  </div>
+</template>
 
 <style scoped>
 .section.transaction-list {
