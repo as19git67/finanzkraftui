@@ -142,7 +142,7 @@ export default {
     async saveTransaction() {
       this.error = undefined;
       const transactionData = {
-        t_amount: this.transactionAmount,
+        t_amount: this.transactionAmount * (this.isSpending ? -1 : 1),
         t_notes: this.transactionNotes,
         t_payee: this.transactionPayee,
         t_value_date: this.transactionDate,

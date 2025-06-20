@@ -2,9 +2,9 @@
   <div class="page">
     <div class="section">
       <div class="top-links">
-        <router-link v-if="!dirty" class="action" replace :to="{ name: 'home'}">
+        <a v-if="!dirty" class="action" @click="router.back">
           < Zurück
-        </router-link>
+        </a>
         <button v-if="dirty" @click="cancelChanges" class="action btn btn--is-secondary">Abbrechen
         </button>
         <button :disabled="!dirty" @click="saveTransaction" class="action btn btn--is-primary">
@@ -239,7 +239,7 @@ export default {
       this.editName = false;
     },
     goToTransactionList() {
-      router.replace({name: 'home'});
+      router.back();
     },
     async selectCategory() {
       this.showCategorySelectionDialog = true;

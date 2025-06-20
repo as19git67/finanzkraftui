@@ -286,7 +286,7 @@ export default {
                 <tr v-for="(item, index) in trOfDate.transactions" :key="item.t_id" :id="'transaction-' + item.t_id"
                     class="transaction-details" :class="{'alternate-row-background': index % 2 }">
                   <td class="transaction-text">
-                    <router-link class="transaction-data action" replace
+                    <router-link class="transaction-data action" append
                                  :to="{ path:'/transaction/:transactionId', name: 'TransactionDetail',  params: { transactionId: item.t_id }}">
                       <div class="td-text-item" :class="{'tr-not-confirmed': !item.confirmed }">
                         {{
