@@ -1,5 +1,7 @@
+import { Settings as DateTimeSettings } from 'luxon';
 import {createApp} from "vue";
 import PrimeVue from 'primevue/config';
+import { de } from "primelocale/js/de.js";
 import Aura from '@primeuix/themes/aura';
 import App from "./App.vue";
 import router from "./router";
@@ -23,6 +25,8 @@ import "primeicons/primeicons.css";
 
 
 import "./assets/main.css";
+
+DateTimeSettings.defaultLocale = 'de-DE';
 
 let originUrl = new URL(location.origin);
 const baseServerUrlFromConfig = import.meta.env.VITE_APP_API_BASE_URL;
@@ -74,7 +78,8 @@ app.use(pinia);
 app.use(PrimeVue, {
   theme: {
     preset: Aura
-  }
+  },
+  locale: de
 });
 app.component('AutoComplete', AutoComplete);
 app.component('Fluid', Fluid);
