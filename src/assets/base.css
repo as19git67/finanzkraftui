@@ -236,6 +236,7 @@ button:hover svg .metaphor {
     border: 1px solid var(--as-color-primary-0);
     background-color: var(--as-color-primary-0);
     border-radius: 6px;
+    overflow: hidden;
     gap: 1px;
     min-width: calc(var(--page-min-width) - (2 * var(--page-padding-inline)));
     max-width: 600px;
@@ -265,8 +266,6 @@ button:hover svg .metaphor {
     display: flex;
     flex: 1 1 auto;
     gap: 0.5em;
-    padding-inline: 0.5em;
-    padding-block: 0.25em;
     flex-wrap: wrap;
     font-size: var(--as-font-size-small);
     background-color: var(--as-color-primary-6);
@@ -285,7 +284,6 @@ button:hover svg .metaphor {
 .data--list__right {
     display: flex;
     align-items: center;
-    margin-left: 16px;
 }
 
 
