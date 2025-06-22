@@ -129,21 +129,21 @@ export default {
     </div>
     <div class="page--content">
       <div class="page--content--row">
-        <div class="data-list" v-if="accountsEnriched.length">
+        <div class="data--list data--list--standard" v-if="accountsEnriched.length">
           <div v-for="(item, index) of accountsEnriched" :key="item"
                :class="{ 'account-closed': !!item.closedAt }">
-            <div class="data-list--item">
-              <div class="data-list--item__main">
-                <div class="data-list--item__main__row">
-                  <span class="element--is-grow">{{ item.name }}</span>
-                  <span class="element--is-right-aligned">{{ item.accountTypeStr }}</span>
+            <div class="data--list__item">
+              <div class="data--list__left">
+                <div class="data--list__line data--list__line--bold">
+                  <span>{{ item.name }}</span>
+                  <span>{{ item.accountTypeStr }}</span>
                 </div>
-                <div class="data-list--item__main__row" v-if="item.closedAt">{{ `Konto geschlossen: ${item.closedDateStr}` }}</div>
-                <div class="data-list--item__main__row">
+                <div class="data--list__line" v-if="item.closedAt">{{ `Konto geschlossen: ${item.closedDateStr}` }}</div>
+                <div class="data--list__line">
                   <span v-if="item.balance">Saldo: {{ item.balance }}{{item.currencyStr}}</span>
                   <span v-if="item.balanceDateStr">aktualisiert: {{item.balanceDateStr}}</span>
                 </div>
-                <div class="data-list--item__main__row">
+                <div class="data--list__line">
                   <span v-for="(writer, index) of item.writerNames" :key="writer" >
                     <Chip class="element--is-chip" :label="writer.initials" icon="pi pi-pencil" :title="writer.email"/>
                   </span>
@@ -152,7 +152,7 @@ export default {
                   </span>
                 </div>
               </div>
-              <div class="data-list--item__caret">
+              <div class="data--list__right">
                 <Button @click="navigateToAccountDetail(item.id)" @keydown.enter="navigateToAccountDetail(item.id)" icon="pi pi-caret-right" severity="contrast" variant="text" rounded aria-label="Ändern" />
               </div>
             </div>

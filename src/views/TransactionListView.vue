@@ -270,20 +270,17 @@ export default {
     </div>
     <div class="page--content">
       <div class="page--content--row">
-        <div class="data-list data-list--is-grouped" @scroll="tableScroll">
-          <div class="data-list--item" v-for="(trOfDate, index) in transactionsByDate" :key="trOfDate">
-            <div class="data-list--item__title">{{ trOfDate.valueDateStr }}</div>
-            <div class="data-list--item__main">
-              <div class="data-list--item__main__row" v-for="(item, index) in trOfDate.transactions" :key="item.t_id"
+        <div class="data--list data--list--grouped" @scroll="tableScroll">
+          <div class="data--list__group" v-for="(trOfDate, index) in transactionsByDate" :key="trOfDate">
+            <div class="data--list__date-header data--list__date-header--sticky">{{ trOfDate.valueDateStr }}</div>
+            <div class="data--list__item">
+              <div class="data--list__line" v-for="(item, index) in trOfDate.transactions" :key="item.t_id"
                    :id="'transaction-' + item.t_id">
                 <span>{{
                     item.t_payee ? item.t_payee : item.textShortened ? item.textShortened : item.t_entry_text
                   }}</span>
                 <span>{{ item.amountStr }}</span>
               </div>
-            </div>
-            <div class="data-list--item__caret">
-
             </div>
           </div>
         </div>

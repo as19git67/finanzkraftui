@@ -17,9 +17,10 @@ export default {
       myUsername: this.myUsername,
       loading: this.loading,
       error: this.error,
-      accountsDaily: this.accountsDaily,
-      accountsSavings: this.accountsSavings,
-      accountsOther: this.accountsOther,
+      accountGroups: this.accountGroups,
+      // accountsDaily: this.accountsDaily,
+      // accountsSavings: this.accountsSavings,
+      // accountsOther: this.accountsOther,
     };
   },
   computed: {
@@ -110,9 +111,23 @@ export default {
     this.loading = false;
     try {
       await this.loadDataFromServer();
-      this.accountsDaily = this.createAccountListByTypes(['cash', 'checking', 'credit']);
-      this.accountsSavings = this.createAccountListByTypes(['daily', 'savings', 'security']);
-      this.accountsOther = this.createAccountListByTypes(['other']);
+      this.accountGroups = [
+        {
+          name: 'Täglich',
+          accounts: this.createAccountListByTypes(['cash', 'checking', 'credit']),
+        },
+        {
+          name: 'Sparen',
+          accounts: this.createAccountListByTypes(['daily', 'savings', 'security']),
+        },
+        {
+          name: 'Sonstige',
+          accounts: this.createAccountListByTypes(['other']),
+        },
+      ];
+      // this.accountsDaily = this.createAccountListByTypes(['cash', 'checking', 'credit']);
+      // this.accountsSavings = this.createAccountListByTypes(['daily', 'savings', 'security']);
+      // this.accountsOther = this.createAccountListByTypes(['other']);
       this.myUsername = this.authenticatedUserEmail;
     } catch (ex) {
       this.error = ex.message;
@@ -122,9 +137,10 @@ export default {
   created() {
     this.error = undefined;
     this.loading = false;
-    this.accountsDaily = [];
-    this.accountsSavings = [];
-    this.accountsOther = [];
+    this.accountGroups = [];
+    // this.accountsDaily = [];
+    // this.accountsSavings = [];
+    // this.accountsOther = [];
   },
 };
 </script>
@@ -134,82 +150,29 @@ export default {
     <div class="page--header">
       <div class="title">Übersicht für {{ myUsername }}</div>
     </div>
-    <div class="page--content">
-      <div v-if="accountsDaily.length > 0" class="page--content--row page--content--row__heading">Täglich</div>
-      <div v-if="accountsDaily.length > 0" class="page--content--row">
-        <div class="data-list" v-if="accountsDaily.length">
-          <div v-for="(item, index) of accountsDaily" :key="item.id">
-            <div class="data-list--item">
-              <router-link class="data-list--item-link" replace
+    <div class="page--content" v-if="accountGroups.length">
+      <template v-for="(accountGroup, index) of accountGroups">
+        <div v-if="accountGroup.accounts.length > 0" class="page--content--row page--content--row__heading">{{ accountGroup.name }}</div>
+        <div v-if="accountGroup.accounts.length > 0" class="page--content--row">
+          <div v-if="accountGroup.accounts.length" class="data--list data--list--standard">
+            <div class="data--list__item" v-for="(item, index) of accountGroup.accounts" :key="item.id">
+              <router-link class="data--list__left" replace
                            :to="{ name: 'Transactions',  params: { accountId: item.id }}">
-                <div class="data-list--item__main">
-                  <div class="data-list--item__main__row">
-                    <span>{{ item.name }}</span>
-                  </div>
-                  <div class="data-list--item__main__row">
-                    <span v-if="item.balanceStr">{{ item.balanceStr }}</span>
-                    <span v-if="item.balanceDateStr">aktualisiert: {{ item.balanceDateStr }}</span>
-                  </div>
+                <div class="data--list__line data--list__line--bold">{{ item.name }}</div>
+                <div class="data--list__line">
+                  <span v-if="item.balanceStr">{{ item.balanceStr }}</span>
+                  <span v-if="item.balanceDateStr">aktualisiert: {{ item.balanceDateStr }}</span>
                 </div>
               </router-link>
-              <div class="data-list--item__caret" v-if="item.type === 'cash'">
+              <div class="data--list__right" v-if="item.type === 'cash'">
                 <Button @click="navigateToAddTransaction(item.id)" @keydown.enter="navigateToAddTransaction(item.id)"
                         icon="pi pi-plus" variant="text" aria-label="Buchung hinzufügen"/>
               </div>
             </div>
           </div>
         </div>
-      </div>
-      <div v-if="accountsSavings.length > 0" class="page--content--row page--content--row__heading">Sparen</div>
-      <div v-if="accountsSavings.length > 0" class="page--content--row">
-        <div class="data-list" v-if="accountsSavings.length">
-          <div v-for="(item, index) of accountsSavings" :key="item.id">
-            <div class="data-list--item">
-              <router-link class="data-list--item-link" replace
-                           :to="{ name: 'Transactions',  params: { accountId: item.id }}">
-                <div class="data-list--item__main">
-                  <div class="data-list--item__main__row">
-                    <span>{{ item.name }}</span>
-                  </div>
-                  <div class="data-list--item__main__row">
-                    <span v-if="item.balanceStr">{{ item.balanceStr }}</span>
-                    <span v-if="item.balanceDateStr">aktualisiert: {{ item.balanceDateStr }}</span>
-                  </div>
-                </div>
-              </router-link>
-              <div class="data-list--item__caret" v-if="item.type === 'cash'">
-                <Button @click="navigateToAddTransaction(item.id)" @keydown.enter="navigateToAddTransaction(item.id)"
-                        icon="pi pi-plus" variant="text" aria-label="Buchung hinzufügen"/>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div v-if="accountsOther.length > 0" class="page--content--row page--content--row__heading">Sonstige</div>
-      <div v-if="accountsOther.length > 0" class="page--content--row">
-        <div class="data-list" v-if="accountsOther.length">
-          <div v-for="(item, index) of accountsOther" :key="item.id">
-            <div class="data-list--item">
-              <router-link class="data-list--item-link" replace
-                           :to="{ name: 'Transactions',  params: { accountId: item.id }}">
-                <div class="data-list--item__main">
-                  <div class="data-list--item__main__row">
-                    <span>{{ item.name }}</span>
-                  </div>
-                  <div class="data-list--item__main__row">
-                    <span v-if="item.balanceStr">{{ item.balanceStr }}</span>
-                    <span v-if="item.balanceDateStr">aktualisiert: {{ item.balanceDateStr }}</span>
-                  </div>
-                </div>
-              </router-link>
-              <div class="data-list--item__caret" v-if="item.type === 'cash'">
-                <Button @click="navigateToAddTransaction(item.id)" @keydown.enter="navigateToAddTransaction(item.id)"
-                        icon="pi pi-plus" variant="text" aria-label="Buchung hinzufügen"/>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      </template>
+
       <div class="page--content--row" v-if="error">
         <div class="error">{{ error }}</div>
       </div>

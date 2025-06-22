@@ -230,82 +230,93 @@ button:hover svg .metaphor {
     bottom: 0;
 }
 
-.data-list {
+.data--list {
     display: flex;
     flex-direction: column;
     border: 1px solid var(--as-color-primary-0);
     background-color: var(--as-color-primary-0);
     border-radius: 6px;
     gap: 1px;
-    overflow: hidden;
     min-width: calc(var(--page-min-width) - (2 * var(--page-padding-inline)));
+    max-width: 600px;
 }
-.data-list--item {
+
+/* Standard-Liste */
+.data--list--standard .data--list__item {
     display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 1em;
     padding: 0.5em;
     background-color: var(--as-color-primary-6);
-    flex-direction: row;
-    gap: 1em;
     --p-chip-padding-x: 0.5em;
     --p-chip-padding-y: 0.1em;
     --p-chip-color: var(--as-color-primary-6);
     --p-chip-icon-color: var(--as-color-primary-6);
     --p-chip-background: var(--as-color-secondary-2-0);
 }
-.data-list--item__main {
-    display: flex;
-    flex: 1 1 auto;
-    flex-direction: column;
+
+.data--list__left {
+    flex-grow: 1;
 }
-.data-list--item__caret {
+
+.data--list__line {
+    flex-direction: row;
     display: flex;
-}
-.data-list--item > .data-list--item-link {
-    display: flex;
-    flex: 1 1 auto;
-}
-.data-list--item__main .data-list--item__main__row {
-    display: inline-flex;
     flex: 1 1 auto;
     gap: 0.5em;
+    padding-inline: 0.5em;
+    padding-block: 0.25em;
     flex-wrap: wrap;
     font-size: var(--as-font-size-small);
+    background-color: var(--as-color-primary-6);
+    justify-content: space-between;
 }
-.data-list--item__main .data-list--item__main__row > * {
-    display: flex;
-    font-weight: inherit;
-}
-.data-list--item__main .data-list--item__main__row:first-child {
+
+.data--list__line--bold {
     font-size: unset;
     font-weight: bold;
 }
-.data-list--item__main .data-list--item__main__row > .element--is-grow {
-    flex-grow: 1;
+
+.data--list__line--bold * {
+    font-weight: inherit;
 }
-.data-list--item__main .data-list--item__main__row > .element--is-right-aligned {
+
+.data--list__right {
     display: flex;
-    align-content: flex-end;
-    justify-content: flex-end;
-}
-.data-list--item__main .data-list--item__main__row .element--is-chip {
-    --p-chip-icon-size: 12px;
-    font-size: 12px;
+    align-items: center;
+    margin-left: 16px;
 }
 
-.data-list.data-list--is-grouped {
-    background-color: red;
+
+/* Gruppierte Liste mit Datum */
+
+.data--list--grouped {
+    position: relative;
 }
 
-.data-list.data-list--is-grouped .data-list--item {
-    flex-direction: column;
+.data--list--grouped .data--list__group {
 }
-.data-list.data-list--is-grouped .data-list--item .data-list--item__title {
+
+.data--list--grouped .data--list__item {
     display: flex;
     flex-direction: column;
+    gap: 1px;
 }
 
-.data-list.data-list--is-grouped .data-list--item .data-list--item__main__row {
-    font-weight: normal;
+.data--list__date-header {
+    font-weight: bold;
+    font-size: 15px;
+}
+
+/* Sticky-Datum */
+.data--list__date-header--sticky {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background-color: var(--as-color-secondary-2-4);
+    color: var(--as-color-primary-6);
+    padding-inline: 0.5em;
 }
 
 /*  O L D  */
