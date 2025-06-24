@@ -57,7 +57,7 @@
       <div v-if="transaction.currency_id" class="label-value in-row">
         <div class="label">Betrag:</div>
         <div class="value">{{
-            `${new Intl.NumberFormat(undefined, {
+            `${new Intl.NumberFormat(DateTimeSettings.defaultLocale, {
               style: 'currency',
               currency: transaction.currency_id
             }).format(transaction.t_amount)}`
@@ -146,6 +146,7 @@ import IconEdit from "@/components/icons/IconEdit.vue";
 import IconTick from "@/components/icons/IconTick.vue";
 import IconEyeOK from "@/components/icons/IconEyeOK.vue";
 import CategorySelectionView from "@/views/CategorySelectionView.vue";
+import {Settings as DateTimeSettings} from "luxon";
 
 defineProps({
   transactionId: {type: String},

@@ -9,6 +9,7 @@ import {mapActions, mapState, mapStores} from 'pinia';
 import {UserStore} from '@/stores/user';
 import {AccountStore} from '@/stores/accounts';
 import {MasterDataStore} from '@/stores/masterdata';
+import {Settings as DateTimeSettings} from "luxon";
 
 export default {
   name: 'StartView',
@@ -46,7 +47,7 @@ export default {
         accounts = accounts.concat(filteredAccounts).map(account => {
           // const currencyDetails = this.getCurrencyDetails(account.currency);
           const balanceDateStr = account.balanceDate ? DateTime.fromISO(account.balanceDate).toLocaleString() : '';
-          const balanceStr = new Intl.NumberFormat(undefined, {
+          const balanceStr = new Intl.NumberFormat(DateTimeSettings.defaultLocale, {
             style: 'currency',
             currency: account.currency,
           }).format(account.balance);
@@ -152,21 +153,26 @@ export default {
     </div>
     <div class="page--content" v-if="accountGroups.length">
       <template v-for="(accountGroup, index) of accountGroups">
-        <div v-if="accountGroup.accounts.length > 0" class="page--content--row page--content--row__heading">{{ accountGroup.name }}</div>
+        <div v-if="accountGroup.accounts.length > 0" class="page--content--row page--content--row__heading">
+          {{ accountGroup.name }}
+        </div>
         <div v-if="accountGroup.accounts.length > 0" class="page--content--row">
           <div v-if="accountGroup.accounts.length" class="data--list data--list--standard">
             <div class="data--list__item" v-for="(item, index) of accountGroup.accounts" :key="item.id">
-              <router-link class="data--list__left" replace
-                           :to="{ name: 'Transactions',  params: { accountId: item.id }}">
-                <div class="data--list__line data--list__line--bold">{{ item.name }}</div>
-                <div class="data--list__line">
-                  <span v-if="item.balanceStr">{{ item.balanceStr }}</span>
-                  <span v-if="item.balanceDateStr">aktualisiert: {{ item.balanceDateStr }}</span>
+              <div class="data--list__left">
+                <router-link replace :to="{ name: 'Transactions',  params: { accountId: item.id }}">
+                  <div class="data--list__line data--list__line--bold">{{ item.name }}:</div>
+                  <div class="data--list__line">
+                    <span v-if="item.balanceDateStr">aktualisiert: {{ item.balanceDateStr }}</span>
+                  </div>
+                </router-link>
+                <div class="data--list__line" v-if="item.type === 'cash'">
+                  <Button @click="navigateToAddTransaction(item.id)" @keydown.enter="navigateToAddTransaction(item.id)"
+                          icon="pi pi-plus" variant="text" aria-label="Buchung hinzufügen" label="Buchung hinzufügen"/>
                 </div>
-              </router-link>
-              <div class="data--list__right" v-if="item.type === 'cash'">
-                <Button @click="navigateToAddTransaction(item.id)" @keydown.enter="navigateToAddTransaction(item.id)"
-                        icon="pi pi-plus" variant="text" aria-label="Buchung hinzufügen"/>
+              </div>
+              <div class="data--list__right">
+                <span v-if="item.balanceStr">{{ item.balanceStr }}</span>
               </div>
             </div>
           </div>

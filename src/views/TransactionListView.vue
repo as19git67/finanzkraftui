@@ -5,7 +5,7 @@ defineProps({
 </script>
 
 <script>
-import {DateTime} from 'luxon';
+import {DateTime, Settings as DateTimeSettings} from 'luxon';
 import router from '@/router';
 import {mapActions, mapState, mapStores} from 'pinia';
 import {UserStore} from '@/stores/user';
@@ -167,15 +167,15 @@ export default {
     _buildTransactionsPerDate() {
       const transactionsOfDate = {};
       this.transactions.forEach((t) => {
-        const tDate = t.t_value_date;
-        if (transactionsOfDate[tDate] === undefined) {
-          transactionsOfDate[tDate] = [];
+        const tDateShortStr = DateTime.fromISO(t.t_value_date).toISODate();
+        if (transactionsOfDate[tDateShortStr] === undefined) {
+          transactionsOfDate[tDateShortStr] = [];
         }
-        t.amountStr = new Intl.NumberFormat(undefined, {
+        t.amountStr = new Intl.NumberFormat(DateTimeSettings.defaultLocale, {
           style: 'currency',
           currency: this.currency,
         }).format(t.t_amount);
-        transactionsOfDate[tDate].push(t);
+        transactionsOfDate[tDateShortStr].push(t);
       });
       const transactionDatesSorted = Object.keys(transactionsOfDate).toSorted((a, b) => {
         const aDate = DateTime.fromISO(a);
@@ -214,7 +214,7 @@ export default {
         return account.closedAt === null;
       }));
     },
-    _updateAccountsWhereIn: function() {
+    _updateAccountsWhereIn: function () {
       const filter = this.accountFilter;
       if (!isNaN(filter)) {
         const accountId = parseInt(filter);
@@ -273,14 +273,18 @@ export default {
         <div class="data--list data--list--grouped" @scroll="tableScroll">
           <div class="data--list__group" v-for="(trOfDate, index) in transactionsByDate" :key="trOfDate">
             <div class="data--list__date-header data--list__date-header--sticky">{{ trOfDate.valueDateStr }}</div>
-            <div class="data--list__item">
-              <div class="data--list__line" v-for="(item, index) in trOfDate.transactions" :key="item.t_id"
-                   :id="'transaction-' + item.t_id">
-                <span>{{
-                    item.t_payee ? item.t_payee : item.textShortened ? item.textShortened : item.t_entry_text
-                  }}</span>
-                <span>{{ item.amountStr }}</span>
-              </div>
+            <div class="data--list__item" v-for="(item, index) in trOfDate.transactions" :key="item.t_id"
+                 :id="'transaction-' + item.t_id" :class="{'alternate-row-background': index % 2 }">
+                <div class="data--list__left">
+                  <div class="data--list__line">
+                    <span>
+                      {{item.t_payee ? item.t_payee : item.textShortened ? item.textShortened : item.t_entry_text }}
+                    </span>
+                  </div>
+                </div>
+                <div class="data--list__right">
+                  <span>{{ item.amountStr }}</span>
+                </div>
             </div>
           </div>
         </div>
