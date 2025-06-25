@@ -21,14 +21,14 @@ export default {
   data() {
     return {
       transactionNotes: this.transactionNotes,
+      transactionText: this.transactionText,
       transactionPayee: this.transactionPayee ? this.transactionPayee : '',
       transactionEntryText: this.transactionEntryText ? this.transactionEntryText : '',
-      categoryId: this.categoryId,
+      transactionCategory: this.transactionCategory,
+      filteredCategories: this.filteredCategories,
       transaction: this.transaction,
       error: this.error,
       updateData: this.updateData,
-      showConfirmDialog: false,
-      showCategorySelectionDialog: false,
       categoryPreselection: 0,
       confirmText: '',
       editName: false,
@@ -96,6 +96,15 @@ export default {
     goToTransactionList() {
       router.back();
     },
+    searchCategory(event) {
+      if (!event.query.trim().length) {
+        this.filteredCategories = [...this.categories];
+      } else {
+        this.filteredCategories = this.categories.filter((category) => {
+          return category.full_name.toLowerCase().indexOf(event.query.toLowerCase()) >= 0;
+        });
+      }
+    },
     async selectCategory() {
       this.showCategorySelectionDialog = true;
       this.showTransaction = true;
@@ -141,9 +150,10 @@ export default {
       this.error = undefined;
       this.updateData.id = this.transactionId;
       if (this.updateData.category_id !== undefined) {
+        this.updateData.category_id = this.transactionCategory.id;
         // update also the category_name, but it is only used in the transactions list and is
         // not really being updated, because it is retrieved via joining Fk_Category
-        this.updateData.category_name = this.getCategoryById(this.updateData.category_id).full_name;
+        // this.updateData.category_name = this.getCategoryById(this.updateData.category_id).full_name;
       }
       const result = await this.updateTransaction(this.updateData);
       let not_ok = false;
@@ -186,7 +196,6 @@ export default {
     this.dataChanged = _.debounce(this.handleDataChanged, 2000);
     this.updateData = {};
     this.transaction = {};
-    this.categoryId = 0;
   },
   async mounted() {
     this.error = undefined;
@@ -246,8 +255,12 @@ export default {
 
     this.transaction = {...(results[0].data)};
 
-    this.categoryId = this.transaction.category_id;
+    this.transactionCategory = _.find(this.categories, (item) => {
+      return item.id === this.transaction.category_id;
+    });
+
     this.transactionNotes = this.transaction.t_notes;
+    this.transactionText = this.transaction.t_text;
     this.transactionPayee = this.transaction.t_payee;
     this.transactionEntryText = this.transaction.t_entry_text;
     if (this.transaction.t_text && this.transaction.t_payee &&
@@ -276,6 +289,13 @@ export default {
     <div class="page--content">
       <div class="page--content--row">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
+          <InputText id="idTransactionEntryText" class="value" v-model="transactionEntryText" variant="filled"
+                     readonly size="small"></InputText>
+          <label for="idTransactionEntryText">Buchungstyp</label>
+        </FloatLabel>
+      </div>
+      <div class="page--content--row">
+        <FloatLabel variant="in" class="row--item row--item--is-grow">
           <InputText id="idTransactionPayee" class="value" v-model="transactionPayee" variant="filled"
                      readonly size="small"></InputText>
           <label for="idTransactionPayee">Name</label>
@@ -283,27 +303,27 @@ export default {
       </div>
       <div class="page--content--row">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <InputText id="idTransactionEntryText" class="value" v-model="transactionEntryText" variant="filled"
+          <InputText id="idTransactionText" class="value" v-model="transactionText" variant="filled"
                      readonly size="small"></InputText>
-          <label for="idTransactionEntryText">Entry Text</label>
+          <label for="idTransactionText">Text</label>
+        </FloatLabel>
+      </div>
+      <div class="page--content--row">
+        <FloatLabel variant="in" class="row--item row--item--is-grow">
+          <AutoComplete id="catSelection" v-model="transactionCategory"
+                        optionLabel="full_name"
+                        dropdown
+                        :suggestions="filteredCategories" @complete="searchCategory" />
+          <label for="catSelection">Kategorie</label>
+        </FloatLabel>
+      </div>
+      <div class="page--content--row">
+        <FloatLabel variant="in" class="row--item row--item--is-grow">
+          <Textarea id="idTransactionNotes" v-model="transactionNotes"></Textarea>
+          <label for="idTransactionNotes">Notiz</label>
         </FloatLabel>
       </div>
       <div class="section">
-        <div class="label-value in-row">
-          <span v-if="transaction.category_name">{{ transaction.category_name }}</span>
-          <span v-if="!transaction.category_name">Kategorie wählen</span>
-          <button class="btn-icon-only" aria-label="Kategorie auswählen" @click="selectCategory">
-            <IconEdit/>
-          </button>
-        </div>
-        <div class="label-value in-column">
-          <div class="label">Notiz:</div>
-          <textarea class="value" v-model="transactionNotes"></textarea>
-        </div>
-        <div v-if="transaction.t_text" class="label-value in-column">
-          <div class="label">Text:</div>
-          <div class="value">{{ transaction.t_text }}</div>
-        </div>
         <div v-if="transaction.currency_id" class="label-value in-row">
           <div class="label">Betrag:</div>
           <div class="value">{{

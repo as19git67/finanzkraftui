@@ -21,6 +21,7 @@ import Select from 'primevue/select';
 import MultiSelect from 'primevue/multiselect';
 import DatePicker from 'primevue/datepicker';
 import Chip from 'primevue/chip';
+import Textarea from 'primevue/textarea';
 import "primeicons/primeicons.css";
 
 
@@ -87,6 +88,7 @@ app.component('Button', Button);
 app.component('ToggleButton', ToggleButton);
 app.component('ToggleSwitch', ToggleSwitch);
 app.component('InputText', InputText);
+app.component('Textarea', Textarea);
 app.component('InputIcon', InputIcon);
 app.component('IconField', IconField);
 app.component('InputNumber', InputNumber);

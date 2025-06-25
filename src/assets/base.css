@@ -259,7 +259,7 @@ button:hover svg .metaphor {
     display: flex;
     flex-direction: row;
     gap: 1em;
-    padding: 0.5em;
+    padding-block: 0.5em;
     --p-chip-padding-x: 0.5em;
     --p-chip-padding-y: 0.1em;
     --p-chip-color: var(--as-color-primary-6);
@@ -269,6 +269,7 @@ button:hover svg .metaphor {
 
 .data--list__left {
     flex-grow: 1;
+    padding-inline: 0.5em;
 }
 
 .data--list__line {
@@ -293,6 +294,7 @@ button:hover svg .metaphor {
     display: flex;
     flex: 0 0 auto;
     align-items: center;
+    padding-inline: 0.5em;
 }
 
 
@@ -316,7 +318,6 @@ button:hover svg .metaphor {
 }
 
 .data--list--grouped .data--list__line {
-    padding-inline: 0.5em;
     font-size: var(--as-font-size-data-list-item);
 }
 
