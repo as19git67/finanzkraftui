@@ -1,152 +1,5 @@
-<template>
-  <div class="page">
-    <div class="section">
-      <div class="top-links">
-        <a v-if="!dirty" class="action" @click="router.back">
-          < Zurück
-        </a>
-        <button v-if="dirty" @click="cancelChanges" class="action btn btn--is-secondary">Abbrechen
-        </button>
-        <button :disabled="!dirty" @click="saveTransaction" class="action btn btn--is-primary">
-          Speichern
-        </button>
-      </div>
-    </div>
-
-    <div v-if="error" class="section">
-      <div class="error">{{ error }}</div>
-    </div>
-
-    <div class="section">
-      <div v-if="transaction" class="label-value in-row">
-        <div v-if="editName" class="value">
-          <input class="detail-value" type="text" v-model="transactionPayee" placeholder="Name">
-          <button @click="switchOffEditName" class="btn-icon-only" aria-label="Edit">
-            <IconTick/>
-          </button>
-        </div>
-        <div class="value" v-else>
-          {{ transactionPayee ? transactionPayee : transaction.t_entry_text }}
-          <button v-if="!transaction.t_entry_text" @click="switchToEditName" class="btn-icon-only"
-                  aria-label="Edit">
-            <IconEdit/>
-          </button>
-        </div>
-        <button v-if="transaction.confirmed" class="btn-icon-only" aria-label="markiere ungesehen"
-                @click="markUnconfirmed()">
-          <IconEyeOK class="icon-seen"/>
-        </button>
-      </div>
-    </div>
-    <div class="section">
-      <div class="label-value in-row">
-        <span v-if="transaction.category_name">{{ transaction.category_name }}</span>
-        <span v-if="!transaction.category_name">Kategorie wählen</span>
-          <button class="btn-icon-only" aria-label="Kategorie auswählen" @click="selectCategory">
-            <IconEdit/>
-          </button>
-      </div>
-      <div class="label-value in-column">
-        <div class="label">Notiz:</div>
-        <textarea class="value" v-model="transactionNotes"></textarea>
-      </div>
-      <div v-if="transaction.t_text" class="label-value in-column">
-        <div class="label">Text:</div>
-        <div class="value">{{ transaction.t_text }}</div>
-      </div>
-      <div v-if="transaction.currency_id" class="label-value in-row">
-        <div class="label">Betrag:</div>
-        <div class="value">{{
-            `${new Intl.NumberFormat(DateTimeSettings.defaultLocale, {
-              style: 'currency',
-              currency: transaction.currency_id
-            }).format(transaction.t_amount)}`
-          }}
-        </div>
-      </div>
-      <div v-if="transaction.t_value_date" class="label-value in-row">
-        <div class="label">Datum:</div>
-        <div class="value">
-          {{ DateTime.fromISO(transaction.t_value_date).toLocaleString(DateTime.DATE_HUGE) }}
-        </div>
-      </div>
-      <div v-if="amazonOrderId" class="label-value in-row">
-        <div class="label">Amazon Bestellung:</div>
-        <a class="value" target="_blank"
-           :href="`https://www.amazon.de/gp/your-account/order-details?ie=UTF8&orderID=${amazonOrderId}`">{{
-            amazonOrderId
-          }}</a>
-      </div>
-      <div class="label-value in-row">
-        <div class="label">Konto:</div>
-        <div class="value">{{ transaction.account_name }}</div>
-      </div>
-      <div v-if="transaction.t_payeePayerAcctNo" class="label-value in-row">
-        <div class="label">Zahlungsempfänger:</div>
-        <div class="value">{{ transaction.t_payeePayerAcctNo }}</div>
-      </div>
-      <div v-if="transaction.t_EREF" class="label-value in-row">
-        <div class="label">EREF:</div>
-        <div class="value">{{ transaction.t_EREF }}</div>
-      </div>
-      <div v-if="transaction.t_CRED" class="label-value in-row">
-        <div class="label">Gläubiger:</div>
-        <div class="value">{{ transaction.t_CRED }}</div>
-      </div>
-      <div v-if="transaction.t_MREF" class="label-value in-row">
-        <div class="label">Mandatsreferenz:</div>
-        <div class="value">{{ transaction.t_MREF }}</div>
-      </div>
-      <div class="label-value in-row">
-        <div class="label">Buchungsart:</div>
-        <div class="value">{{
-            transaction.t_entry_text ? transaction.t_entry_text : 'Nicht angegeben'
-          }}
-        </div>
-      </div>
-    </div>
-    <div class="section">
-      <div v-if="transaction" class="detail-links">
-        <router-link class="action" replace :to="{ path:'/', name: 'home'}">
-          Tags bearbeiten
-        </router-link>
-      </div>
-      <div v-if="transaction" class="detail-links">
-        <router-link class="action" replace
-                     :to="{ name: 'TransactionRules', state: { ruleSetId: transaction.rule_set_id }, meta: { ruleSetId: transaction.rule_set_id } }">
-          Regeln <span v-if="transaction.rule_set_id">({{ transaction.rule_set_name }})</span>
-        </router-link>
-      </div>
-    </div>
-    <div class="section">
-      <div class="detail-links">
-      </div>
-    </div>
-  </div>
-  <div v-if="showConfirmDialog" class="confirm">
-    <div class="confirm-backdrop"></div>
-    <div class="dialog confirm-dialog confirm--yes-no">
-      <span class="confirm-text">{{ confirmText }}</span>
-      <div class="btn-group">
-        <button class="btn btn-confirm" @click="confirmDialogButtonClicked('yes')">Ja</button>
-        <button class="btn btn-confirm btn--is-primary" v-focus
-                @click="confirmDialogButtonClicked('no')">Nein
-        </button>
-      </div>
-    </div>
-  </div>
-  <div class="dialog-from-side" :class="{ 'dialog-slided' : showCategorySelectionDialog }">
-    <CategorySelectionView show-transaction="true" :category-preselection="categoryPreselection" @close="categorySelectionDialogButtonClicked"/>
-  </div>
-</template>
-
-
 <script setup>
-import IconEdit from "@/components/icons/IconEdit.vue";
-import IconTick from "@/components/icons/IconTick.vue";
-import IconEyeOK from "@/components/icons/IconEyeOK.vue";
-import CategorySelectionView from "@/views/CategorySelectionView.vue";
-import {Settings as DateTimeSettings} from "luxon";
+import {DateTime, Settings as DateTimeSettings} from "luxon";
 
 defineProps({
   transactionId: {type: String},
@@ -154,13 +7,13 @@ defineProps({
 </script>
 
 <script>
-import {mapActions, mapState, mapStores} from "pinia";
-import {UserStore} from "@/stores/user";
-import router from "@/router";
-import _ from "lodash";
-import {DateTime} from "luxon";
+import _ from 'lodash';
+import router from '@/router';
+import {mapActions, mapState, mapStores} from 'pinia';
+import {UserStore} from '@/stores/user';
+import {MasterDataStore} from '@/stores/masterdata';
+import {DateTime, Settings as DateTimeSettings} from "luxon";
 import {TransactionStore} from "@/stores/transactions";
-import {MasterDataStore} from "@/stores/masterdata";
 
 export default {
   name: "TransactionDetailView",
@@ -168,7 +21,8 @@ export default {
   data() {
     return {
       transactionNotes: this.transactionNotes,
-      transactionPayee: this.transactionPayee,
+      transactionPayee: this.transactionPayee ? this.transactionPayee : '',
+      transactionEntryText: this.transactionEntryText ? this.transactionEntryText : '',
       categoryId: this.categoryId,
       transaction: this.transaction,
       error: this.error,
@@ -338,24 +192,6 @@ export default {
     this.error = undefined;
     this.loading = true;
 
-    // cancel the debounced dataChanged function in case of leaving before save
-    /*
-        router.beforeEach(async (to, from, next) => {
-          if (from.name === 'TransactionDetail') {
-            if (to.name === 'home') {
-              const keyCount = Object.keys(this.updateData).length;
-              if (keyCount === 1 && this.updateData.confirmed) {
-                this.dataChanged.cancel();
-              } else {
-                this.dataChanged();
-                this.dataChanged.flush();
-              }
-            }
-          }
-          next();
-        });
-    */
-
     if (!this.transactionId) {
       router.replace("/");
       return;
@@ -413,9 +249,7 @@ export default {
     this.categoryId = this.transaction.category_id;
     this.transactionNotes = this.transaction.t_notes;
     this.transactionPayee = this.transaction.t_payee;
-    if (!this.transaction.t_payee && !this.transaction.t_entry_text) {
-      this.editName = true;
-    }
+    this.transactionEntryText = this.transaction.t_entry_text;
     if (this.transaction.t_text && this.transaction.t_payee &&
         this.transaction.t_payee.startsWith('AMAZON')) {
       const matches = this.transaction.t_text.match(/(\d{3}\-\d{7}\-\d{7})/);
@@ -434,111 +268,118 @@ export default {
 };
 </script>
 
+<template>
+  <div class="page page--is-transaction-new-view">
+    <div class="page--header">
+      <div class="title">Buchungsdetails</div>
+    </div>
+    <div class="page--content">
+      <div class="page--content--row">
+        <FloatLabel variant="in" class="row--item row--item--is-grow">
+          <InputText id="idTransactionPayee" class="value" v-model="transactionPayee" variant="filled"
+                     readonly size="small"></InputText>
+          <label for="idTransactionPayee">Name</label>
+        </FloatLabel>
+      </div>
+      <div class="page--content--row">
+        <FloatLabel variant="in" class="row--item row--item--is-grow">
+          <InputText id="idTransactionEntryText" class="value" v-model="transactionEntryText" variant="filled"
+                     readonly size="small"></InputText>
+          <label for="idTransactionEntryText">Entry Text</label>
+        </FloatLabel>
+      </div>
+      <div class="section">
+        <div class="label-value in-row">
+          <span v-if="transaction.category_name">{{ transaction.category_name }}</span>
+          <span v-if="!transaction.category_name">Kategorie wählen</span>
+          <button class="btn-icon-only" aria-label="Kategorie auswählen" @click="selectCategory">
+            <IconEdit/>
+          </button>
+        </div>
+        <div class="label-value in-column">
+          <div class="label">Notiz:</div>
+          <textarea class="value" v-model="transactionNotes"></textarea>
+        </div>
+        <div v-if="transaction.t_text" class="label-value in-column">
+          <div class="label">Text:</div>
+          <div class="value">{{ transaction.t_text }}</div>
+        </div>
+        <div v-if="transaction.currency_id" class="label-value in-row">
+          <div class="label">Betrag:</div>
+          <div class="value">{{
+              `${new Intl.NumberFormat(DateTimeSettings.defaultLocale, {
+                style: 'currency',
+                currency: transaction.currency_id
+              }).format(transaction.t_amount)}`
+            }}
+          </div>
+        </div>
+        <div v-if="transaction.t_value_date" class="label-value in-row">
+          <div class="label">Datum:</div>
+          <div class="value">
+            {{ DateTime.fromISO(transaction.t_value_date).toLocaleString(DateTime.DATE_HUGE) }}
+          </div>
+        </div>
+        <div v-if="amazonOrderId" class="label-value in-row">
+          <div class="label">Amazon Bestellung:</div>
+          <a class="value" target="_blank"
+             :href="`https://www.amazon.de/gp/your-account/order-details?ie=UTF8&orderID=${amazonOrderId}`">{{
+              amazonOrderId
+            }}</a>
+        </div>
+        <div class="label-value in-row">
+          <div class="label">Konto:</div>
+          <div class="value">{{ transaction.account_name }}</div>
+        </div>
+        <div v-if="transaction.t_payeePayerAcctNo" class="label-value in-row">
+          <div class="label">Zahlungsempfänger:</div>
+          <div class="value">{{ transaction.t_payeePayerAcctNo }}</div>
+        </div>
+        <div v-if="transaction.t_EREF" class="label-value in-row">
+          <div class="label">EREF:</div>
+          <div class="value">{{ transaction.t_EREF }}</div>
+        </div>
+        <div v-if="transaction.t_CRED" class="label-value in-row">
+          <div class="label">Gläubiger:</div>
+          <div class="value">{{ transaction.t_CRED }}</div>
+        </div>
+        <div v-if="transaction.t_MREF" class="label-value in-row">
+          <div class="label">Mandatsreferenz:</div>
+          <div class="value">{{ transaction.t_MREF }}</div>
+        </div>
+        <div class="label-value in-row">
+          <div class="label">Buchungsart:</div>
+          <div class="value">{{
+              transaction.t_entry_text ? transaction.t_entry_text : 'Nicht angegeben'
+            }}
+          </div>
+        </div>
+      </div>
+      <div class="section">
+        <div v-if="transaction" class="detail-links">
+          <router-link class="action" replace :to="{ path:'/', name: 'home'}">
+            Tags bearbeiten
+          </router-link>
+        </div>
+        <div v-if="transaction" class="detail-links">
+          <router-link class="action" replace
+                       :to="{ name: 'TransactionRules', state: { ruleSetId: transaction.rule_set_id }, meta: { ruleSetId: transaction.rule_set_id } }">
+            Regeln <span v-if="transaction.rule_set_id">({{ transaction.rule_set_name }})</span>
+          </router-link>
+        </div>
+      </div>
+      <div class="page--content--row" v-if="error">
+        <div class="error">{{ error }}</div>
+      </div>
+    </div>
+    <div class="page--footer footer--is-sticky">
+      <Button label="Speichern" :disabled="!saveEnabled" @click="saveTransaction" size="large">
+      </Button>
+      <Button label="Abbrechen" @click="cancel" size="large">
+      </Button>
+    </div>
+  </div>
+</template>
+
 <style scoped>
-.action.action--is-disabled {
-  color: var(--as-color-complement-5);
-}
-
-.transaction-details {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 100%;
-  width: 100%;
-  align-items: flex-start;
-  margin-top: 0.5em;
-}
-
-.transaction-details.details {
-  display: flex;
-  width: 100%;
-}
-
-.transaction-details.title {
-  display: flex;
-  flex-direction: column;
-  font-size: 16px;
-  font-weight: bold;
-}
-
-.transaction-details.payee {
-  display: flex;
-  flex-direction: row;
-  font-size: 16px;
-  font-weight: bold;
-  align-items: center;
-  word-wrap: anywhere;
-}
-
-.transaction-details .detail-wrapper {
-  display: flex;
-  flex: 1 1 auto;
-}
-
-.transaction-details .detail-value {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-}
-
-.transaction-details.category {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-}
-
-.transaction-details.details-row {
-  flex-direction: row;
-  align-content: space-between;
-  column-gap: 1em;
-}
-
-.transaction-details.details-column {
-  flex-direction: column;
-}
-
-.transaction-details.details-column > .details-row-left {
-  justify-content: flex-start;
-  font-weight: bold;
-}
-
-.transaction-details.details-column > .details-row-right {
-  justify-content: flex-start;
-}
-
-.transaction-details.details-column > .details-row-right.transaction-details-text {
-  white-space: normal;
-  text-align: start;
-}
-
-.transaction-details.details-column > textarea {
-  display: flex;
-  width: 100%;
-}
-
-.transaction-details.details-row.details-row-single-column {
-  flex-direction: column;
-}
-
-.transaction-details.details-row > div {
-  display: block;
-  overflow-x: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.transaction-details.details-row > .details-row-left {
-  justify-content: flex-start;
-  flex: 1 0 4em;
-  font-weight: bold;
-}
-
-.transaction-details.details-row > .details-row-right {
-  justify-content: flex-end;
-}
-
-.transaction-details.details-row > .details-row-right.transaction-details-text {
-  white-space: normal;
-  text-align: end;
-}
 </style>

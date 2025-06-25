@@ -1,6 +1,6 @@
 <script setup>
 defineProps({
-  accountId: { type: String },
+  accountId: {type: String},
 });
 </script>
 
@@ -217,7 +217,7 @@ export default {
 <template>
   <div class="page page--is-transaction-new-view">
     <div class="page--header">
-      <div class="title">Neue Buchung für {{accountName}} eingeben:</div>
+      <div class="title">Neue Buchung für {{ accountName }} eingeben:</div>
     </div>
     <div class="page--content">
       <div class="page--content--row">
@@ -228,7 +228,7 @@ export default {
           <label for="idTransactionAmount">Betrag</label>
         </FloatLabel>
         <ToggleButton v-model="isSpending" onLabel="Ausgabe" offLabel="Einnahme" onIcon="pi pi-minus"
-                      offIcon="pi pi-plus" />
+                      offIcon="pi pi-plus"/>
       </div>
       <div class="page--content--row">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
@@ -238,19 +238,23 @@ export default {
         </FloatLabel>
       </div>
       <div class="page--content--row">
-        <Button v-for="(item, index) in shortcuts" :key="item.id" :id="item.id" @click="clickedShortcut(item.id)"
-                :label="item.name" severity="info" rounded size="small"/>
+        <div class="page--content--row__chips">
+          <Button v-for="(item, index) in shortcuts" :key="item.id" :id="item.id" @click="clickedShortcut(item.id)"
+                  :label="item.name" severity="info" rounded size="small"/>
+        </div>
       </div>
       <div class="page--content--row">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <AutoComplete id="catSelection" class="transactionCategorySelection" v-model="transactionCategory" optionLabel="full_name"
-                        :suggestions="filteredCategories" @complete="searchCategory" />
+          <AutoComplete id="catSelection" class="transactionCategorySelection" v-model="transactionCategory"
+                        optionLabel="full_name"
+                        :suggestions="filteredCategories" @complete="searchCategory"/>
           <label for="catSelection">Kategorie</label>
         </FloatLabel>
       </div>
       <div class="page--content--row">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <DatePicker v-model="transactionDate" inputId="transactionDate" showIcon iconDisplay="input" variant="filled" />
+          <DatePicker v-model="transactionDate" inputId="transactionDate" showIcon iconDisplay="input"
+                      variant="filled"/>
           <label for="transactionDate">Buchungsdatum</label>
         </FloatLabel>
         <Button size="small" @click="setDateToday" label="Heute"></Button>
@@ -261,10 +265,10 @@ export default {
       </div>
     </div>
     <div class="page--footer footer--is-sticky">
-        <Button label="Speichern" :disabled="!saveEnabled" @click="saveTransaction" size="large">
-        </Button>
-        <Button label="Abbrechen" @click="cancel" size="large">
-        </Button>
+      <Button label="Speichern" :disabled="!saveEnabled" @click="saveTransaction" size="large">
+      </Button>
+      <Button label="Abbrechen" @click="cancel" size="large">
+      </Button>
     </div>
   </div>
 </template>

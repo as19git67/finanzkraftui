@@ -1,5 +1,4 @@
 <script setup>
-import {DateTime} from 'luxon';
 </script>
 
 <script>
@@ -9,7 +8,7 @@ import {mapActions, mapState, mapStores} from 'pinia';
 import {UserStore} from '@/stores/user';
 import {AccountStore} from '@/stores/accounts';
 import {MasterDataStore} from '@/stores/masterdata';
-import {Settings as DateTimeSettings} from "luxon";
+import {DateTime, Settings as DateTimeSettings} from "luxon";
 
 export default {
   name: 'StartView',

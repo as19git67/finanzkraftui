@@ -273,19 +273,26 @@ export default {
         <div class="data--list data--list--grouped" @scroll="tableScroll">
           <div class="data--list__group" v-for="(trOfDate, index) in transactionsByDate" :key="trOfDate">
             <div class="data--list__date-header data--list__date-header--sticky">{{ trOfDate.valueDateStr }}</div>
-            <div class="data--list__item" v-for="(item, index) in trOfDate.transactions" :key="item.t_id"
-                 :id="'transaction-' + item.t_id" :class="{'alternate-row-background': index % 2 }">
-                <div class="data--list__left">
-                  <div class="data--list__line">
+            <router-link class="data--list__item" append
+                         :to="{ path:'/transaction/:transactionId', name: 'TransactionDetail',  params: { transactionId: item.t_id }}"
+                         v-for="(item, index) in trOfDate.transactions" :key="item.t_id"
+                         :id="'transaction-' + item.t_id" :class="{'alternate-row-background': index % 2 }">
+              <div class="data--list__left">
+                <div class="data--list__line">
                     <span>
-                      {{item.t_payee ? item.t_payee : item.textShortened ? item.textShortened : item.t_entry_text }}
+                      {{ item.t_payee ? item.t_payee : item.textShortened ? item.textShortened : item.t_entry_text }}
                     </span>
-                  </div>
                 </div>
-                <div class="data--list__right">
-                  <span>{{ item.amountStr }}</span>
+                <div class="data--list__line">
+                  <div class="td-text-item item--is-category">{{ item.category_name }}</div>
+                  <div class="td-text-item item--is-text">{{ item.textShortened ? item.textShortened : '' }}</div>
+                  <div class="td-text-item item--is-notes">{{ item.t_notes }}</div>
                 </div>
-            </div>
+              </div>
+              <div class="data--list__right">
+                <span>{{ item.amountStr }}</span>
+              </div>
+            </router-link>
           </div>
         </div>
       </div>
