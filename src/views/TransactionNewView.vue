@@ -22,6 +22,7 @@ export default {
     return {
       accountName: this.accountName,
       filteredCategories: this.filteredCategories,
+      filteredShortcuts: this.filteredShortcuts,
       isSpending: true,
       transactionAmount: this.transactionAmount,
       transactionText: this.transactionText,
@@ -30,13 +31,12 @@ export default {
       transactionNotes: this.transactionNotes,
       transactionPayee: this.transactionPayee,
       error: this.error,
-      shortcuts: this.shortcuts,
     };
   },
   watch: {
-    // transactionAmountText: function(val, oldVal) {
-    //   this.transactionAmount = this.currencyStringToNumber(val);
-    // },
+    transactionText: function(val, oldVal) {
+      this.filteredShortcuts = this.filterShortcuts(val);
+    },
   },
   computed: {
     ...mapStores(UserStore, MasterDataStore, PreferencesStore, AccountStore),
@@ -54,6 +54,16 @@ export default {
     ...mapActions(MasterDataStore, ['getCategoryById', 'getCategories']),
     ...mapActions(UserStore, ['setNotAuthenticated']),
     ...mapActions(AccountStore, ["getAccounts", "getAccountById"]),
+    filterShortcuts(searchTerm) {
+      return this.shortcuts.filter(shortcut => {
+        if (!searchTerm) {
+          return true;
+        }
+        const st = searchTerm.trim().toLowerCase();
+        const sc = shortcut.name.trim().toLowerCase();
+        return sc.includes(st);
+      });
+    },
     searchCategory(event) {
       if (!event.query.trim().length) {
         this.filteredCategories = [...this.categories];
@@ -62,6 +72,12 @@ export default {
           return category.full_name.toLowerCase().indexOf(event.query.toLowerCase()) >= 0;
         });
       }
+    },
+    clickedShortcut(shortcut) {
+      this.transactionText = shortcut.name;
+      this.transactionCategory = this.categories.find(category => {
+        return category.id === shortcut.categoryId;
+      });
     },
     async loadDataFromServer() {
       this.error = '';
@@ -203,13 +219,14 @@ export default {
   created() {
     this.error = undefined;
     this.loading = false;
-    this.transactionAmount = 0;
+    this.transactionAmount = undefined;
     this.transactionDate = DateTime.now().toJSDate();
     this.filteredCategories = [];
     this.shortcuts = [
-      {id: 1, name: 'Bäckerei', categoryId: 1, tags: ['Urlaub', '2025 Köln']},
-      {id: 1, name: 'Metzgerei', categoryId: 2, tags: []},
+      {id: 1, name: 'Bäckerei', categoryId: 60, tags: ['Urlaub', '2025 Köln']},
+      {id: 1, name: 'Döner', categoryId: 25, tags: []},
     ];
+    this.filteredShortcuts = this.filterShortcuts();
   },
 };
 </script>
@@ -221,25 +238,26 @@ export default {
     </div>
     <div class="page--content">
       <div class="page--content--row">
-        <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <InputNumber id="idTransactionAmount" locale="de-DE"
-                       inputmode="decimal" currency="EUR"
-                       mode="currency" v-model=transactionAmount variant="filled" size="large"/>
-          <label for="idTransactionAmount">Betrag</label>
-        </FloatLabel>
-        <ToggleButton v-model="isSpending" onLabel="Ausgabe" offLabel="Einnahme" onIcon="pi pi-minus"
-                      offIcon="pi pi-plus"/>
+        <div class="page--content--row__inline">
+          <FloatLabel variant="in" class="row--item row--item--is-grow">
+            <InputNumber id="idTransactionAmount" locale="de-DE"
+                         inputmode="decimal" currency="EUR"
+                         mode="currency" v-model=transactionAmount size="large"/>
+            <label for="idTransactionAmount">Betrag</label>
+          </FloatLabel>
+          <ToggleButton v-model="isSpending" onLabel="Ausgabe" offLabel="Einnahme" onIcon="pi pi-minus"
+                        offIcon="pi pi-plus"/>
+        </div>
       </div>
       <div class="page--content--row">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <InputText id="idTransactionText" class="value" v-model=transactionText variant="filled"
-                     size="small"></InputText>
+          <InputText id="idTransactionText" class="value" v-model=transactionText size="small" autofocus></InputText>
           <label for="idTransactionText">Name</label>
         </FloatLabel>
       </div>
       <div class="page--content--row">
-        <div class="page--content--row__chips">
-          <Button v-for="(item, index) in shortcuts" :key="item.id" :id="item.id" @click="clickedShortcut(item.id)"
+        <div class="page--content--row__inline">
+          <Button v-for="(item, index) in filteredShortcuts" :key="item.id" :id="item.id" @click="clickedShortcut(item)"
                   :label="item.name" severity="info" rounded size="small"/>
         </div>
       </div>
@@ -252,13 +270,15 @@ export default {
         </FloatLabel>
       </div>
       <div class="page--content--row">
-        <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <DatePicker v-model="transactionDate" inputId="transactionDate" showIcon iconDisplay="input"
-                      variant="filled"/>
-          <label for="transactionDate">Buchungsdatum</label>
-        </FloatLabel>
-        <Button size="small" @click="setDateToday" label="Heute"></Button>
-        <Button size="small" @click="setDateYesterday">Gestern</Button>
+        <div class="page--content--row__inline">
+          <FloatLabel variant="in" class="row--item row--item--is-grow">
+            <DatePicker v-model="transactionDate" inputId="transactionDate" showIcon iconDisplay="input"
+                        variant="filled"/>
+            <label for="transactionDate">Buchungsdatum</label>
+          </FloatLabel>
+          <Button size="small" @click="setDateToday" label="Heute"></Button>
+          <Button size="small" @click="setDateYesterday">Gestern</Button>
+        </div>
       </div>
       <div class="page--content--row" v-if="error">
         <div class="error">{{ error }}</div>

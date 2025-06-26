@@ -207,7 +207,7 @@ button:hover svg .metaphor {
     font-weight: var(--as-font-weight-heading);
 }
 
-.page--content--row__chips {
+.page--content--row__inline {
     display: flex;
     flex-direction: row;
     gap: 0.5em;
