@@ -50,12 +50,12 @@ export default {
   },
   methods: {
     ...mapActions(TransactionStore, ['addTransaction']),
-    ...mapActions(PreferencesStore, ['getNewTransactionPresets']),
+    ...mapActions(PreferencesStore, ['getNewTransactionPresets', 'addNewTransactionPresets', 'saveNewTransactionPresets']),
     ...mapActions(MasterDataStore, ['getCategoryById', 'getCategories']),
     ...mapActions(UserStore, ['setNotAuthenticated']),
     ...mapActions(AccountStore, ["getAccounts", "getAccountById"]),
     filterShortcuts(searchTerm) {
-      return this.shortcuts.filter(shortcut => {
+      return this.newTransactionPresets.filter(shortcut => {
         if (!searchTerm) {
           return true;
         }
@@ -97,7 +97,6 @@ export default {
           if (_.isObject(result)) {
             status = result.status;
           }
-
           switch (status) {
             case 403:
               notAuthorized = true;
@@ -121,6 +120,7 @@ export default {
           router.replace({name: 'notAuthorized'});
           return;
         }
+        this.filteredShortcuts = this.filterShortcuts();
       } catch (ex) {
         this.error = ex.message;
         this.loading = false;
@@ -156,7 +156,11 @@ export default {
     //   return number / 100;
     // },
     async saveTransaction() {
-      this.error = undefined;
+      this.error = '';
+      this.loading = false;
+      this.transactionText = this.transactionText ? this.transactionText.trim() : null;
+      this.transactionPayee = this.transactionPayee ? this.transactionPayee.trim() : null;
+      this.transactionNotes = this.transactionNotes? this.transactionNotes.trim(): null;
       const transactionData = {
         t_amount: this.transactionAmount * (this.isSpending ? -1 : 1),
         t_notes: this.transactionNotes,
@@ -166,35 +170,71 @@ export default {
         t_category_id: this.transactionCategory.id,
         idAccount: parseInt(this.accountId),
       }
-      const result = await this.addTransaction(transactionData);
-      let not_ok = false;
-      let mustAuthenticate = false;
-      let status = result.status;
-      switch (status) {
-        case 401:
-          mustAuthenticate = true;
-          break;
-        case 403:
-          this.error = 'Die Berechtigung zum Speichern einer neuen Buchung fehlt.';
-          not_ok = true;
-          break;
-        case 200:
-          break;
-        default:
-          not_ok = true;
+
+      const s = this.newTransactionPresets.find(shortcut => {
+        return shortcut.name === this.transactionText;
+      });
+      if (s) {
+        s.categoryId = this.transactionCategory.id;
+        s.lastUsed = new Date();
+      } else {
+        this.newTransactionPresets.push({
+          name: this.transactionText,
+          categoryId: this.transactionCategory.id,
+          tags: [],
+          lastUsed: new Date(),
+        });
       }
-      if (mustAuthenticate) {
-        this.error = 'Benutzer muss angemeldet sein';
-        return false;
-      }
-      if (not_ok) {
-        if (!this.error) {
-          this.error = result.message;
+      try {
+        const promises = [];
+        promises.push(this.addTransaction(transactionData));
+        promises.push(this.saveNewTransactionPresets());
+        const results = await Promise.all(promises);
+        this.loading = false;
+        let mustAuthenticate = false;
+        let notAuthorized = false;
+        let not_ok = false;
+        results.forEach((result) => {
+          if (mustAuthenticate || not_ok) {
+            return; // skip further request results
+          }
+          let status = result;
+          if (_.isObject(result)) {
+            status = result.status;
+          }
+          switch (status) {
+            case 403:
+              this.error = 'Die Berechtigung zum Speichern einer neuen Buchung fehlt.';
+              not_ok = true;
+              break;
+            case 401:
+            case 404:
+              mustAuthenticate = true;
+              break;
+            case 200:
+              router.replace({name: 'home'});
+              break;
+            default:
+              not_ok = true;
+          }
+        });
+        if (mustAuthenticate) {
+          this.setNotAuthenticated();
+          await router.replace({name: 'login'});
+          return;
         }
-        return false;
+        if (notAuthorized) {
+          await router.replace({name: 'notAuthorized'});
+          return;
+        }
+        if (not_ok) {
+          this.error = 'Fehler beim Speichern der Buchung.';
+          console.log(result.message);
+        }
+      } catch (ex) {
+        this.error = ex.message;
+        this.loading = false;
       }
-      router.replace({name: 'home'});
-      return true;
     },
     cancel() {
       router.replace({name: 'home'});
@@ -222,11 +262,7 @@ export default {
     this.transactionAmount = undefined;
     this.transactionDate = DateTime.now().toJSDate();
     this.filteredCategories = [];
-    this.shortcuts = [
-      {id: 1, name: 'Bäckerei', categoryId: 60, tags: ['Urlaub', '2025 Köln']},
-      {id: 1, name: 'Döner', categoryId: 25, tags: []},
-    ];
-    this.filteredShortcuts = this.filterShortcuts();
+    this.shortcuts = [];
   },
 };
 </script>
@@ -246,12 +282,12 @@ export default {
             <label for="idTransactionAmount">Betrag</label>
           </FloatLabel>
           <ToggleButton v-model="isSpending" onLabel="Ausgabe" offLabel="Einnahme" onIcon="pi pi-minus"
-                        offIcon="pi pi-plus"/>
+                        offIcon="pi pi-plus" size="large"/>
         </div>
       </div>
       <div class="page--content--row">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <InputText id="idTransactionText" class="value" v-model=transactionText size="small" autofocus></InputText>
+          <InputText id="idTransactionText" class="value" v-model=transactionText size="small" autofocus clear></InputText>
           <label for="idTransactionText">Name</label>
         </FloatLabel>
       </div>

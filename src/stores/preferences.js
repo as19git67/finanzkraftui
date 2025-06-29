@@ -22,10 +22,10 @@ export const PreferencesStore = defineStore('preferences', {
             const response = await axios.get('/api/newtransactionpresets', config);
             if (response.status === 200) {
               if (_.isArray(response.data)) {
-                this._newTransactionPresets = _.map(response.data, (preference) => ({
-                  id: preference.id,
-                  value: preference.value,
-                  description: preference.description,
+                this._newTransactionPresets = _.map(response.data, (preset) => ({
+                  name: preset.name,
+                  categoryId: preset.categoryId,
+                  tags: preset.tags,
                 }));
               } else {
                 this._newTransactionPresets = [];
@@ -51,6 +51,20 @@ export const PreferencesStore = defineStore('preferences', {
       } else {
         return 200; // status ok
       }
+    },
+    async saveNewTransactionPresets() {
+      const presets = this._newTransactionPresets.sort((a, b) => b.lastUsed - a.lastUsed).slice(0, 20);
+      const userStore = UserStore();
+      if (userStore.authenticated) {
+        const config = userStore.getBearerAuthRequestHeader();
+        try {
+          const response = await axios.post('/api/newtransactionpresets', presets, config);
+          return { status: response.status, resultData: {} };
+        } catch (ex) {
+          return userStore.handleAxiosException(ex, userStore, {});
+        }
+      }
+      return { status: 401 };
     },
   },
 });
