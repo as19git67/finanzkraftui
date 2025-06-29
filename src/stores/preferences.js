@@ -26,6 +26,7 @@ export const PreferencesStore = defineStore('preferences', {
                   name: preset.name,
                   categoryId: preset.categoryId,
                   tags: preset.tags,
+                  lastUsed: preset.lastUsed,
                 }));
               } else {
                 this._newTransactionPresets = [];
@@ -53,7 +54,10 @@ export const PreferencesStore = defineStore('preferences', {
       }
     },
     async saveNewTransactionPresets() {
-      const presets = this._newTransactionPresets.sort((a, b) => b.lastUsed - a.lastUsed).slice(0, 20);
+      const presets = this._newTransactionPresets.sort((a, b) => {
+        return new Date(b.lastUsed) - new Date(a.lastUsed);
+      }).slice(0, 20);
+      this._newTransactionPresets = presets;
       const userStore = UserStore();
       if (userStore.authenticated) {
         const config = userStore.getBearerAuthRequestHeader();

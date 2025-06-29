@@ -213,6 +213,10 @@ button:hover svg .metaphor {
     gap: 0.5em;
 }
 
+.page--content--row__inline--wrapped {
+    flex-wrap: wrap;
+}
+
 .row--item {
 }
 

@@ -292,7 +292,7 @@ export default {
         </FloatLabel>
       </div>
       <div class="page--content--row">
-        <div class="page--content--row__inline">
+        <div class="page--content--row__inline page--content--row__inline--wrapped">
           <Button v-for="(item, index) in filteredShortcuts" :key="item.id" :id="item.id" @click="clickedShortcut(item)"
                   :label="item.name" severity="info" rounded size="small"/>
         </div>
@@ -315,6 +315,12 @@ export default {
           <Button size="small" @click="setDateToday" label="Heute"></Button>
           <Button size="small" @click="setDateYesterday">Gestern</Button>
         </div>
+      </div>
+      <div class="page--content--row">
+        <FloatLabel variant="in" class="row--item row--item--is-grow">
+          <InputText id="idTransactionNotes" class="value" v-model=transactionNotes size="small" clear></InputText>
+          <label for="idTransactionNotes">Notizen</label>
+        </FloatLabel>
       </div>
       <div class="page--content--row" v-if="error">
         <div class="error">{{ error }}</div>
