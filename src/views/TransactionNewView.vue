@@ -22,6 +22,7 @@ export default {
     return {
       accountName: this.accountName,
       filteredCategories: this.filteredCategories,
+      filteredPayees: this.filteredPayees,
       filteredShortcuts: this.filteredShortcuts,
       isSpending: true,
       transactionAmount: this.transactionAmount,
@@ -31,6 +32,7 @@ export default {
       transactionNotes: this.transactionNotes,
       transactionPayee: this.transactionPayee,
       error: this.error,
+      labelSave: this.labelSave,
     };
   },
   watch: {
@@ -45,7 +47,7 @@ export default {
     ...mapState(PreferencesStore, ['newTransactionPresets']),
     ...mapState(MasterDataStore, ['categories']),
     saveEnabled() {
-      return this.transactionAmount && this.transactionText && this.transactionDate && this.transactionCategory;
+      return !this.loading && this.transactionAmount && this.transactionText && this.transactionDate && this.transactionCategory;
     },
   },
   methods: {
@@ -73,6 +75,15 @@ export default {
         });
       }
     },
+    searchPayee(event) {
+      if (!event.query.trim().length) {
+        this.filteredPayees = [...this.payees];
+      } else {
+        this.filteredPayees = this.payees.filter((payee) => {
+          return payee.toLowerCase().indexOf(event.query.toLowerCase()) >= 0;
+        });
+      }
+    },
     clickedShortcut(shortcut) {
       this.transactionText = shortcut.name;
       this.transactionCategory = this.categories.find(category => {
@@ -88,7 +99,6 @@ export default {
         promises.push(this.getNewTransactionPresets());
         promises.push(this.getCategories(true));
         const results = await Promise.all(promises);
-        this.loading = false;
         let mustAuthenticate = false;
         let notAuthorized = false;
         let not_ok = false;
@@ -121,6 +131,8 @@ export default {
           return;
         }
         this.filteredShortcuts = this.filterShortcuts();
+        this.payees = ['Grabmann', 'Felixo', 'Baywa', 'Aldi', 'Rewe'];  //todo
+        this.loading = false;
       } catch (ex) {
         this.error = ex.message;
         this.loading = false;
@@ -158,6 +170,7 @@ export default {
     async saveTransaction() {
       this.error = '';
       this.loading = false;
+      this.labelSave = 'speichern...';
       this.transactionText = this.transactionText ? this.transactionText.trim() : null;
       this.transactionPayee = this.transactionPayee ? this.transactionPayee.trim() : null;
       this.transactionNotes = this.transactionNotes? this.transactionNotes.trim(): null;
@@ -234,6 +247,7 @@ export default {
       } catch (ex) {
         this.error = ex.message;
         this.loading = false;
+        this.labelSave = 'Speichern';
       }
     },
     cancel() {
@@ -262,7 +276,8 @@ export default {
     this.transactionAmount = undefined;
     this.transactionDate = DateTime.now().toJSDate();
     this.filteredCategories = [];
-    this.shortcuts = [];
+    this.filteredPayees = [];
+    this.labelSave = 'Speichern';
   },
 };
 </script>
@@ -286,16 +301,26 @@ export default {
         </div>
       </div>
       <div class="page--content--row">
-        <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <InputText id="idTransactionText" class="value" v-model=transactionText size="small" autofocus clear></InputText>
-          <label for="idTransactionText">Name</label>
-        </FloatLabel>
-      </div>
-      <div class="page--content--row">
         <div class="page--content--row__inline page--content--row__inline--wrapped">
           <Button v-for="(item, index) in filteredShortcuts" :key="item.id" :id="item.id" @click="clickedShortcut(item)"
                   :label="item.name" severity="info" rounded size="small"/>
         </div>
+      </div>
+      <div class="page--content--row">
+        <FloatLabel variant="in" class="row--item row--item--is-grow">
+          <InputText id="idTransactionText" class="value" v-model=transactionText size="small" autofocus></InputText>
+          <label for="idTransactionText">Text</label>
+        </FloatLabel>
+      </div>
+      <div class="page--content--row">
+        <FloatLabel variant="in" class="row--item row--item--is-grow">
+          <AutoComplete id="payeeSelection" class="transactionCategorySelection" v-model="transactionPayee"
+                        :suggestions="filteredPayees" @complete="searchPayee"/>
+          <label for="payeeSelection">
+            <span v-if="isSpending">Zahlungsempfänger</span>
+            <span v-else>Zahler</span>
+          </label>
+        </FloatLabel>
       </div>
       <div class="page--content--row">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
@@ -327,7 +352,7 @@ export default {
       </div>
     </div>
     <div class="page--footer footer--is-sticky">
-      <Button label="Speichern" :disabled="!saveEnabled" @click="saveTransaction" size="large">
+      <Button :label="labelSave" :disabled="!saveEnabled" @click="saveTransaction" size="large">
       </Button>
       <Button label="Abbrechen" @click="cancel" size="large">
       </Button>

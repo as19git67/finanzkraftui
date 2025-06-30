@@ -287,7 +287,7 @@ export default {
       <div class="title">Buchungsdetails</div>
     </div>
     <div class="page--content">
-      <div class="page--content--row">
+      <div class="page--content--row" v-if="transactionEntryText">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
           <InputText id="idTransactionEntryText" class="value" v-model="transactionEntryText" variant="filled"
                      readonly size="small"></InputText>
@@ -295,17 +295,31 @@ export default {
         </FloatLabel>
       </div>
       <div class="page--content--row">
-        <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <InputText id="idTransactionPayee" class="value" v-model="transactionPayee" variant="filled"
-                     readonly size="small"></InputText>
-          <label for="idTransactionPayee">Name</label>
-        </FloatLabel>
+        <div class="page--content--row__inline">
+          <FloatLabel variant="in" class="row--item row--item--is-grow">
+            <InputNumber id="idTransactionAmount" locale="de-DE"
+                         inputmode="decimal" currency="EUR"
+                         mode="currency" v-model="transaction.t_amount"
+                         variant="filled" readonly size="large"/>
+            <label for="idTransactionAmount">Betrag</label>
+          </FloatLabel>
+        </div>
       </div>
       <div class="page--content--row">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
           <InputText id="idTransactionText" class="value" v-model="transactionText" variant="filled"
                      readonly size="small"></InputText>
           <label for="idTransactionText">Text</label>
+        </FloatLabel>
+      </div>
+      <div class="page--content--row">
+        <FloatLabel variant="in" class="row--item row--item--is-grow">
+          <InputText id="idTransactionPayee" class="value" v-model="transactionPayee" variant="filled"
+                     readonly size="small"></InputText>
+          <label for="idTransactionPayee">
+            <span v-if="transaction.t_amount <= 0">Zahlungsempfänger</span>
+            <span v-else>Zahler</span>
+          </label>
         </FloatLabel>
       </div>
       <div class="page--content--row">
@@ -324,16 +338,6 @@ export default {
         </FloatLabel>
       </div>
       <div class="section">
-        <div v-if="transaction.currency_id" class="label-value in-row">
-          <div class="label">Betrag:</div>
-          <div class="value">{{
-              `${new Intl.NumberFormat(DateTimeSettings.defaultLocale, {
-                style: 'currency',
-                currency: transaction.currency_id
-              }).format(transaction.t_amount)}`
-            }}
-          </div>
-        </div>
         <div v-if="transaction.t_value_date" class="label-value in-row">
           <div class="label">Datum:</div>
           <div class="value">
