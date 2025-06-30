@@ -175,6 +175,18 @@ export default {
           style: 'currency',
           currency: this.currency,
         }).format(t.t_amount);
+        try {
+          if (t.t_payee) {
+            const i = t.t_payee.indexOf('(');
+            const j = t.t_payee.indexOf(')');
+            if (i > 0 && j > 0 && j > i) {
+              t.payeeShortened = t.t_payee.substring(0, i - 1);
+              t.payeeShortened = t.payeeShortened.trim();
+            }
+          }
+        } catch (ex) {
+          console.log(ex);
+        }
         transactionsOfDate[tDateShortStr].push(t);
       });
       const transactionDatesSorted = Object.keys(transactionsOfDate).toSorted((a, b) => {
@@ -278,16 +290,11 @@ export default {
                          v-for="(item, index) in trOfDate.transactions" :key="item.t_id"
                          :id="'transaction-' + item.t_id" :class="{'alternate-row-background': index % 2 }">
               <div class="data--list__left">
-                <div class="data--list__line">
-                    <span>
-                      {{ item.t_payee ? item.t_payee : item.textShortened ? item.textShortened : item.t_entry_text }}
-                    </span>
-                </div>
-                <div class="data--list__line">
-                  <div class="td-text-item item--is-category">{{ item.category_name }}</div>
-                  <div class="td-text-item item--is-text">{{ item.textShortened ? item.textShortened : '' }}</div>
-                  <div class="td-text-item item--is-notes">{{ item.t_notes }}</div>
-                </div>
+                <div class="data--list__line data--list__line--bold" v-if="item.payeeShortened">{{ item.payeeShortened }}</div>
+                <div class="data--list__line" v-if="item.textShortened">{{ item.textShortened }}</div>
+                <div class="data--list__line" v-if="item.t_entry_text">{{ item.t_entry_text }}</div>
+                <div class="data--list__line" v-if="item.category_name">{{ item.category_name }}</div>
+                <div class="data--list__line" v-if="item.t_notes">{{ item.t_notes }}</div>
               </div>
               <div class="data--list__right">
                 <span>{{ item.amountStr }}</span>
