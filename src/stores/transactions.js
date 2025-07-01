@@ -75,6 +75,19 @@ export const TransactionStore = defineStore('transaction', {
       } else {
         res.textShortened = transactionData.t_text;
       }
+
+      // Cut the part in brackets from the payee text
+      if (res.t_payee) {
+        const i = res.t_payee.indexOf('(');
+        const j = res.t_payee.indexOf(')');
+        if (i > 0 && j > 0 && j > i) {
+          res.payeeShortened = res.t_payee.substring(0, i - 1);
+          res.payeeShortened = res.payeeShortened.trim();
+        } else {
+          res.payeeShortened = res.t_payee;
+        }
+      }
+
       return res;
     },
     async getTransactions(options) {

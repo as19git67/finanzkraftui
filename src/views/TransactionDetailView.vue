@@ -20,10 +20,12 @@ export default {
   components: {},
   data() {
     return {
+      transactionDate: this.transactionDate,
       transactionNotes: this.transactionNotes,
       transactionText: this.transactionText,
-      transactionPayee: this.transactionPayee ? this.transactionPayee : '',
-      transactionEntryText: this.transactionEntryText ? this.transactionEntryText : '',
+      transactionPayee: this.transactionPayee,
+      transactionPayeeShortened: this.transactionPayeeShortened,
+      transactionEntryText: this.transactionEntryText,
       transactionCategory: this.transactionCategory,
       filteredCategories: this.filteredCategories,
       transaction: this.transaction,
@@ -146,6 +148,9 @@ export default {
         this.goToTransactionList();
       }
     },
+    cancel() {
+      router.back();
+    },
     async handleDataChanged() {
       this.error = undefined;
       this.updateData.id = this.transactionId;
@@ -259,9 +264,11 @@ export default {
       return item.id === this.transaction.category_id;
     });
 
+    this.transactionDate = new Date(this.transaction.t_value_date);
     this.transactionNotes = this.transaction.t_notes;
     this.transactionText = this.transaction.t_text;
     this.transactionPayee = this.transaction.t_payee;
+    this.transactionPayeeShortened = this.transaction.payeeShortened;
     this.transactionEntryText = this.transaction.t_entry_text;
     if (this.transaction.t_text && this.transaction.t_payee &&
         this.transaction.t_payee.startsWith('AMAZON')) {
@@ -287,11 +294,16 @@ export default {
       <div class="title">Buchungsdetails</div>
     </div>
     <div class="page--content">
-      <div class="page--content--row" v-if="transactionEntryText">
+      <div class="page--content--row" v-if="transactionPayeeShortened">
+        <div class="row--item row--item--is-centered row--item--is-emphasized" title="{{transactionPayee}}">{{transactionPayeeShortened}}</div>
+      </div>
+      <div class="page--content--row">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <InputText id="idTransactionEntryText" class="value" v-model="transactionEntryText" variant="filled"
-                     readonly size="small"></InputText>
-          <label for="idTransactionEntryText">Buchungstyp</label>
+          <AutoComplete id="catSelection" v-model="transactionCategory"
+                        optionLabel="full_name"
+                        dropdown size="small"
+                        :suggestions="filteredCategories" @complete="searchCategory" />
+          <label for="catSelection">Kategorie</label>
         </FloatLabel>
       </div>
       <div class="page--content--row">
@@ -306,29 +318,35 @@ export default {
         </div>
       </div>
       <div class="page--content--row">
+        <div class="page--content--row__inline">
+          <FloatLabel variant="in" class="row--item row--item--is-grow">
+            <DatePicker v-model="transactionDate" inputId="transactionDate" showIcon readonly
+                        iconDisplay="input"
+                        variant="filled"/>
+            <label for="transactionDate">Buchungsdatum</label>
+          </FloatLabel>
+        </div>
+      </div>
+
+      <div class="page--content--row" v-if="transactionEntryText">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <Textarea id="idTransactionText" class="value" v-model="transactionText" variant="filled"
+          <InputText id="idTransactionEntryText" v-model="transactionEntryText" variant="filled"
+                     readonly/>
+          <label for="idTransactionEntryText">Buchungstyp</label>
+        </FloatLabel>
+      </div>
+      <div class="page--content--row">
+        <FloatLabel variant="in" class="row--item row--item--is-grow">
+          <Textarea id="idTransactionText" v-model="transactionText" variant="filled"
                      readonly size="small"></Textarea>
           <label for="idTransactionText">Text</label>
         </FloatLabel>
       </div>
-      <div class="page--content--row">
+      <div class="page--content--row" v-if="transaction.t_MREF">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <InputText id="idTransactionPayee" class="value" v-model="transactionPayee" variant="filled"
-                     readonly size="small"></InputText>
-          <label for="idTransactionPayee">
-            <span v-if="transaction.t_amount <= 0">Zahlungsempfänger</span>
-            <span v-else>Zahler</span>
-          </label>
-        </FloatLabel>
-      </div>
-      <div class="page--content--row">
-        <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <AutoComplete id="catSelection" v-model="transactionCategory"
-                        optionLabel="full_name"
-                        dropdown
-                        :suggestions="filteredCategories" @complete="searchCategory" />
-          <label for="catSelection">Kategorie</label>
+          <InputText id="idTransactionMREF" v-model="transaction.t_MREF" variant="filled"
+                     readonly size="small"/>
+          <label for="idTransactionMREF">Mandatsreferenz</label>
         </FloatLabel>
       </div>
       <div class="page--content--row">
@@ -337,67 +355,59 @@ export default {
           <label for="idTransactionNotes">Notiz</label>
         </FloatLabel>
       </div>
-      <div class="section">
-        <div v-if="transaction.t_value_date" class="label-value in-row">
-          <div class="label">Datum:</div>
-          <div class="value">
-            {{ DateTime.fromISO(transaction.t_value_date).toLocaleString(DateTime.DATE_HUGE) }}
-          </div>
-        </div>
-        <div v-if="amazonOrderId" class="label-value in-row">
-          <div class="label">Amazon Bestellung:</div>
-          <a class="value" target="_blank"
-             :href="`https://www.amazon.de/gp/your-account/order-details?ie=UTF8&orderID=${amazonOrderId}`">{{
-              amazonOrderId
-            }}</a>
-        </div>
-        <div class="label-value in-row">
-          <div class="label">Konto:</div>
-          <div class="value">{{ transaction.account_name }}</div>
-        </div>
-        <div v-if="transaction.t_payeePayerAcctNo" class="label-value in-row">
-          <div class="label">Zahlungsempfänger:</div>
-          <div class="value">{{ transaction.t_payeePayerAcctNo }}</div>
-        </div>
-        <div v-if="transaction.t_EREF" class="label-value in-row">
-          <div class="label">EREF:</div>
-          <div class="value">{{ transaction.t_EREF }}</div>
-        </div>
-        <div v-if="transaction.t_CRED" class="label-value in-row">
-          <div class="label">Gläubiger:</div>
-          <div class="value">{{ transaction.t_CRED }}</div>
-        </div>
-        <div v-if="transaction.t_MREF" class="label-value in-row">
-          <div class="label">Mandatsreferenz:</div>
-          <div class="value">{{ transaction.t_MREF }}</div>
-        </div>
-        <div class="label-value in-row">
-          <div class="label">Buchungsart:</div>
-          <div class="value">{{
-              transaction.t_entry_text ? transaction.t_entry_text : 'Nicht angegeben'
-            }}
-          </div>
+
+      <div v-if="amazonOrderId" class="page--content--row">
+        <div class="row--item">
+          <Button as="a"
+                  label="Bestellung in Amazon anzeigen"
+                  :href="`https://www.amazon.de/gp/your-account/order-details?ie=UTF8&orderID=${amazonOrderId}`"
+                  target="_blank" rel="noopener" />
         </div>
       </div>
-      <div class="section">
-        <div v-if="transaction" class="detail-links">
-          <router-link class="action" replace :to="{ path:'/', name: 'home'}">
-            Tags bearbeiten
-          </router-link>
-        </div>
-        <div v-if="transaction" class="detail-links">
-          <router-link class="action" replace
-                       :to="{ name: 'TransactionRules', state: { ruleSetId: transaction.rule_set_id }, meta: { ruleSetId: transaction.rule_set_id } }">
-            Regeln <span v-if="transaction.rule_set_id">({{ transaction.rule_set_name }})</span>
-          </router-link>
-        </div>
+
+      <div class="page--content--row" v-if="transaction.account_name">
+        <FloatLabel variant="in" class="row--item row--item--is-grow">
+          <InputText id="idTransactionAccountName" v-model="transaction.account_name" variant="filled"
+                     readonly size="small"/>
+          <label for="idTransactionAccountName">Konto</label>
+        </FloatLabel>
+      </div>
+      <div class="page--content--row" v-if="transaction.t_payeePayerAcctNo">
+        <FloatLabel variant="in" class="row--item row--item--is-grow">
+          <InputText id="idTransactionPayeePayeeAcctNo" v-model="transaction.t_payeePayerAcctNo" variant="filled"
+                     readonly size="small"/>
+          <label for="idTransactionPayeePayeeAcctNo">Zahlungsempfänger</label>
+        </FloatLabel>
+      </div>
+      <div class="page--content--row" v-if="transaction.t_EREF">
+        <FloatLabel variant="in" class="row--item row--item--is-grow">
+          <InputText id="idTransactionEREF" v-model="transaction.t_EREF" variant="filled"
+                     readonly size="small"/>
+          <label for="idTransactionEREF">ERef</label>
+        </FloatLabel>
+      </div>
+      <div class="page--content--row" v-if="transaction.t_CRED">
+        <FloatLabel variant="in" class="row--item row--item--is-grow">
+          <InputText id="idTransactionCRED" v-model="transaction.t_CRED" variant="filled"
+                     readonly size="small"/>
+          <label for="idTransactionCRED">Lieferant</label>
+        </FloatLabel>
+      </div>
+      <div class="page--content--row" v-if="transaction">
+        <router-link class="action" replace :to="{ path:'/', name: 'home'}">Tags bearbeiten</router-link>
+      </div>
+      <div class="page--content--row" v-if="transaction">
+        <router-link class="action" replace
+                     :to="{ name: 'TransactionRules', state: { ruleSetId: transaction.rule_set_id }, meta: { ruleSetId: transaction.rule_set_id } }">
+          Regeln <span v-if="transaction.rule_set_id">({{ transaction.rule_set_name }})</span>
+        </router-link>
       </div>
       <div class="page--content--row" v-if="error">
         <div class="error">{{ error }}</div>
       </div>
     </div>
     <div class="page--footer footer--is-sticky">
-      <Button label="Speichern" :disabled="!saveEnabled" @click="saveTransaction" size="large">
+      <Button label="Speichern" :disabled="!dirty" @click="saveTransaction" size="large">
       </Button>
       <Button label="Abbrechen" @click="cancel" size="large">
       </Button>

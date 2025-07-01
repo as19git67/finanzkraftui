@@ -175,18 +175,6 @@ export default {
           style: 'currency',
           currency: this.currency,
         }).format(t.t_amount);
-        try {
-          if (t.t_payee) {
-            const i = t.t_payee.indexOf('(');
-            const j = t.t_payee.indexOf(')');
-            if (i > 0 && j > 0 && j > i) {
-              t.payeeShortened = t.t_payee.substring(0, i - 1);
-              t.payeeShortened = t.payeeShortened.trim();
-            }
-          }
-        } catch (ex) {
-          console.log(ex);
-        }
         transactionsOfDate[tDateShortStr].push(t);
       });
       const transactionDatesSorted = Object.keys(transactionsOfDate).toSorted((a, b) => {

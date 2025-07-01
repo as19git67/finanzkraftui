@@ -217,13 +217,26 @@ button:hover svg .metaphor {
     flex-wrap: wrap;
 }
 
-.row--item {
+.page--content--row .row--item {
+    display: flex;
 }
 
 .row--item.row--item--is-grow,
 .row--item.row--item--is-grow > * {
-    display: flex;
     flex: 1 1 auto;
+}
+
+.row--item.row--item--is-grow > * {
+    display: flex;
+}
+
+.row--item--is-centered {
+    justify-content: center;
+    text-align: center;
+}
+
+.row--item--is-emphasized {
+    font-weight: bold;
 }
 
 .page--title {
