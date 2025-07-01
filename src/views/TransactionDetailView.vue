@@ -307,8 +307,8 @@ export default {
       </div>
       <div class="page--content--row">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <InputText id="idTransactionText" class="value" v-model="transactionText" variant="filled"
-                     readonly size="small"></InputText>
+          <Textarea id="idTransactionText" class="value" v-model="transactionText" variant="filled"
+                     readonly size="small"></Textarea>
           <label for="idTransactionText">Text</label>
         </FloatLabel>
       </div>

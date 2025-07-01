@@ -44,6 +44,7 @@ export default {
     ...mapStores(UserStore, MasterDataStore, PreferencesStore, AccountStore),
     ...mapState(UserStore, ['authenticated']),
     ...mapState(AccountStore, ["accounts"]),
+    ...mapState(TransactionStore, ['transactions']),
     ...mapState(PreferencesStore, ['newTransactionPresets']),
     ...mapState(MasterDataStore, ['categories']),
     saveEnabled() {
@@ -51,7 +52,7 @@ export default {
     },
   },
   methods: {
-    ...mapActions(TransactionStore, ['addTransaction']),
+    ...mapActions(TransactionStore, ['getTransactions', 'addTransaction']),
     ...mapActions(PreferencesStore, ['getNewTransactionPresets', 'addNewTransactionPresets', 'saveNewTransactionPresets']),
     ...mapActions(MasterDataStore, ['getCategoryById', 'getCategories']),
     ...mapActions(UserStore, ['setNotAuthenticated']),
@@ -90,12 +91,25 @@ export default {
         return category.id === shortcut.categoryId;
       });
     },
+    extractPayees() {
+      const p = {};
+      this.transactions.forEach(transaction => {
+        const payee = transaction.t_payee;
+        if (payee) {
+          p[payee] = payee;
+        }
+      });
+      this.payees = Object.keys(p);
+    },
     async loadDataFromServer() {
       this.error = '';
       this.loading = true;
       try {
         const promises = [];
         promises.push(this.getAccounts(true));
+        promises.push(this.getTransactions({
+          accountsWhereIn: [parseInt(this.accountId)],
+        }));
         promises.push(this.getNewTransactionPresets());
         promises.push(this.getCategories(true));
         const results = await Promise.all(promises);
@@ -131,7 +145,7 @@ export default {
           return;
         }
         this.filteredShortcuts = this.filterShortcuts();
-        this.payees = ['Grabmann', 'Felixo', 'Baywa', 'Aldi', 'Rewe'];  //todo
+        this.extractPayees();
         this.loading = false;
       } catch (ex) {
         this.error = ex.message;
