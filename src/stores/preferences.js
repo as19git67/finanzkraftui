@@ -23,7 +23,7 @@ export const PreferencesStore = defineStore('preferences', {
             if (response.status === 200) {
               if (_.isArray(response.data)) {
                 this._newTransactionPresets = _.map(response.data, (preset) => ({
-                  name: preset.name,
+                  payee: preset.name ? preset.name : preset.payee,
                   categoryId: preset.categoryId,
                   tags: preset.tags,
                   lastUsed: preset.lastUsed,

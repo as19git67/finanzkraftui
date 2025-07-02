@@ -26,7 +26,6 @@ export default {
       filteredShortcuts: this.filteredShortcuts,
       isSpending: true,
       transactionAmount: this.transactionAmount,
-      transactionText: this.transactionText,
       transactionDate: this.transactionDate,
       transactionCategory: this.transactionCategory,
       transactionNotes: this.transactionNotes,
@@ -48,7 +47,7 @@ export default {
     ...mapState(PreferencesStore, ['newTransactionPresets']),
     ...mapState(MasterDataStore, ['categories']),
     saveEnabled() {
-      return !this.loading && this.transactionAmount && this.transactionText && this.transactionDate && this.transactionCategory;
+      return !this.loading && this.transactionAmount && (this.transactionNotes || this.transactionPayee) && this.transactionDate && this.transactionCategory;
     },
   },
   methods: {
@@ -86,10 +85,11 @@ export default {
       }
     },
     clickedShortcut(shortcut) {
-      this.transactionText = shortcut.name;
+      this.transactionPayee = shortcut.payee;
       this.transactionCategory = this.categories.find(category => {
         return category.id === shortcut.categoryId;
       });
+      // todo: tags
     },
     extractPayees() {
       const p = {};
@@ -185,7 +185,6 @@ export default {
       this.error = '';
       this.loading = false;
       this.labelSave = 'speichern...';
-      this.transactionText = this.transactionText ? this.transactionText.trim() : null;
       this.transactionPayee = this.transactionPayee ? this.transactionPayee.trim() : null;
       this.transactionNotes = this.transactionNotes? this.transactionNotes.trim(): null;
       const transactionData = {
@@ -193,24 +192,26 @@ export default {
         t_notes: this.transactionNotes,
         t_payee: this.transactionPayee,
         t_value_date: this.transactionDate,
-        t_text: this.transactionText,
         t_category_id: this.transactionCategory.id,
         idAccount: parseInt(this.accountId),
       }
 
       const s = this.newTransactionPresets.find(shortcut => {
-        return shortcut.name === this.transactionText;
+        return shortcut.payee === this.transactionPayee;
       });
       if (s) {
         s.categoryId = this.transactionCategory.id;
         s.lastUsed = new Date();
       } else {
-        this.newTransactionPresets.push({
-          name: this.transactionText,
-          categoryId: this.transactionCategory.id,
-          tags: [],
-          lastUsed: new Date(),
-        });
+        if (this.transactionPayee) {
+          this.transactionPayee = this.transactionPayee.trim();
+          this.newTransactionPresets.push({
+            payee: this.transactionPayee,
+            categoryId: this.transactionCategory.id,
+            tags: [],
+            lastUsed: new Date(),
+          });
+        }
       }
       try {
         const promises = [];
@@ -299,31 +300,21 @@ export default {
 <template>
   <div class="page page--is-transaction-new-view">
     <div class="page--header">
-      <div class="title">Neue Buchung für {{ accountName }} eingeben:</div>
+      <div class="page--title title__with-buttons">
+        <Button label="Abbrechen" @click="cancel" size="large">
+        </Button>
+        Neu für {{ accountName }}
+        <Button :label="labelSave" :disabled="!saveEnabled" @click="saveTransaction" size="large">
+        </Button>
+      </div>
     </div>
     <div class="page--content">
       <div class="page--content--row">
-        <div class="page--content--row__inline">
-          <FloatLabel variant="in" class="row--item row--item--is-grow">
-            <InputNumber id="idTransactionAmount" locale="de-DE"
-                         inputmode="decimal" currency="EUR"
-                         mode="currency" v-model=transactionAmount size="large"/>
-            <label for="idTransactionAmount">Betrag</label>
-          </FloatLabel>
-          <ToggleButton v-model="isSpending" onLabel="Ausgabe" offLabel="Einnahme" onIcon="pi pi-minus"
-                        offIcon="pi pi-plus" size="large"/>
-        </div>
-      </div>
-      <div class="page--content--row">
-        <div class="page--content--row__inline page--content--row__inline--wrapped">
-          <Button v-for="(item, index) in filteredShortcuts" :key="item.id" :id="item.id" @click="clickedShortcut(item)"
-                  :label="item.name" severity="info" rounded size="small"/>
-        </div>
-      </div>
-      <div class="page--content--row">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <InputText id="idTransactionText" class="value" v-model=transactionText size="small" autofocus></InputText>
-          <label for="idTransactionText">Text</label>
+          <AutoComplete id="catSelection" class="transactionCategorySelection" v-model="transactionCategory"
+                        optionLabel="full_name"
+                        :suggestions="filteredCategories" @complete="searchCategory"/>
+          <label for="catSelection">Kategorie</label>
         </FloatLabel>
       </div>
       <div class="page--content--row">
@@ -334,14 +325,6 @@ export default {
             <span v-if="isSpending">Zahlungsempfänger</span>
             <span v-else>Zahler</span>
           </label>
-        </FloatLabel>
-      </div>
-      <div class="page--content--row">
-        <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <AutoComplete id="catSelection" class="transactionCategorySelection" v-model="transactionCategory"
-                        optionLabel="full_name"
-                        :suggestions="filteredCategories" @complete="searchCategory"/>
-          <label for="catSelection">Kategorie</label>
         </FloatLabel>
       </div>
       <div class="page--content--row">
@@ -356,20 +339,32 @@ export default {
         </div>
       </div>
       <div class="page--content--row">
+        <div class="page--content--row__inline">
+          <FloatLabel variant="in" class="row--item row--item--is-grow">
+            <InputNumber id="idTransactionAmount" locale="de-DE"
+                         inputmode="decimal" currency="EUR"
+                         mode="currency" v-model=transactionAmount size="large"/>
+            <label for="idTransactionAmount">Betrag</label>
+          </FloatLabel>
+          <ToggleButton v-model="isSpending" onLabel="Ausgabe" offLabel="Einnahme" onIcon="pi pi-minus"
+                        offIcon="pi pi-plus" size="large"/>
+        </div>
+      </div>
+      <div class="page--content--row">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <InputText id="idTransactionNotes" class="value" v-model=transactionNotes size="small" clear></InputText>
+          <InputText id="idTransactionNotes" v-model=transactionNotes size="small" clear></InputText>
           <label for="idTransactionNotes">Notizen</label>
         </FloatLabel>
+      </div>
+      <div class="page--content--row">
+        <div class="page--content--row__inline page--content--row__inline--wrapped">
+          <Button v-for="(item, index) in filteredShortcuts" :key="item.id" :id="item.id" @click="clickedShortcut(item)"
+                  :label="item.payee" severity="info" rounded size="small"/>
+        </div>
       </div>
       <div class="page--content--row" v-if="error">
         <div class="error">{{ error }}</div>
       </div>
-    </div>
-    <div class="page--footer footer--is-sticky">
-      <Button :label="labelSave" :disabled="!saveEnabled" @click="saveTransaction" size="large">
-      </Button>
-      <Button label="Abbrechen" @click="cancel" size="large">
-      </Button>
     </div>
   </div>
 </template>

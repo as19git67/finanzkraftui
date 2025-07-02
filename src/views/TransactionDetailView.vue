@@ -291,7 +291,13 @@ export default {
 <template>
   <div class="page page--is-transaction-new-view">
     <div class="page--header">
-      <div class="title">Buchungsdetails</div>
+      <div class="page--title title__with-buttons">
+        <Button label="Abbrechen" @click="cancel" size="large">
+        </Button>
+        Buchungsdetails
+        <Button label="Speichern" :disabled="!dirty" @click="saveTransaction" size="large">
+        </Button>
+      </div>
     </div>
     <div class="page--content">
       <div class="page--content--row" v-if="transactionPayeeShortened">
@@ -335,10 +341,10 @@ export default {
           <label for="idTransactionEntryText">Buchungstyp</label>
         </FloatLabel>
       </div>
-      <div class="page--content--row">
+      <div class="page--content--row" v-if="transactionText">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
           <Textarea id="idTransactionText" v-model="transactionText" variant="filled"
-                     readonly size="small"></Textarea>
+                     readonly size="small" autoResize></Textarea>
           <label for="idTransactionText">Text</label>
         </FloatLabel>
       </div>
@@ -351,7 +357,7 @@ export default {
       </div>
       <div class="page--content--row">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <Textarea id="idTransactionNotes" v-model="transactionNotes"></Textarea>
+          <InputText id="idTransactionNotes" v-model="transactionNotes"></InputText>
           <label for="idTransactionNotes">Notiz</label>
         </FloatLabel>
       </div>
@@ -405,12 +411,6 @@ export default {
       <div class="page--content--row" v-if="error">
         <div class="error">{{ error }}</div>
       </div>
-    </div>
-    <div class="page--footer footer--is-sticky">
-      <Button label="Speichern" :disabled="!dirty" @click="saveTransaction" size="large">
-      </Button>
-      <Button label="Abbrechen" @click="cancel" size="large">
-      </Button>
     </div>
   </div>
 </template>

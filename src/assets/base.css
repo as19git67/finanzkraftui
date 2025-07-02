@@ -233,6 +233,7 @@ button:hover svg .metaphor {
 .row--item--is-centered {
     justify-content: center;
     text-align: center;
+    padding-block: 0.5em;
 }
 
 .row--item--is-emphasized {
@@ -240,6 +241,15 @@ button:hover svg .metaphor {
 }
 
 .page--title {
+    display: flex;
+}
+
+.page--title.title__with-buttons {
+    align-items: center;
+    gap: 0.5em;
+    padding-block: 0.25em;
+    flex: 1 1 auto;
+    justify-content: space-between;
 }
 
 .page--footer {

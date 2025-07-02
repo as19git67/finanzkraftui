@@ -114,7 +114,7 @@ export default {
       this.accountGroups = [
         {
           name: 'Täglich',
-          accounts: this.createAccountListByTypes(['cash', 'checking', 'credit']),
+          accounts: this.createAccountListByTypes(['checking', 'credit', 'cash']),
         },
         {
           name: 'Sparen',
