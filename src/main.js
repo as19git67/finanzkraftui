@@ -50,18 +50,18 @@ function calculateViewport() {
   };
 }
 
-function setViewPortStyleSheet() {
-  const vp = calculateViewport();
-  const sheet = new CSSStyleSheet();
-  sheet.replaceSync(`:root { --100vvw: ${vp.visual.width}px; --100vvh: ${vp.visual.height}px; --100vw: ${vp.width}px; --100vh: ${vp.height}px;}`);
-  document.adoptedStyleSheets = [sheet];
-}
-
-window.visualViewport.addEventListener('resize', () => {
-  setViewPortStyleSheet()
-});
-
-setViewPortStyleSheet();
+// function setViewPortStyleSheet() {
+//   const vp = calculateViewport();
+//   const sheet = new CSSStyleSheet();
+//   sheet.replaceSync(`:root { --100vvw: ${vp.visual.width}px; --100vvh: ${vp.visual.height}px; --100vw: ${vp.width}px; --100vh: ${vp.height}px;}`);
+//   document.adoptedStyleSheets = [sheet];
+// }
+//
+// window.visualViewport.addEventListener('resize', () => {
+//   setViewPortStyleSheet()
+// });
+//
+// setViewPortStyleSheet();
 
 const pinia = createPinia();
 const app = createApp(App);

@@ -110,10 +110,8 @@ html {
 
 body {
     position: fixed;
-    overflow: hidden;   /* stop scrolling body */
+    overflow: hidden;
     width: 100%;
-    height: var(--100vh, 100vh);
-    padding: env(safe-area-inset-top, 20px) env(safe-area-inset-right, 20px) env(safe-area-inset-bottom, 20px) env(safe-area-inset-left, 20px);
     color: var(--color-text);
     background: var(--color-background);
     transition: color 0.5s, background-color 0.5s;
@@ -124,6 +122,18 @@ body {
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+}
+
+/* this prevents the body to scroll on iOS Safari (https://gist.github.com/kiding/72721a0553fa93198ae2bb6eefaa3299) */
+@keyframes blink_input_opacity_to_prevent_scrolling_when_focus {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+input.prevent-scroll:focus,
+.prevent-scroll input:focus,
+.prevent-scroll textarea:focus {
+    animation: blink_input_opacity_to_prevent_scrolling_when_focus 0.01s;
 }
 
 .error {

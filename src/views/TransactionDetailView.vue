@@ -151,6 +151,9 @@ export default {
     cancel() {
       router.back();
     },
+    deleteTransaction() {
+
+    },
     async handleDataChanged() {
       this.error = undefined;
       this.updateData.id = this.transactionId;
@@ -313,6 +316,12 @@ export default {
         </FloatLabel>
       </div>
       <div class="page--content--row">
+        <FloatLabel variant="in" class="row--item row--item--is-grow">
+          <InputText id="idTransactionNotes" v-model="transactionNotes"></InputText>
+          <label for="idTransactionNotes">Notiz</label>
+        </FloatLabel>
+      </div>
+      <div class="page--content--row">
         <div class="page--content--row__inline">
           <FloatLabel variant="in" class="row--item row--item--is-grow">
             <InputNumber id="idTransactionAmount" locale="de-DE"
@@ -353,12 +362,6 @@ export default {
           <InputText id="idTransactionMREF" v-model="transaction.t_MREF" variant="filled"
                      readonly size="small"/>
           <label for="idTransactionMREF">Mandatsreferenz</label>
-        </FloatLabel>
-      </div>
-      <div class="page--content--row">
-        <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <InputText id="idTransactionNotes" v-model="transactionNotes"></InputText>
-          <label for="idTransactionNotes">Notiz</label>
         </FloatLabel>
       </div>
 
@@ -410,6 +413,11 @@ export default {
       </div>
       <div class="page--content--row" v-if="error">
         <div class="error">{{ error }}</div>
+      </div>
+      <div class="page--content--row">
+        <div class="row--item row--item--is-centered">
+          <Button label="Löschen" severity="danger" @click="deleteTransaction" size="large"/>
+        </div>
       </div>
     </div>
   </div>

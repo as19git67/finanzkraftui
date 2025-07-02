@@ -319,13 +319,33 @@ export default {
       </div>
       <div class="page--content--row">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <AutoComplete id="payeeSelection" class="transactionCategorySelection" v-model="transactionPayee"
+          <AutoComplete id="payeeSelection" class="transactionCategorySelection prevent-scroll" v-model="transactionPayee"
                         :suggestions="filteredPayees" @complete="searchPayee"/>
           <label for="payeeSelection">
             <span v-if="isSpending">Zahlungsempfänger</span>
             <span v-else>Zahler</span>
           </label>
         </FloatLabel>
+      </div>
+      <div class="page--content--row">
+        <FloatLabel variant="in" class="row--item row--item--is-grow">
+          <InputText id="idTransactionNotes" v-model=transactionNotes size="small"
+                     class="prevent-scroll"></InputText>
+          <label for="idTransactionNotes">Notizen</label>
+        </FloatLabel>
+      </div>
+      <div class="page--content--row">
+        <div class="page--content--row__inline">
+          <FloatLabel variant="in" class="row--item row--item--is-grow">
+            <InputNumber id="idTransactionAmount" locale="de-DE"
+                         inputmode="decimal" currency="EUR"
+                         class="prevent-scroll"
+                         mode="currency" v-model=transactionAmount size="large"/>
+            <label for="idTransactionAmount">Betrag</label>
+          </FloatLabel>
+          <ToggleButton v-model="isSpending" onLabel="Ausgabe" offLabel="Einnahme" onIcon="pi pi-minus"
+                        offIcon="pi pi-plus" size="large"/>
+        </div>
       </div>
       <div class="page--content--row">
         <div class="page--content--row__inline">
@@ -337,24 +357,6 @@ export default {
           <Button size="small" @click="setDateToday" label="Heute"></Button>
           <Button size="small" @click="setDateYesterday">Gestern</Button>
         </div>
-      </div>
-      <div class="page--content--row">
-        <div class="page--content--row__inline">
-          <FloatLabel variant="in" class="row--item row--item--is-grow">
-            <InputNumber id="idTransactionAmount" locale="de-DE"
-                         inputmode="decimal" currency="EUR"
-                         mode="currency" v-model=transactionAmount size="large"/>
-            <label for="idTransactionAmount">Betrag</label>
-          </FloatLabel>
-          <ToggleButton v-model="isSpending" onLabel="Ausgabe" offLabel="Einnahme" onIcon="pi pi-minus"
-                        offIcon="pi pi-plus" size="large"/>
-        </div>
-      </div>
-      <div class="page--content--row">
-        <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <InputText id="idTransactionNotes" v-model=transactionNotes size="small" clear></InputText>
-          <label for="idTransactionNotes">Notizen</label>
-        </FloatLabel>
       </div>
       <div class="page--content--row">
         <div class="page--content--row__inline page--content--row__inline--wrapped">
@@ -393,5 +395,11 @@ export default {
 
 .page--footer .p-button button {
   flex-grow: 1;
+}
+</style>
+
+<style>
+.p-togglebutton-content {
+  height: 100%;
 }
 </style>
