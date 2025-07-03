@@ -53,14 +53,25 @@ export default {
     toggleSearch(event) {
       this.searchPopover.value.show(event);
     },
+    clearSearch() {
+      this.searchTerm = '';
+    },
+    async popoverKeyDown(event) {
+      if (event.key === 'Enter') {
+        await this.searchTransactions();
+      }
+    },
+    closeSearch() {
+      this.searchPopover.value.hide();
+    },
     tableScroll(ev) {
       this.setLastScrollTop(ev.srcElement.scrollTop);
     },
     async searchTransactions() {
       await this.loadDataFromServer();
-      if (this.transactions.length > 0) {
-        this.searchPopover.value.hide();
-      }
+      // if (this.transactions.length > 0) {
+      //   this.searchPopover.value.hide();
+      // }
     },
     accountChanged() {
       this.loadDataFromServer();
@@ -284,10 +295,19 @@ export default {
         <span v-if="!loading && accountBalance" class="element--is-grow">{{ accountBalance }}{{ currencyStr }}</span>
         <span v-if="!loading && accountBalanceDateStr" class="element--is-grow">{{ accountBalanceDateStr }}</span>
         <Button icon="pi pi-search" aria-label="Suche einblenden" @click="toggleSearch"/>
-        <Popover ref="searchPopover">
-          <InputText placeholder="Suchen" v-model="searchTerm">
-          </InputText>
-          <Button icon="pi pi-search" aria-label="Suchen" @click="searchTransactions"/>
+        <Popover ref="searchPopover" class="search-popover">
+          <InputGroup>
+            <InputText placeholder="Suchen" inputmode="search" enterKeyHint="search"
+                       v-model="searchTerm"
+                       @keydown="popoverKeyDown"
+                       autofocus
+            ></InputText>
+            <InputGroupAddon>
+              <Button v-if="searchTerm" icon="pi pi-times" severity="secondary" variant="text" @click="clearSearch" />
+              <Button icon="pi pi-search" severity="secondary" variant="text" @click="searchTransactions" />
+            </InputGroupAddon>
+          </InputGroup>
+          <Button icon="pi pi-times" aria-label="Schließen" @click="closeSearch"/>
         </Popover>
       </div>
     </div>
@@ -314,13 +334,25 @@ export default {
           </div>
         </div>
         <div v-else class="row--item.row--item--is-grow row--item--is-centered">
-          <div class="row--item--is-centered row--item--is-emphasized" style="height:10em;align-content:center">Keine Ergebnisse</div>
+          <div class="row--item--is-centered row--item--is-emphasized empty-message">Keine Ergebnisse</div>
         </div>
       </div>
     </div>
   </div>
 </template>
 
-<style scoped>
+<style>
+.search-popover .p-popover-content {
+  display: flex;
+  flex-direction: row;
+  gap: 0.5em;
+}
+</style>
 
+<style scoped>
+.empty-message {
+  height: 50vh;
+  min-height: 10em;
+  align-content: center;
+}
 </style>

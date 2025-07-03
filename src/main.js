@@ -13,6 +13,8 @@ import ToggleButton from "primevue/togglebutton";
 import ToggleSwitch from 'primevue/toggleswitch';
 import InputText from "primevue/inputtext"
 import InputNumber from "primevue/inputnumber"
+import InputGroup from 'primevue/inputgroup';
+import InputGroupAddon from 'primevue/inputgroupaddon';
 import FloatLabel from "primevue/floatlabel";
 import IconField from 'primevue/iconfield';
 import InputIcon from 'primevue/inputicon';
@@ -99,5 +101,7 @@ app.component('MultiSelect', MultiSelect);
 app.component('DatePicker', DatePicker);
 app.component('Chip', Chip);
 app.component('Popover', Popover);
+app.component('InputGroup', InputGroup);
+app.component('InputGroupAddon', InputGroupAddon);
 
 app.mount("#app");
