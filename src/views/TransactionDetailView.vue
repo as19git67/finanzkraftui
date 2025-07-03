@@ -292,7 +292,7 @@ export default {
 </script>
 
 <template>
-  <div class="page page--is-transaction-new-view">
+  <div class="page page--is-transaction-detail-view">
     <div class="page--header">
       <div class="page--title title__with-buttons">
         <Button label="Abbrechen" @click="cancel" size="large">

@@ -175,6 +175,12 @@ button:hover svg .metaphor {
     overflow-y: hidden;
 }
 
+.page.page--is-my-accounts-view,
+.page.page--is-transactions-list-view {
+    min-width: calc(var(--page-min-width) - (2 * var(--page-padding-inline)));
+    max-width: var(--data-list-max-width);
+}
+
 .page--header {
     display: flex;
     gap: 0.5em;
@@ -283,8 +289,6 @@ button:hover svg .metaphor {
     border-radius: 6px;
     overflow: hidden;
     gap: 1px;
-    min-width: calc(var(--page-min-width) - (2 * var(--page-padding-inline)));
-    max-width: var(--data-list-max-width);
 }
 
 .data--list__item {

@@ -7,6 +7,7 @@ defineProps({
 <script>
 import {DateTime, Settings as DateTimeSettings} from 'luxon';
 import router from '@/router';
+import {useTemplateRef} from "vue";
 import {mapActions, mapState, mapStores} from 'pinia';
 import {UserStore} from '@/stores/user';
 import {AccountStore} from '@/stores/accounts';
@@ -46,11 +47,20 @@ export default {
     ...mapActions(TransactionStore, ['getTransactions', 'setLastScrollTop', 'clearTransactions']),
     ...mapActions(AccountStore, ['getAccounts', 'getAccountById']),
     ...mapActions(UserStore, ['setNotAuthenticated']),
+    navigateBack() {
+      router.back();
+    },
+    toggleSearch(event) {
+      this.searchPopover.value.show(event);
+    },
     tableScroll(ev) {
       this.setLastScrollTop(ev.srcElement.scrollTop);
     },
-    searchTransactions() {
-      this.loadDataFromServer();
+    async searchTransactions() {
+      await this.loadDataFromServer();
+      if (this.transactions.length > 0) {
+        this.searchPopover.value.hide();
+      }
     },
     accountChanged() {
       this.loadDataFromServer();
@@ -227,6 +237,8 @@ export default {
     },
   },
   async mounted() {
+    this.searchPopover = useTemplateRef('searchPopover');
+
     if (this.accountId !== undefined) {
       this.accountFilter = this.accountId;
     }
@@ -262,15 +274,26 @@ export default {
 
 </script>
 <template>
-  <div class="page page--is-transaction-new-view">
+  <div class="page page--is-transactions-list-view">
     <div class="page--header">
-      <span v-if="loading">Buchungen laden...</span>
-      <span v-if="!loading" class="element--is-grow">{{ accountName }}: {{ accountBalance }}{{ currencyStr }}</span>
-      <span v-if="!loading" class="element--is-right-aligned">{{ accountBalanceDateStr }}</span>
+      <div class="page--title title__with-buttons">
+        <Button label="Zurück" @click="navigateBack" size="large">
+        </Button>
+        <span v-if="loading">Buchungen laden...</span>
+        <span v-if="!loading" class="element--is-grow">{{ accountName }}</span>
+        <span v-if="!loading && accountBalance" class="element--is-grow">{{ accountBalance }}{{ currencyStr }}</span>
+        <span v-if="!loading && accountBalanceDateStr" class="element--is-grow">{{ accountBalanceDateStr }}</span>
+        <Button icon="pi pi-search" aria-label="Suche einblenden" @click="toggleSearch"/>
+        <Popover ref="searchPopover">
+          <InputText placeholder="Suchen" v-model="searchTerm">
+          </InputText>
+          <Button icon="pi pi-search" aria-label="Suchen" @click="searchTransactions"/>
+        </Popover>
+      </div>
     </div>
     <div class="page--content">
       <div class="page--content--row">
-        <div class="data--list data--list--grouped" @scroll="tableScroll">
+        <div class="data--list data--list--grouped" @scroll="tableScroll" v-if="transactionsByDate.length">
           <div class="data--list__group" v-for="(trOfDate, index) in transactionsByDate" :key="trOfDate">
             <div class="data--list__date-header data--list__date-header--sticky">{{ trOfDate.valueDateStr }}</div>
             <router-link class="data--list__item" append
@@ -289,6 +312,9 @@ export default {
               </div>
             </router-link>
           </div>
+        </div>
+        <div v-else class="row--item.row--item--is-grow row--item--is-centered">
+          <div class="row--item--is-centered row--item--is-emphasized" style="height:10em;align-content:center">Keine Ergebnisse</div>
         </div>
       </div>
     </div>

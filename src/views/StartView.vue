@@ -146,7 +146,7 @@ export default {
 </script>
 
 <template>
-  <div class="page page--is-accounts-view">
+  <div class="page page--is-my-accounts-view">
     <div class="page--header">
       <div class="title">Übersicht für {{ myUsername }}</div>
     </div>
@@ -159,7 +159,7 @@ export default {
           <div v-if="accountGroup.accounts.length" class="data--list data--list--standard">
             <div class="data--list__item" v-for="(item, index) of accountGroup.accounts" :key="item.id">
               <div class="data--list__left">
-                <router-link replace :to="{ name: 'Transactions',  params: { accountId: item.id }}">
+                <router-link append :to="{ name: 'Transactions',  params: { accountId: item.id }}">
                   <div class="data--list__line data--list__line--bold">{{ item.name }}:</div>
                   <div class="data--list__line">
                     <span v-if="item.balanceDateStr">aktualisiert: {{ item.balanceDateStr }}</span>

@@ -22,6 +22,7 @@ import MultiSelect from 'primevue/multiselect';
 import DatePicker from 'primevue/datepicker';
 import Chip from 'primevue/chip';
 import Textarea from 'primevue/textarea';
+import Popover from 'primevue/popover';
 import "primeicons/primeicons.css";
 
 
@@ -97,5 +98,6 @@ app.component('Select', Select);
 app.component('MultiSelect', MultiSelect);
 app.component('DatePicker', DatePicker);
 app.component('Chip', Chip);
+app.component('Popover', Popover);
 
 app.mount("#app");
