@@ -18,9 +18,6 @@ export default {
       loading: this.loading,
       error: this.error,
       accountGroups: this.accountGroups,
-      // accountsDaily: this.accountsDaily,
-      // accountsSavings: this.accountsSavings,
-      // accountsOther: this.accountsOther,
     };
   },
   computed: {
@@ -57,7 +54,15 @@ export default {
           };
         });
       }
-      return accounts;
+      const allIds = accounts.map(account => {
+        return account.id;
+      });
+      return [{
+        type: 'all',
+        name: 'Alle Buchungen',
+        id: allIds.toString(),
+        accountsInGroup: allIds,
+      }].concat(accounts);
     },
     async loadDataFromServer() {
       this.error = '';
@@ -125,9 +130,6 @@ export default {
           accounts: this.createAccountListByTypes(['other']),
         },
       ];
-      // this.accountsDaily = this.createAccountListByTypes(['cash', 'checking', 'credit']);
-      // this.accountsSavings = this.createAccountListByTypes(['daily', 'savings', 'security']);
-      // this.accountsOther = this.createAccountListByTypes(['other']);
       this.myUsername = this.authenticatedUserEmail;
     } catch (ex) {
       this.error = ex.message;
@@ -138,9 +140,6 @@ export default {
     this.error = undefined;
     this.loading = false;
     this.accountGroups = [];
-    // this.accountsDaily = [];
-    // this.accountsSavings = [];
-    // this.accountsOther = [];
   },
 };
 </script>
@@ -159,7 +158,10 @@ export default {
           <div v-if="accountGroup.accounts.length" class="data--list data--list--standard">
             <div class="data--list__item" v-for="(item, index) of accountGroup.accounts" :key="item.id">
               <div class="data--list__left">
-                <router-link append :to="{ name: 'Transactions',  params: { accountId: item.id }}">
+                <router-link v-if="item.type === 'all'" append :to="{ name: 'Transactions',  params: { accountId: item.accountsInGroup }}">
+                  <div class="data--list__line data--list__line--bold">{{ item.name }}</div>
+                </router-link>
+                <router-link v-else append :to="{ name: 'Transactions',  params: { accountId: [item.id] }}">
                   <div class="data--list__line data--list__line--bold">{{ item.name }}:</div>
                   <div class="data--list__line">
                     <span v-if="item.balanceDateStr">aktualisiert: {{ item.balanceDateStr }}</span>

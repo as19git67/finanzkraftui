@@ -1,12 +1,13 @@
 <script setup>
 defineProps({
-  accountId: {type: String},
+  accountId: {type: Array},
 });
 </script>
 
 <script>
 import {DateTime, Settings as DateTimeSettings} from 'luxon';
 import router from '@/router';
+import _ from 'lodash';
 import {useTemplateRef} from "vue";
 import {mapActions, mapState, mapStores} from 'pinia';
 import {UserStore} from '@/stores/user';
@@ -25,8 +26,6 @@ export default {
       accountBalanceDateStr: this.accountBalanceDateStr,
       currencyStr: this.currencyStr,
       searchTerm: this.searchTerm,
-      accountList: this.accountList,
-      accountFilter: this.accountFilter,
       timespanList: this.timespanList,
       dateFilter: this.dateFilter,
       transactionsByDate: this.transactionsByDate,
@@ -168,7 +167,6 @@ export default {
       }
     },
     async prepareDataForList() {
-      this._fillAccountList();
       if (this.accountsWhereIn.length === 0) {
         this.accountName = 'Alle Transaktionen';
       } else if (this.accountsWhereIn.length === 1) {
@@ -192,10 +190,19 @@ export default {
         if (transactionsOfDate[tDateShortStr] === undefined) {
           transactionsOfDate[tDateShortStr] = [];
         }
-        t.amountStr = new Intl.NumberFormat(DateTimeSettings.defaultLocale, {
-          style: 'currency',
-          currency: this.currency,
-        }).format(t.t_amount);
+        if (this.accountsWhereIn.length > 1) {
+          const currencyDetails = this.getCurrencyDetails(t.account_id);
+          const currency = currencyDetails ? currencyDetails.id : 'EUR';
+          t.amountStr = new Intl.NumberFormat(DateTimeSettings.defaultLocale, {
+            style: 'currency',
+            currency: currency,
+          }).format(t.t_amount);
+        } else {
+          t.amountStr = new Intl.NumberFormat(DateTimeSettings.defaultLocale, {
+            style: 'currency',
+            currency: this.currency,
+          }).format(t.t_amount);
+        }
         transactionsOfDate[tDateShortStr].push(t);
       });
       const transactionDatesSorted = Object.keys(transactionsOfDate).toSorted((a, b) => {
@@ -223,36 +230,24 @@ export default {
         return {id: tsInfo.id, name: tsInfo.name};
       });
     },
-    _fillAccountList() {
-      const accountGroups = [
-        // {id: "g1", name: "Alle"},
-        // {id: "g2", name: "Martinas Konten"},
-        // {id: "g3", name: "Antons Konten"},
-        // {id: "g4", name: "Sparkonten"},
-        // {id: "g5", name: "Geschlossene Konten"},
-      ];
-      this.accountList = accountGroups.concat(this.accounts.filter((account) => {
-        return account.closedAt === null;
-      }));
-    },
     _updateAccountsWhereIn: function () {
-      const filter = this.accountFilter;
-      if (!isNaN(filter)) {
-        const accountId = parseInt(filter);
-        if (accountId) {
-          this.accountsWhereIn = [accountId];
-        } else {
-          this.accountsWhereIn = [];
-        }
+      if (_.isArray(this.accountId)) {
+        this.accountsWhereIn = this.accountId;
+      } else {
+        const parts = this.accountId.split(',');
+        this.accountsWhereIn = [];
+        parts.forEach((part) => {
+          const accountId = parseInt(part);
+          if (isNaN(accountId)) {
+            return;
+          }
+          this.accountsWhereIn.push(accountId);
+        });
       }
-    },
+    }
   },
   async mounted() {
     this.searchPopover = useTemplateRef('searchPopover');
-
-    if (this.accountId !== undefined) {
-      this.accountFilter = this.accountId;
-    }
     if (this.accountId !== undefined) {
       this.clearTransactions(); // always load the transactions
     }
@@ -275,8 +270,6 @@ export default {
     this.accountBalanceDateStr = '';
     this.currencyStr = '';
     this.searchTerm = '';
-    this.accountList = [];
-    this.accountFilter = 'g1';
     this.accountsWhereIn = [];
     this.dateFilterFrom = undefined;
     this.dateFilterTo = undefined;
@@ -292,8 +285,10 @@ export default {
         </Button>
         <span v-if="loading">Buchungen laden...</span>
         <span v-if="!loading" class="element--is-grow">{{ accountName }}</span>
-        <span v-if="!loading && accountBalance" class="element--is-grow">{{ accountBalance }}{{ currencyStr }}</span>
-        <span v-if="!loading && accountBalanceDateStr" class="element--is-grow">{{ accountBalanceDateStr }}</span>
+        <div class="element-as-columns">
+          <span v-if="!loading && accountBalance" class="element--is-grow">{{ accountBalance }}{{ currencyStr }}</span>
+          <span v-if="!loading && accountBalanceDateStr" class="element--is-grow is-de-emphasized">{{ accountBalanceDateStr }}</span>
+        </div>
         <Button icon="pi pi-search" aria-label="Suche einblenden" @click="toggleSearch"/>
         <Popover ref="searchPopover" class="search-popover">
           <InputGroup>

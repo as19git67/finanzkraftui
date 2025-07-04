@@ -43,7 +43,7 @@ const router = createRouter({
       component: LogoutView,
     },
     {
-      path: '/transactionsOfAccount/:accountId',
+      path: '/transactionsOfAccount/:accountId*',
       name: 'Transactions',
       component: TransactionListView,
       props: true,

@@ -295,10 +295,10 @@ export default {
   <div class="page page--is-transaction-detail-view">
     <div class="page--header">
       <div class="page--title title__with-buttons">
-        <Button label="Abbrechen" @click="cancel" size="large">
+        <Button label="Abbrechen" @click="cancel">
         </Button>
         Buchungsdetails
-        <Button label="Speichern" :disabled="!dirty" @click="saveTransaction" size="large">
+        <Button label="Speichern" :disabled="!dirty" @click="saveTransaction">
         </Button>
       </div>
     </div>

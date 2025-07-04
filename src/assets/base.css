@@ -112,6 +112,7 @@ body {
     position: fixed;
     overflow: hidden;
     width: 100%;
+    height: 100vh;
     color: var(--color-text);
     background: var(--color-background);
     transition: color 0.5s, background-color 0.5s;
@@ -176,6 +177,7 @@ button:hover svg .metaphor {
 }
 
 .page.page--is-my-accounts-view,
+.page.page--is-accounts-view,
 .page.page--is-transactions-list-view {
     min-width: calc(var(--page-min-width) - (2 * var(--page-padding-inline)));
     max-width: var(--data-list-max-width);
@@ -194,6 +196,17 @@ button:hover svg .metaphor {
 
 .page--header .element--is-grow {
     flex-grow: 1;
+}
+
+.page--header .element-as-columns {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1em;
+    align-items: flex-end;
+}
+
+.is-de-emphasized {
+    font-size: 0.8em;
 }
 
 .page--header .element--is-right-aligned {
@@ -254,6 +267,7 @@ button:hover svg .metaphor {
 
 .row--item--is-emphasized {
     font-weight: bold;
+    font-size: 1.2em;
 }
 
 .page--title {
