@@ -182,6 +182,33 @@ export const TransactionStore = defineStore('transaction', {
         return { status: 401, data: resultData };
       }
     },
+    async addTransaction(transactionData) {
+      const resultData = {};
+      const userStore = UserStore();
+      if (userStore.authenticated) {
+        const config = userStore.getBearerAuthRequestHeader();
+        try {
+          const tr = {
+            idAccount: transactionData.idAccount,
+            text: transactionData.t_text,
+            notes: transactionData.t_notes,
+            payee: transactionData.t_payee,
+            amount: transactionData.t_amount,
+            valueDate: transactionData.t_value_date,
+            idCategory: transactionData.t_category_id,
+          };
+          const response = await axios.put('/api/transaction', tr, config);
+          if (response.status === 200) {
+            tr.t_id = parseInt(response.data, 10);
+            this._transactions.push(tr);
+          }
+          return { status: response.status, data: tr };
+        } catch (ex) {
+          return userStore.handleAxiosException(ex, userStore, resultData);
+        }
+      }
+      return { status: 401, data: resultData };
+    },
     async getTransaction(id) {
       this._transaction = {};
       const userStore = UserStore();
@@ -201,32 +228,6 @@ export const TransactionStore = defineStore('transaction', {
         }
       }
       return { status: 401, data: this._transaction };
-    },
-    setCurrentTransactionId(id) {
-      this._currentTransactionId = id;
-    },
-    setLastScrollTop(top) {
-      this._lastScrollTop = top;
-    },
-    async getRuleSet(id) {
-      let resultData = {};
-      const userStore = UserStore();
-      if (userStore.authenticated) {
-        const config = userStore.getBearerAuthRequestHeader();
-        if (id === undefined) {
-          throw new Error('id of rule set missing in getRuleSet call');
-        }
-        try {
-          const response = await axios.get(`/api/rules/${id}`, config);
-          if (response.status === 200) {
-            resultData = response.data;
-          }
-          return { status: response.status, data: resultData };
-        } catch (ex) {
-          return userStore.handleAxiosException(ex, userStore, resultData);
-        }
-      }
-      return { status: 401, data: resultData };
     },
     async updateTransaction(updateData) {
       const resultData = {};
@@ -252,27 +253,23 @@ export const TransactionStore = defineStore('transaction', {
       }
       return { status: 401, data: resultData };
     },
-    async addTransaction(transactionData) {
+    async deleteTransaction(id) {
       const resultData = {};
       const userStore = UserStore();
       if (userStore.authenticated) {
         const config = userStore.getBearerAuthRequestHeader();
+        if (id === undefined) {
+          throw new Error('Transaction id missing in deleteTransaction call');
+        }
         try {
-          const tr = {
-            idAccount: transactionData.idAccount,
-            text: transactionData.t_text,
-            notes: transactionData.t_notes,
-            payee: transactionData.t_payee,
-            amount: transactionData.t_amount,
-            valueDate: transactionData.t_value_date,
-            idCategory: transactionData.t_category_id,
-          };
-          const response = await axios.put('/api/transaction', tr, config);
+          const response = await axios.delete(`/api/transaction/${id}`, config);
           if (response.status === 200) {
-            tr.t_id = parseInt(response.data, 10);
-            this._transactions.push(tr);
+            const trId = parseInt(id, 10);
+            this._transactions = this._transactions.filter((tr) => {
+              return tr.t_id !== trId;
+            });
           }
-          return { status: response.status, data: tr };
+          return { status: response.status, data: resultData };
         } catch (ex) {
           return userStore.handleAxiosException(ex, userStore, resultData);
         }
@@ -309,6 +306,26 @@ export const TransactionStore = defineStore('transaction', {
       this._ruleSets = [];
       return { status: 401 };
     },
+    async getRuleSet(id) {
+      let resultData = {};
+      const userStore = UserStore();
+      if (userStore.authenticated) {
+        const config = userStore.getBearerAuthRequestHeader();
+        if (id === undefined) {
+          throw new Error('id of rule set missing in getRuleSet call');
+        }
+        try {
+          const response = await axios.get(`/api/rules/${id}`, config);
+          if (response.status === 200) {
+            resultData = response.data;
+          }
+          return { status: response.status, data: resultData };
+        } catch (ex) {
+          return userStore.handleAxiosException(ex, userStore, resultData);
+        }
+      }
+      return { status: 401, data: resultData };
+    },
     async setRules(ruleInfo, includeProcessed) {
       const resultData = {};
       const userStore = UserStore();
@@ -344,6 +361,12 @@ export const TransactionStore = defineStore('transaction', {
     },
     clearTransactions() {
       this._transactions = [];
-    }
+    },
+    setCurrentTransactionId(id) {
+      this._currentTransactionId = id;
+    },
+    setLastScrollTop(top) {
+      this._lastScrollTop = top;
+    },
   },
 });

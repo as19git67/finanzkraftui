@@ -7,6 +7,10 @@ import App from "./App.vue";
 import router from "./router";
 import {createPinia} from 'pinia';
 import axios from 'axios';
+import ConfirmationService from 'primevue/confirmationservice';
+import ToastService from 'primevue/toastservice';
+import Toast from 'primevue/toast';
+import ConfirmDialog from 'primevue/confirmdialog';
 import Fluid from 'primevue/fluid';
 import Button from "primevue/button";
 import ToggleButton from "primevue/togglebutton";
@@ -85,6 +89,10 @@ app.use(PrimeVue, {
   },
   locale: de
 });
+app.use(ConfirmationService);
+app.use(ToastService);
+app.component('Toast', Toast);
+app.component('ConfirmDialog', ConfirmDialog);
 app.component('AutoComplete', AutoComplete);
 app.component('Fluid', Fluid);
 app.component('Button', Button);

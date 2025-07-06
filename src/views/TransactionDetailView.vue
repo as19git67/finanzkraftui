@@ -1,24 +1,24 @@
-<script setup>
-import {DateTime, Settings as DateTimeSettings} from 'luxon';
-
-defineProps({
-  transactionId: {type: String},
-});
-</script>
-
 <script>
+import {DateTime, Settings as DateTimeSettings} from 'luxon';
 import _ from 'lodash';
 import router from '@/router';
 import {mapActions, mapState, mapStores} from 'pinia';
 import {UserStore} from '@/stores/user';
 import {MasterDataStore} from '@/stores/masterdata';
-import {DateTime, Settings as DateTimeSettings} from 'luxon';
 import {TransactionStore} from '@/stores/transactions';
 import {AccountStore} from '@/stores/accounts';
+import {useConfirm} from 'primevue/useconfirm';
 
 export default {
   name: 'TransactionDetailView',
   components: {},
+  props: {
+    transactionId: String,
+  },
+  setup () {
+    const confirm = useConfirm();
+    return { confirm };
+  },
   data() {
     return {
       transactionDate: this.transactionDate,
@@ -90,15 +90,9 @@ export default {
   },
   methods: {
     ...mapActions(TransactionStore,
-        ['getTransaction', 'updateTransaction', 'setCurrentTransactionId']),
+        ['getTransaction', 'updateTransaction', 'deleteTransaction', 'setCurrentTransactionId']),
     ...mapActions(AccountStore, ['getAccounts', 'getAccountById']),
     ...mapActions(MasterDataStore, ['getCategoryById', 'getCategories']),
-    switchToEditName() {
-      this.editName = true;
-    },
-    switchOffEditName() {
-      this.editName = false;
-    },
     goToTransactionList() {
       router.back();
     },
@@ -111,41 +105,6 @@ export default {
         });
       }
     },
-    async selectCategory() {
-      this.showCategorySelectionDialog = true;
-      this.showTransaction = true;
-      this.categoryPreselection = this.categoryId;
-      const res = await new Promise((resolve, reject) => {
-        this.dialogResolve = resolve;
-      });
-      switch (res.btnId) {
-        case 'ok':
-          this.categoryId = res.categoryId;
-          break;
-      }
-    },
-    categorySelectionDialogButtonClicked(btnId, categoryId) {
-      this.showCategorySelectionDialog = false;
-      this.dialogResolve({btnId: btnId, categoryId: categoryId});
-    },
-    async cancelChanges() {
-      this.confirmText = 'Änderungen verwerfen und zurück zur Liste?';
-      this.showConfirmDialog = true;
-      const res = await new Promise((resolve, reject) => {
-        this.dialogResolve = resolve;
-      });
-      switch (res) {
-        case 'yes':
-          this.goToTransactionList();
-          break;
-        case 'no':
-          break;
-      }
-    },
-    confirmDialogButtonClicked(btnId) {
-      this.showConfirmDialog = false;
-      this.dialogResolve(btnId);
-    },
     async saveTransaction() {
       this.updateData.confirmed = true;
       if (await this.handleDataChanged()) {
@@ -155,10 +114,47 @@ export default {
     cancel() {
       router.back();
     },
-    deleteTransaction() {
-
+    deleteTheTransaction() {
+      this.confirm.require({
+        message: 'Soll diese Buchung wirklich gelöscht werden?',
+        header: 'Buchung löschen',
+        icon: 'pi pi-exclamation-triangle',
+        rejectLabel: 'Abbrechen',
+        rejectProps: {
+          label: 'Abbrechen',
+          severity: 'secondary',
+          outlined: true,
+        },
+        acceptProps: {
+          label: 'Löschen',
+          severity: 'danger',
+        },
+        accept: async () => {
+          this.error = undefined;
+          try {
+            const result = await this.deleteTransaction(this.transactionId);
+            if (result.status !== 200) {
+              this.error = result.message;
+              return;
+            }
+            // this transaction is no more available - in case debounced handleDataChanged for confirmed flag gets called
+            this.stopUpdating = true;
+            router.back();
+          } catch (ex) {
+            this.error = ex.message;
+            console.log(ex);
+          }
+        },
+        reject: () => {
+          // do nothing when delete is canceled
+        },
+      });
     },
     async handleDataChanged() {
+      if (this.stopUpdating) {
+        // no transaction to update - this can happen if transaction was deleted in the meanwhile
+        return;
+      }
       this.error = undefined;
       this.updateData.id = this.transactionId;
       if (this.updateData.category_id !== undefined) {
@@ -205,6 +201,7 @@ export default {
     },
   },
   created() {
+    this.stopUpdating = false;
     this.canDelete = false;
     this.dataChanged = _.debounce(this.handleDataChanged, 2000);
     this.updateData = {};
@@ -426,9 +423,10 @@ export default {
       </div>
       <div class="page--content--row" v-if="canDelete">
         <div class="row--item row--item--is-centered">
-          <Button label="Löschen" severity="danger" @click="deleteTransaction" size="large"/>
+          <Button label="Löschen" severity="danger" @click="deleteTheTransaction" size="large"/>
         </div>
       </div>
+      <ConfirmDialog></ConfirmDialog>
     </div>
   </div>
 </template>
