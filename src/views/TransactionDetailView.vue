@@ -1,5 +1,5 @@
 <script setup>
-import {DateTime, Settings as DateTimeSettings} from "luxon";
+import {DateTime, Settings as DateTimeSettings} from 'luxon';
 
 defineProps({
   transactionId: {type: String},
@@ -12,11 +12,12 @@ import router from '@/router';
 import {mapActions, mapState, mapStores} from 'pinia';
 import {UserStore} from '@/stores/user';
 import {MasterDataStore} from '@/stores/masterdata';
-import {DateTime, Settings as DateTimeSettings} from "luxon";
-import {TransactionStore} from "@/stores/transactions";
+import {DateTime, Settings as DateTimeSettings} from 'luxon';
+import {TransactionStore} from '@/stores/transactions';
+import {AccountStore} from '@/stores/accounts';
 
 export default {
-  name: "TransactionDetailView",
+  name: 'TransactionDetailView',
   components: {},
   data() {
     return {
@@ -29,6 +30,7 @@ export default {
       transactionCategory: this.transactionCategory,
       filteredCategories: this.filteredCategories,
       transaction: this.transaction,
+      canDelete: this.canDelete,
       error: this.error,
       updateData: this.updateData,
       categoryPreselection: 0,
@@ -38,14 +40,14 @@ export default {
     };
   },
   watch: {
-    transactionNotes: function (val, oldVal) {
+    transactionNotes: function(val, oldVal) {
       if (oldVal === undefined || this.transaction === undefined) {
         return;
       }
       this.updateData.t_notes = val;
       this.transaction.t_notes = val;
     },
-    categoryId: function (val, oldVal) {
+    categoryId: function(val, oldVal) {
       if (oldVal === undefined || this.transaction === undefined) {
         return;
       }
@@ -60,7 +62,7 @@ export default {
         this.transaction.category_name = '';
       }
     },
-    transactionPayee: function (val, oldVal) {
+    transactionPayee: function(val, oldVal) {
       if (oldVal === undefined || this.transaction === undefined) {
         return;
       }
@@ -68,7 +70,7 @@ export default {
         return;
       }
       this.updateData.t_payee = val;
-    }
+    },
   },
   computed: {
     confirmed() {
@@ -82,13 +84,15 @@ export default {
       return keyCount > 0;
     },
     ...mapStores(UserStore, MasterDataStore),
-    ...mapState(UserStore, ["authenticated"]),
-    ...mapState(MasterDataStore, ["categories"]),
+    ...mapStores(AccountStore),
+    ...mapState(UserStore, ['authenticated']),
+    ...mapState(MasterDataStore, ['categories']),
   },
   methods: {
     ...mapActions(TransactionStore,
-        ["getTransaction", "updateTransaction", "setCurrentTransactionId"]),
-    ...mapActions(MasterDataStore, ["getCategoryById", "getCategories"]),
+        ['getTransaction', 'updateTransaction', 'setCurrentTransactionId']),
+    ...mapActions(AccountStore, ['getAccounts', 'getAccountById']),
+    ...mapActions(MasterDataStore, ['getCategoryById', 'getCategories']),
     switchToEditName() {
       this.editName = true;
     },
@@ -198,9 +202,10 @@ export default {
     async markUnconfirmed() {
       this.updateData.confirmed = false;
       await this.handleDataChanged();
-    }
+    },
   },
   created() {
+    this.canDelete = false;
     this.dataChanged = _.debounce(this.handleDataChanged, 2000);
     this.updateData = {};
     this.transaction = {};
@@ -210,7 +215,7 @@ export default {
     this.loading = true;
 
     if (!this.transactionId) {
-      router.replace("/");
+      router.replace('/');
       return;
     }
 
@@ -219,6 +224,7 @@ export default {
     const promises = [];
     promises.push(this.getTransaction(this.transactionId));
     promises.push(this.getCategories());
+    promises.push(this.getAccounts());
     const results = await Promise.all(promises);
     this.loading = false;
 
@@ -240,7 +246,7 @@ export default {
             if (this.error) {
               this.error += ' ';
             }
-            this.error += 'Die Berechtigung zum Laden der Kategorien fehlt.'
+            this.error += 'Die Berechtigung zum Laden der Kategorien fehlt.';
           }
           not_ok = true;
           break;
@@ -254,7 +260,7 @@ export default {
       this.transaction = {};
     }
     if (mustAuthenticate) {
-      router.replace("/login");
+      router.replace('/login');
       return;
     }
     if (not_ok) {
@@ -262,6 +268,8 @@ export default {
     }
 
     this.transaction = {...(results[0].data)};
+    const account = this.getAccountById(this.transaction.account_id);
+    this.canDelete = account.type === 'cash';
 
     this.transactionCategory = _.find(this.categories, (item) => {
       return item.id === this.transaction.category_id;
@@ -304,14 +312,16 @@ export default {
     </div>
     <div class="page--content">
       <div class="page--content--row" v-if="transactionPayeeShortened">
-        <div class="row--item row--item--is-centered row--item--is-emphasized" title="{{transactionPayee}}">{{transactionPayeeShortened}}</div>
+        <div class="row--item row--item--is-centered row--item--is-emphasized" title="{{transactionPayee}}">
+          {{ transactionPayeeShortened }}
+        </div>
       </div>
       <div class="page--content--row">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
           <AutoComplete id="catSelection" v-model="transactionCategory"
                         optionLabel="full_name"
                         dropdown size="small"
-                        :suggestions="filteredCategories" @complete="searchCategory" />
+                        :suggestions="filteredCategories" @complete="searchCategory"/>
           <label for="catSelection">Kategorie</label>
         </FloatLabel>
       </div>
@@ -353,7 +363,7 @@ export default {
       <div class="page--content--row" v-if="transactionText">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
           <Textarea id="idTransactionText" v-model="transactionText" variant="filled"
-                     readonly size="small" autoResize></Textarea>
+                    readonly size="small" autoResize></Textarea>
           <label for="idTransactionText">Text</label>
         </FloatLabel>
       </div>
@@ -370,7 +380,7 @@ export default {
           <Button as="a"
                   label="Bestellung in Amazon anzeigen"
                   :href="`https://www.amazon.de/gp/your-account/order-details?ie=UTF8&orderID=${amazonOrderId}`"
-                  target="_blank" rel="noopener" />
+                  target="_blank" rel="noopener"/>
         </div>
       </div>
 
@@ -414,7 +424,7 @@ export default {
       <div class="page--content--row" v-if="error">
         <div class="error">{{ error }}</div>
       </div>
-      <div class="page--content--row">
+      <div class="page--content--row" v-if="canDelete">
         <div class="row--item row--item--is-centered">
           <Button label="Löschen" severity="danger" @click="deleteTransaction" size="large"/>
         </div>

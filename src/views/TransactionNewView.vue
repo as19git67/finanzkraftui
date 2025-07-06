@@ -13,7 +13,7 @@ import {UserStore} from '@/stores/user';
 import {TransactionStore} from '@/stores/transactions';
 import {PreferencesStore} from '@/stores/preferences';
 import {MasterDataStore} from '@/stores/masterdata';
-import {AccountStore} from "@/stores/accounts";
+import {AccountStore} from '@/stores/accounts';
 
 export default {
   name: 'TransactionNewView',
@@ -42,20 +42,22 @@ export default {
   computed: {
     ...mapStores(UserStore, MasterDataStore, PreferencesStore, AccountStore),
     ...mapState(UserStore, ['authenticated']),
-    ...mapState(AccountStore, ["accounts"]),
+    ...mapState(AccountStore, ['accounts']),
     ...mapState(TransactionStore, ['transactions']),
     ...mapState(PreferencesStore, ['newTransactionPresets']),
     ...mapState(MasterDataStore, ['categories']),
     saveEnabled() {
-      return !this.loading && this.transactionAmount && (this.transactionNotes || this.transactionPayee) && this.transactionDate && this.transactionCategory;
+      return !this.loading && this.transactionAmount && (this.transactionNotes || this.transactionPayee) &&
+          this.transactionDate && this.transactionCategory;
     },
   },
   methods: {
     ...mapActions(TransactionStore, ['getTransactions', 'addTransaction']),
-    ...mapActions(PreferencesStore, ['getNewTransactionPresets', 'addNewTransactionPresets', 'saveNewTransactionPresets']),
+    ...mapActions(PreferencesStore,
+        ['getNewTransactionPresets', 'addNewTransactionPresets', 'saveNewTransactionPresets']),
     ...mapActions(MasterDataStore, ['getCategoryById', 'getCategories']),
     ...mapActions(UserStore, ['setNotAuthenticated']),
-    ...mapActions(AccountStore, ["getAccounts", "getAccountById"]),
+    ...mapActions(AccountStore, ['getAccounts', 'getAccountById']),
     filterShortcuts(searchTerm) {
       return this.newTransactionPresets.filter(shortcut => {
         if (!searchTerm) {
@@ -186,7 +188,7 @@ export default {
       this.loading = false;
       this.labelSave = 'speichern...';
       this.transactionPayee = this.transactionPayee ? this.transactionPayee.trim() : null;
-      this.transactionNotes = this.transactionNotes? this.transactionNotes.trim(): null;
+      this.transactionNotes = this.transactionNotes ? this.transactionNotes.trim() : null;
       const transactionData = {
         t_amount: this.transactionAmount * (this.isSpending ? -1 : 1),
         t_notes: this.transactionNotes,
@@ -194,7 +196,7 @@ export default {
         t_value_date: this.transactionDate,
         t_category_id: this.transactionCategory.id,
         idAccount: parseInt(this.accountId),
-      }
+      };
 
       const s = this.newTransactionPresets.find(shortcut => {
         return shortcut.payee === this.transactionPayee;
@@ -278,7 +280,7 @@ export default {
   async mounted() {
     try {
       await this.loadDataFromServer();
-      this.account = await this.getAccountById(parseInt(this.accountId));
+      this.account = this.getAccountById(parseInt(this.accountId));
       this.accountName = this.account.name;
     } catch (ex) {
       this.error = ex.message;
@@ -319,7 +321,8 @@ export default {
       </div>
       <div class="page--content--row">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <AutoComplete id="payeeSelection" class="transactionCategorySelection prevent-scroll" v-model="transactionPayee"
+          <AutoComplete id="payeeSelection" class="transactionCategorySelection prevent-scroll"
+                        v-model="transactionPayee"
                         :suggestions="filteredPayees" @complete="searchPayee"/>
           <label for="payeeSelection">
             <span v-if="isSpending">Zahlungsempfänger</span>

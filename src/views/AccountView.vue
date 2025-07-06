@@ -1,20 +1,20 @@
 <script setup>
 defineProps({
-  accountId: { type: String },
+  accountId: {type: String},
 });
 </script>
 
 <script>
 import _ from 'lodash';
-import {mapActions, mapState, mapStores} from "pinia";
-import {DateTime} from "luxon";
-import router from "@/router";
-import {AccountStore} from "@/stores/accounts";
-import {UserStore} from "@/stores/user";
-import {MasterDataStore} from "@/stores/masterdata";
+import {mapActions, mapState, mapStores} from 'pinia';
+import {DateTime} from 'luxon';
+import router from '@/router';
+import {AccountStore} from '@/stores/accounts';
+import {UserStore} from '@/stores/user';
+import {MasterDataStore} from '@/stores/masterdata';
 
 export default {
-  name: "AccountView",
+  name: 'AccountView',
   data() {
     return {
       id: this.accountId,
@@ -34,9 +34,9 @@ export default {
     ...mapStores(UserStore),
     ...mapStores(AccountStore),
     ...mapStores(MasterDataStore),
-    ...mapState(UserStore, ["authenticated", "users"]),
-    ...mapState(MasterDataStore, ["currencies", "accountTypes"]),
-    ...mapState(AccountStore, ["accounts"]),
+    ...mapState(UserStore, ['authenticated', 'users']),
+    ...mapState(MasterDataStore, ['currencies', 'accountTypes']),
+    ...mapState(AccountStore, ['accounts']),
     dirty() {
       const closedAt = this.closedAt ? (this.closed ? DateTime.fromJSDate(this.closedAt).toISO() : '') : '';
       return this.originalData.name !== this.name ||
@@ -44,7 +44,8 @@ export default {
           this.originalData.iban !== this.iban ||
           this.originalData.currency !== this.currencyObj.id ||
           this.originalData.startBalance !== this.startBalance ||
-          (this.originalData.closedAt ? this.originalData.closedAt.substring(0, 10) : '') !==  closedAt.substring(0, 10) ||
+          (this.originalData.closedAt ? this.originalData.closedAt.substring(0, 10) : '') !==
+          closedAt.substring(0, 10) ||
           !_.isEqual(this.originalData.readers, this.integerSort(this.readers)) ||
           !_.isEqual(this.originalData.writers, this.integerSort(this.writers));
     },
@@ -68,9 +69,9 @@ export default {
     },
   },
   methods: {
-    ...mapActions(UserStore, ["setNotAuthenticated", "getUsers"]),
-    ...mapActions(AccountStore, ["getAccounts", "getAccountById", "updateAccount"]),
-    ...mapActions(MasterDataStore, ["getCurrencies", "getAccountTypes"]),
+    ...mapActions(UserStore, ['setNotAuthenticated', 'getUsers']),
+    ...mapActions(AccountStore, ['getAccounts', 'getAccountById', 'updateAccount']),
+    ...mapActions(MasterDataStore, ['getCurrencies', 'getAccountTypes']),
     integerSort(arr) {
       return arr.sort(function(a, b) {
         return a - b;
@@ -120,7 +121,7 @@ export default {
       }
 
       // initialize view data
-      this.data = await this.getAccountById(this.accountId);
+      this.data = this.getAccountById(this.accountId);
       this.integerSort(this.data.readers);
       this.integerSort(this.data.writers);
       this.originalData = _.cloneDeep(this.data);
@@ -160,11 +161,13 @@ export default {
         updateData.startBalance = this.startBalance;
       }
       const closedAt = this.closedAt ? (this.closed ? DateTime.fromJSDate(this.closedAt).toISO() : '') : '';
-      if ((this.originalData.closedAt ? this.originalData.closedAt.substring(0, 10) : '') !==  closedAt.substring(0, 10)) {
+      if ((this.originalData.closedAt ? this.originalData.closedAt.substring(0, 10) : '') !==
+          closedAt.substring(0, 10)) {
         if (closedAt === '') {
           updateData.closedAt = null;
         } else {
-          const d = new Date(Date.UTC(this.closedAt.getFullYear(), this.closedAt.getMonth(), this.closedAt.getDate(), 0, 0, 0));
+          const d = new Date(
+              Date.UTC(this.closedAt.getFullYear(), this.closedAt.getMonth(), this.closedAt.getDate(), 0, 0, 0));
           updateData.closedAt = DateTime.fromJSDate(d);
         }
       }
@@ -193,7 +196,7 @@ export default {
     },
     cancel() {
       router.replace({name: 'Accounts'});
-    }
+    },
   },
   created() {
     this.originalData = {};
@@ -220,7 +223,7 @@ export default {
 <template>
   <div class="page page--is-account-detail-view">
     <div class="page--header">
-      <div class="title">Konto: {{name}}</div>
+      <div class="title">Konto: {{ name }}</div>
     </div>
     <div class="page--content">
       <div class="page--content--row">
@@ -232,7 +235,8 @@ export default {
       </div>
       <div class="page--content--row">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-        <Select class="row--item" id="accountType" fluid v-model="typeObj" :options="accountTypes" optionLabel="name" />
+          <Select class="row--item" id="accountType" fluid v-model="typeObj" :options="accountTypes"
+                  optionLabel="name"/>
           <label for="accountType">Kontoart</label>
         </FloatLabel>
       </div>
@@ -245,7 +249,7 @@ export default {
       </div>
       <div class="page--content--row">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <Select id="accountCurrency" fluid v-model="currencyObj" :options="currencies" optionLabel="name" />
+          <Select id="accountCurrency" fluid v-model="currencyObj" :options="currencies" optionLabel="name"/>
           <label for="accountCurrency">Kontowährung</label>
         </FloatLabel>
       </div>
@@ -259,19 +263,22 @@ export default {
       </div>
       <div class="page--content--row">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <MultiSelect id="accountReader" fluid filter v-model="readers" :options="users" optionValue="id" optionLabel="Email" />
+          <MultiSelect id="accountReader" fluid filter v-model="readers" :options="users" optionValue="id"
+                       optionLabel="Email"/>
           <label for="accountReader">Benutzer mit Leserechten</label>
         </FloatLabel>
       </div>
       <div class="page--content--row">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <MultiSelect id="accountWriter" fluid filter v-model="writers" :options="users" optionValue="id" optionLabel="Email" />
+          <MultiSelect id="accountWriter" fluid filter v-model="writers" :options="users" optionValue="id"
+                       optionLabel="Email"/>
           <label for="accountWriter">Benutzer mit Recht zum Ändern</label>
         </FloatLabel>
       </div>
       <div class="page--content--row">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <DatePicker v-model="closedAt" :disabled="!closed" inputId="closedAt" showIcon iconDisplay="input" variant="filled" />
+          <DatePicker v-model="closedAt" :disabled="!closed" inputId="closedAt" showIcon iconDisplay="input"
+                      variant="filled"/>
           <label for="closedAt">geschlossen am</label>
         </FloatLabel>
         <ToggleSwitch v-model="closed"/>

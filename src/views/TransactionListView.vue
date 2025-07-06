@@ -8,7 +8,7 @@ defineProps({
 import {DateTime, Settings as DateTimeSettings} from 'luxon';
 import router from '@/router';
 import _ from 'lodash';
-import {useTemplateRef} from "vue";
+import {useTemplateRef} from 'vue';
 import {mapActions, mapState, mapStores} from 'pinia';
 import {UserStore} from '@/stores/user';
 import {AccountStore} from '@/stores/accounts';
@@ -170,7 +170,7 @@ export default {
       if (this.accountsWhereIn.length === 0) {
         this.accountName = 'Alle Transaktionen';
       } else if (this.accountsWhereIn.length === 1) {
-        const account = await this.getAccountById(this.accountsWhereIn[0]);
+        const account = this.getAccountById(this.accountsWhereIn[0]);
         const currencyDetails = this.getCurrencyDetails(account.currency);
         this.accountName = account.name;
         this.accountBalance = account.balance;
@@ -178,7 +178,7 @@ export default {
         this.currency = currencyDetails ? currencyDetails.id : 'EUR';
         this.currencyStr = currencyDetails ? currencyDetails.short : '';
       } else {
-        this.accountName = 'Transaktionen mehrerer Konten';
+        this.accountName = 'Alle Buchungen';
       }
       this._fillTimespanList();
       this._buildTransactionsPerDate();
@@ -191,6 +191,8 @@ export default {
           transactionsOfDate[tDateShortStr] = [];
         }
         if (this.accountsWhereIn.length > 1) {
+          const account = this.getAccountById(t.account_id);
+          t.accountName = account.name;
           const currencyDetails = this.getCurrencyDetails(t.account_id);
           const currency = currencyDetails ? currencyDetails.id : 'EUR';
           t.amountStr = new Intl.NumberFormat(DateTimeSettings.defaultLocale, {
@@ -230,7 +232,7 @@ export default {
         return {id: tsInfo.id, name: tsInfo.name};
       });
     },
-    _updateAccountsWhereIn: function () {
+    _updateAccountsWhereIn: function() {
       if (_.isArray(this.accountId)) {
         this.accountsWhereIn = this.accountId;
       } else {
@@ -244,7 +246,7 @@ export default {
           this.accountsWhereIn.push(accountId);
         });
       }
-    }
+    },
   },
   async mounted() {
     this.searchPopover = useTemplateRef('searchPopover');
@@ -284,10 +286,11 @@ export default {
         <Button label="Zurück" @click="navigateBack" size="large">
         </Button>
         <span v-if="loading">Buchungen laden...</span>
-        <span v-if="!loading" class="element--is-grow">{{ accountName }}</span>
+        <span v-if="!loading" class="element--is-grow element--is-centered">{{ accountName }}</span>
         <div class="element-as-columns">
           <span v-if="!loading && accountBalance" class="element--is-grow">{{ accountBalance }}{{ currencyStr }}</span>
-          <span v-if="!loading && accountBalanceDateStr" class="element--is-grow is-de-emphasized">{{ accountBalanceDateStr }}</span>
+          <span v-if="!loading && accountBalanceDateStr"
+                class="element--is-grow is-de-emphasized">{{ accountBalanceDateStr }}</span>
         </div>
         <Button icon="pi pi-search" aria-label="Suche einblenden" @click="toggleSearch"/>
         <Popover ref="searchPopover" class="search-popover">
@@ -298,8 +301,8 @@ export default {
                        autofocus
             ></InputText>
             <InputGroupAddon>
-              <Button v-if="searchTerm" icon="pi pi-times" severity="secondary" variant="text" @click="clearSearch" />
-              <Button icon="pi pi-search" severity="secondary" variant="text" @click="searchTransactions" />
+              <Button v-if="searchTerm" icon="pi pi-times" severity="secondary" variant="text" @click="clearSearch"/>
+              <Button icon="pi pi-search" severity="secondary" variant="text" @click="searchTransactions"/>
             </InputGroupAddon>
           </InputGroup>
           <Button icon="pi pi-times" aria-label="Schließen" @click="closeSearch"/>
@@ -316,9 +319,13 @@ export default {
                          v-for="(item, index) in trOfDate.transactions" :key="item.t_id"
                          :id="'transaction-' + item.t_id" :class="{'alternate-row-background': index % 2 }">
               <div class="data--list__left">
-                <div class="data--list__line data--list__line--bold" v-if="item.payeeShortened">{{ item.payeeShortened }}</div>
+                <div class="data--list__line data--list__line--bold" v-if="item.payeeShortened">{{
+                    item.payeeShortened
+                  }}
+                </div>
                 <div class="data--list__line" v-if="item.textShortened">{{ item.textShortened }}</div>
                 <div class="data--list__line" v-if="item.t_entry_text">{{ item.t_entry_text }}</div>
+                <div class="data--list__line" v-if="item.accountName">{{ item.accountName }}</div>
                 <div class="data--list__line" v-if="item.category_name">{{ item.category_name }}</div>
                 <div class="data--list__line" v-if="item.t_notes">{{ item.t_notes }}</div>
               </div>

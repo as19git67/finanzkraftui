@@ -1,7 +1,7 @@
 import axios from 'axios';
-import { defineStore } from 'pinia';
+import {defineStore} from 'pinia';
 import _ from 'lodash';
-import { UserStore } from '@/stores/user';
+import {UserStore} from '@/stores/user';
 
 export const AccountStore = defineStore('account', {
   state: () => ({
@@ -13,18 +13,16 @@ export const AccountStore = defineStore('account', {
     },
   },
   actions: {
-    async getAccountById(accountId) {
-      return new Promise((resolve, reject) => {
-        const id = parseInt(accountId);
-        const account = _.find(this._accounts, function (item) {
-          return item.id === id;
-        });
-        if (account) {
-          resolve(account);
-        } else {
-          reject(new Error('Account not found'));
-        }
+    getAccountById(accountId) {
+      const id = parseInt(accountId);
+      const account = _.find(this._accounts, function(item) {
+        return item.id === id;
       });
+      if (account) {
+        return account;
+      } else {
+        throw new Error('Account not found');
+      }
     },
     async getAccounts(force) {
       if (force || this.accounts.length === 0) {
@@ -84,7 +82,8 @@ export const AccountStore = defineStore('account', {
           throw new Error('Account id missing in updateAccount call');
         }
         try {
-          const response = await axios.post(`/api/accounts/${updateData.id}`, updateData, config);
+          const response = await axios.post(`/api/accounts/${updateData.id}`,
+              updateData, config);
           if (response.status === 200) {
             const id = parseInt(updateData.id, 10);
             const account = this._accounts.filter((tr) => {
@@ -92,12 +91,12 @@ export const AccountStore = defineStore('account', {
             });
             _.assign(account[0], updateData);
           }
-          return { status: response.status, data: resultData };
+          return {status: response.status, data: resultData};
         } catch (ex) {
           return userStore.handleAxiosException(ex, userStore, resultData);
         }
       }
-      return { status: 401, data: resultData };
+      return {status: 401, data: resultData};
     },
   },
 });
