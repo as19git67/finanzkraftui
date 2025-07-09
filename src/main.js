@@ -2,6 +2,7 @@ import { Settings as DateTimeSettings } from 'luxon';
 import {createApp} from "vue";
 import PrimeVue from 'primevue/config';
 import { de } from "primelocale/js/de.js";
+import {definePreset} from "@primeuix/themes";
 import Aura from '@primeuix/themes/aura';
 import App from "./App.vue";
 import router from "./router";
@@ -30,9 +31,7 @@ import Chip from 'primevue/chip';
 import Textarea from 'primevue/textarea';
 import Popover from 'primevue/popover';
 import "primeicons/primeicons.css";
-
-
-import "./assets/main.css";
+import "./assets/main.scss";
 
 DateTimeSettings.defaultLocale = 'de-DE';
 
@@ -83,9 +82,59 @@ app.directive('focus', {
 
 app.use(router);
 app.use(pinia);
+
+const MyPreset = definePreset(Aura, {
+  semantic: {
+    primary: {
+      50: 'var(--eggplant)',
+      100: 'var(--pale-dogwood)',
+      200: 'var(--hot-pink)',
+      300: 'var(--amaranth-pink)',
+      400: 'var(--sgbus-green)',
+      500: 'var(--sea-green)',
+      600: 'var(--feldgrau)',
+      700: 'var(--asparagus)',
+      800: 'var(--picton-blue)',
+      900: 'var(--linen)',
+      950: 'white'
+    },
+  },
+  components: {
+    button: {
+      colorScheme: {
+        light: {
+          root: {
+            info: {
+              background: 'var(--picton-blue)',
+              border: 'var(--picton-blue)',
+              color: 'white',
+              hoverBackground: 'var(--feldgrau)',
+              hoverBorder: 'var(--feldgrau)',
+              hoverColor: 'white',
+              activeBackground: 'var(--sea-green)',
+              activeBorder: 'var(--sea-green)',
+              activeColor: 'white',
+            }
+          }
+        }
+      }
+    },
+    chip: {
+      colorScheme: {
+        light: {
+          root: {
+            background: 'var(--asparagus)',
+            color: 'white',
+          }
+        }
+      }
+    },
+  },
+});
+
 app.use(PrimeVue, {
   theme: {
-    preset: Aura
+    preset: MyPreset
   },
   locale: de
 });

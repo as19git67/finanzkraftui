@@ -363,8 +363,10 @@ export default {
       </div>
       <div class="page--content--row">
         <div class="page--content--row__inline page--content--row__inline--wrapped">
+          <div class="chips-container">
           <Button v-for="(item, index) in filteredShortcuts" :key="item.id" :id="item.id" @click="clickedShortcut(item)"
                   :label="item.payee" severity="info" rounded size="small"/>
+          </div>
         </div>
       </div>
       <div class="page--content--row" v-if="error">

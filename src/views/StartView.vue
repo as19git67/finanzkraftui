@@ -57,6 +57,9 @@ export default {
       const allIds = accounts.map(account => {
         return account.id;
       });
+      if (accounts.length === 0) {
+        return [];
+      }
       return [{
         type: 'all',
         name: 'Alle Buchungen',

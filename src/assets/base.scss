@@ -1,5 +1,7 @@
 /* color palette from <https://github.com/vuejs/theme> */
 :root {
+    --p-primary-500: chocolate;
+
     --vt-c-white: #ffffff;
     --vt-c-white-soft: #f8f8f8;
     --vt-c-white-mute: #f2f2f2;
@@ -87,6 +89,126 @@
     --page-padding-inline: 0.5em;
     --page-min-width: 375px;
     --data-list-max-width: 600px;
+    --data-list-border-radius: 10px;
+}
+
+[data-theme="t1"] {
+    --pale-dogwood: #c1aba6ff;
+    --eggplant: #533b4dff;
+    --hot-pink: #f564a9ff;
+    --amaranth-pink: #faa4bdff;
+    --linen: #FBF1E5ff;
+    --sgbus-green: #6bd425ff;
+    --sea-green: #5b8c5aff;
+    --feldgrau: #506c64ff;
+    --asparagus: #6baa75ff;
+    --picton-blue: #00a6edff;
+
+    --page-background-color: white;
+    --page-text-color: black;
+    --page-text-color-emphasize: var(--sgbus-green);
+
+    --page-header-background-color: var(--eggplant);
+    --page-header-text-color: var(--linen);
+    --page-header-font-size: 1.2em;
+    --page-header-font-weight: bold;
+
+    --page-content-background-color: var(--page-background-color);
+    --page-content-text-color: var(--page-text-color);
+    --page-content-text-color-emphasize: var(--sgbus-green);
+    --page-content-font-size: 1em;
+    --page-content-font-weight: normal;
+
+    --page-content-row-header-background-color: white;
+    --page-content-row-header-text-color: var(--hot-pink);
+    --page-content-row-header-text-color-emphasize: var(--sgbus-green);
+    --page-content-row-header-font-size: 1.2em;
+    --page-content-row-header-font-weight: bold;
+
+    --page-content-row-item-background-color: var(--page-content-background-color);
+    --page-content-row-item-text-color: var(--page-content-text-color);
+    --page-content-row-item-text-color-emphasize: var(--sgbus-green);
+    --page-content-row-item-font-size: 1em;
+    --page-content-row-item-font-weight: normal;
+    --page-content-row-item-font-size-emphasize: 1.2em;
+    --page-content-row-item-font-weight-emphasize: bold;
+
+    --message-color-background: transparent;
+    --message-color-text: black;
+    --message-color-background-emphasize: var(--sgbus-green);
+    --message-color-text-emphasize: black;
+    --message-color-background-error: var(--hot-pink);
+    --message-color-text-error: black;
+
+    --app-menu-color-background: var(--pale-dogwood);
+    --app-menu-color-text: black;
+
+    --control-border-radius: 3px;
+    --control-primary-background-color: var(--amaranth-pink);
+    --control-primary-border-color: var(--amaranth-pink);
+    --control-primary-text-color: black;
+    --control-primary-hover-background-color: var(--pale-dogwood);
+    --control-primary-hover-border-color: var(--pale-dogwood);
+    --control-primary-hover-text-color: black;
+    --control-primary-disabled-background-color: var(--eggplant);
+    --control-primary-disabled-border-color: var(--eggplant);
+    --control-primary-disabled-text-color: black;
+
+    --control-secondary-background-color: white;
+    --control-secondary-border-color: var(--pale-dogwood);
+    --control-secondary-text-color: var(--pale-dogwood);
+    --control-secondary-hover-background-color: white;
+    --control-secondary-hover-border-color: var(--eggplant);
+    --control-secondary-hover-text-color: var(--eggplant);
+    --control-secondary-disabled-background-color: white;
+    --control-secondary-disabled-border-color: var(--linen);
+    --control-secondary-disabled-text-color: var(--linen);
+
+    --control-terciary-background-color: white;
+    --control-terciary-border-color: transparent;
+    --control-terciary-text-color: var(--eggplant);
+    --control-terciary-hover-background-color: var(--linen);
+    --control-terciary-hover-border-color: var(--linen);
+    --control-terciary-hover-text-color: black;
+    --control-terciary-background-color-emphasize: var(--sgbus-green);
+    --control-terciary-border-color-emphasize: var(--sgbus-green);
+    --control-terciary-text-color-emphasize: var(--eggplant);
+    --control-terciary-hover-background-color-emphasize: var(--sgbus-green);
+    --control-terciary-hover-border-color-emphasize: var(--sgbus-green);
+    --control-terciary-hover-text-color-emphasize: var(--amaranth-pink);
+    --control-terciary-disabled-background-color: white;
+    --control-terciary-disabled-border-color: transparent;
+    --control-terciary-disabled-text-color: var(--linen);
+
+    --data-list-background-color: var(--amaranth-pink);
+    --data-list-background-color-emphasize: var(--linen);
+    --data-list-border-color: var(--pale-dogwood);
+    --data-list-text-color: black;
+    --data-list-text-color-emphasize: var(--sgbus-green);
+    --data-list-font-size: 1em;
+    --data-list-font-weight: normal;
+    --data-list-font-size-emphasize: 1.2em;
+    --data-list-font-weight-emphasize: bold;
+
+    --data-list-header-background-color: white;
+    --data-list-header-background-color-emphasize: white;
+    --data-list-header-border-color: white;
+    --data-list-header-text-color: var(--hot-pink);
+    --data-list-header-text-color-emphasize: var(--sgbus-green);
+    --data-list-header-font-size: 1em;
+    --data-list-header-font-weight: normal;
+    --data-list-header-font-size-emphasize: 1.2em;
+    --data-list-header-font-weight-emphasize: bold;
+
+    --data-list-item-background-color: var(--page-content-row-item-background-color);
+    --data-list-item-text-color: black;
+    --data-list-item-text-color-emphasize: var(--sgbus-green);
+    --data-list-item-font-size: 1em;
+    --data-list-item-font-weight: normal;
+    --data-list-item-font-size-emphasize: 1.2em;
+    --data-list-item-font-weight-emphasize: bold;
+    --data-list-item-font-size-deemphasize: 0.8em;
+    --data-list-item-font-weight-deemphasize: normal;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -113,8 +235,8 @@ body {
     overflow: hidden;
     width: 100%;
     height: 100%;
-    color: var(--color-text);
-    background: var(--color-background);
+    color: var(--page-text-color);
+    background: var(--page-background-color);
     transition: color 0.5s, background-color 0.5s;
     line-height: 1.6;
     font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
@@ -143,23 +265,20 @@ input.prevent-scroll:focus,
 
 .error {
     font-weight: bold;
-    color: var(--color-text-error);
+    background-color: var(--message-color-background-error);
+    color: var(--message-color-text-error);
     margin-bottom: 1em;
     padding-left: 0.5em;
     padding-right: 0.5em;
 }
 
-a {
-    color: var(--color-button-primary-text);
-}
-
-svg .metaphor {
-    fill: var(--color-text);
+.no svg .metaphor {
+    fill: var(--control-primary-text-color);
 }
 
 a:hover svg .metaphor,
 button:hover svg .metaphor {
-    fill: var(--as-color-primary-3);
+    fill: var(--control-primary-hover-text-color);
 }
 
 #app {
@@ -192,11 +311,12 @@ button:hover svg .metaphor {
     display: flex;
     gap: 0.5em;
     justify-content: start;
-    background-color: var(--color-background-soft);
-    color: var(--color-text-soft);
-    font-size: 18px;
-    padding-inline: 0.5em;
-    margin-bottom: 0.25em;
+    background-color: var(--page-header-background-color);
+    color: var(--page-header-text-color);
+    font-size: var(--page-header-font-size);
+    font-weight: var(--page-header-font-weight);
+    padding-inline: 5px;
+    padding-block: 0.25em;
 }
 
 .page--header .element--is-grow {
@@ -229,9 +349,12 @@ button:hover svg .metaphor {
     display: flex;
     flex-direction: column;
     flex-grow: 0;
-    padding-inline: var(--page-padding-inline);
-    gap: 0.5em;
     overflow-y: auto;
+    gap: 5px;
+    background-color: var(--page-content-background-color);
+    color: var(--page-content-text-color);
+    font-size: var(--page-content-font-size);
+    font-weight: var(--page-content-font-weight);
 }
 
 .page--content--row {
@@ -242,8 +365,12 @@ button:hover svg .metaphor {
 
 .page--content--row__heading {
     display: flex;
-    font-size: var(--as-font-size-heading);
-    font-weight: var(--as-font-weight-heading);
+    padding-inline: 5px;
+    padding-top: 5px;
+    background-color: var(--page-content-row-header-background-color);
+    color: var(--page-content-row-header-text-color);
+    font-size: var(--page-content-row-header-font-size);
+    font-weight: var(--page-content-row-header-font-weight);
 }
 
 .page--content--row__inline {
@@ -258,6 +385,10 @@ button:hover svg .metaphor {
 
 .page--content--row .row--item {
     display: flex;
+    background-color: var(--page-content-row-item-background-color);
+    color: var(--page-content-row-item-text-color);
+    font-size: var(--page-content-row-item-font-size);
+    font-weight: var(--page-content-row-item-font-weight);
 }
 
 .row--item.row--item--is-grow,
@@ -276,8 +407,8 @@ button:hover svg .metaphor {
 }
 
 .row--item--is-emphasized {
-    font-weight: bold;
-    font-size: 1.2em;
+    font-weight: var(--page-content-row-item-font-weight-emphasize);
+    font-size: var(--page-content-row-item-font-size-emphasize);
 }
 
 .page--title {
@@ -308,33 +439,61 @@ button:hover svg .metaphor {
 .data--list {
     display: flex;
     flex-direction: column;
-    border: 1px solid var(--as-color-primary-0);
-    background-color: var(--as-color-primary-0);
-    border-radius: 6px;
-    overflow: hidden;
-    gap: 1px;
+    font-size: var(--data-list-font-size);
+    font-weight: var(--data-list-font-weight);
+    gap: 3px;
 }
 
 .data--list__item {
-    background-color: var(--as-color-primary-6);
+    background-color: var(--data-list-item-background-color);
+    color: var(--data-list-item-text-color);
+    font-size: var(--data-list-item-font-size);
+    font-weight: var(--data-list-item-font-weight);
+}
+
+.data--list__item:first-child {
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+
+.data--list__item:last-child {
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+}
+
+.data--list__item a {
+    color: var(--data-list-item-text-color);
 }
 
 /* Standard-Liste */
+.data--list--standard {
+    background-color: var(--data-list-background-color);
+    border: 1px solid var(--data-list-background-color);
+    border-radius: var(--data-list-border-radius);
+    gap: 1px;
+}
+
 .data--list--standard .data--list__item {
     display: flex;
     flex-direction: row;
     gap: 1em;
     padding-block: 0.5em;
-    --p-chip-padding-x: 0.5em;
-    --p-chip-padding-y: 0.1em;
-    --p-chip-color: var(--as-color-primary-6);
-    --p-chip-icon-color: var(--as-color-primary-6);
-    --p-chip-background: var(--as-color-secondary-2-0);
+    --p-chip-padding-x: 6px;
+    --p-chip-padding-y: 3px;
+    --p-chip-icon-font-size: 12px;
+}
+
+.chips-container {
+    display: inherit;
+    flex-direction: inherit;
+    gap: inherit;
+    flex-wrap: inherit;
+    padding-inline: 5px
 }
 
 .data--list__left {
     flex-grow: 1;
-    padding-inline: 0.5em;
+    padding-inline: 5px;
 }
 
 .data--list__line {
@@ -343,16 +502,17 @@ button:hover svg .metaphor {
     flex: 1 1 auto;
     gap: 0.5em;
     flex-wrap: wrap;
-    font-size: var(--as-font-size-small);
+    font-size: var(--data-list-item-font-size-deemphasize);
+    font-weight: var(--data-list-item-font-weight-deemphasize);
 }
 
 .data--list__line--bold {
-    font-size: unset;
-    font-weight: bold;
+    font-size: var(--data-list-item-font-size-emphasize);
+    font-weight: var(--data-list-item-font-weight-emphasize);
 }
 
 .data--list__line--bold * {
-    font-weight: inherit;
+    font-weight: var(--data-list-item-font-weight);
 }
 
 .data--list__right {
@@ -374,6 +534,8 @@ button:hover svg .metaphor {
 .data--list--grouped .data--list__group {
     display: flex;
     flex-direction: column;
+    border: 1px solid var(--data-list-background-color);
+    border-radius: var(--data-list-border-radius);
 }
 
 .data--list--grouped .data--list__item {
@@ -381,16 +543,20 @@ button:hover svg .metaphor {
 }
 
 .data--list--grouped .data--list__item.alternate-row-background {
-    background-color: var(--as-color-primary-5);
+    background-color: var(--data-list-background-color-emphasize);
 }
 
 .data--list--grouped .data--list__line {
-    font-size: var(--as-font-size-data-list-item);
+    font-size: var(--data-list-item-font-size);
 }
 
 .data--list__date-header {
     font-weight: bold;
     font-size: 15px;
+    background-color: var(--data-list-header-background-color);
+    color: var(--data-list-header-text-color);
+    padding-inline: 5px;
+    padding-top: 0.5em;
 }
 
 /* Sticky-Datum */
@@ -398,9 +564,98 @@ button:hover svg .metaphor {
     position: sticky;
     top: 0;
     z-index: 1;
-    background-color: var(--as-color-primary-1);
-    color: var(--as-color-primary-6);
-    padding-inline: 0.5em;
+    border-top-left-radius: inherit;
+    border-top-right-radius: inherit;
+}
+
+/* primevue components */
+.xp-button {
+
+    &:not(:disabled):hover {
+        background: var(--control-primary-hover-background-color);
+        color: var(--control-primary-hover-text-color);
+        border-color: var(--control-primary-hover-border-color);
+    }
+
+    &:not(:disabled):active {
+    }
+
+    &.p-button-outlined {
+        background-color: transparent;
+        color: var(--control-primary-background-color);
+        border: var(--control-primary-border-color);
+
+        &:not(:disabled):hover {
+            background: rgba(var(--control-primary-hover-background-color), 0.7);
+            color: var(--control-primary-hover-text-color);
+            border: var(--control-primary-hover-border-color);
+        }
+
+        &:not(:disabled):active {
+            background: rgba(var(--control-primary-hover-background-color), 0.8);
+            color: var(--control-primary-hover-text-color);
+            border: var(--control-primary-hover-border-color);
+        }
+
+        &.p-button-plain {
+            color: var(--control-primary-background-color);
+            border-color: var(--control-primary-border-color);
+
+            &:not(:disabled):hover {
+                background: var(--control-primary-hover-background-color);
+                color: var(--control-primary-hover-text-color);
+            }
+
+            &:not(:disabled):active {
+                background: var(--control-primary-hover-background-color);
+                color: var(--control-primary-hover-text-color);
+            }
+        }
+    }
+
+    &.p-button-text {
+        background-color: transparent;
+        color: var(--control-primary-background-color);
+        border-color: transparent;
+
+        &:not(:disabled):hover {
+            background: rgba(var(--control-primary-background-color), 0.7);
+            color: var(--control-primary-background-color);
+            border-color: transparent;
+        }
+
+        &:not(:disabled):active {
+            background: rgba(var(--control-primary-background-color), 0.8);
+            color: var(--control-primary-background-color);
+            border-color: transparent;
+        }
+
+        &.p-button-plain {
+            color: var(--control-primary-text-color);
+
+            &:not(:disabled):hover {
+                background: var(--control-primary-hover-background-color);
+                color: var(--control-primary-hover-text-color);
+            }
+
+            &:not(:disabled):active {
+                background: var(--control-primary-hover-background-color);
+                color: var(--control-primary-hover-text-color);
+            }
+        }
+    }
+
+    &:focus-visible {
+    }
+
+    .p-badge {
+        color: var(--control-primary-background-color);
+        background-color: var(--control-primary-text-color);
+    }
+
+    &.p-button-raised {
+    }
+
 }
 
 /*  O L D  */

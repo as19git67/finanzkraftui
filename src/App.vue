@@ -37,8 +37,8 @@ export default {
 </script>
 <style scoped>
 header {
-  background-color: var(--color-heading);
-  color: var(--color-text);
+  background-color: var(--app-menu-color-background);
+  color: var(--app-menu-color-text);
   display: block;
 }
 
@@ -64,6 +64,7 @@ nav a {
   transition: 0.4s;
   flex: 1 1 auto;
   padding-block: 0.25em;
+  color: var(--app-menu-color-text);
 }
 
 nav a:first-of-type {

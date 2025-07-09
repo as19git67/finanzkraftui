@@ -23,6 +23,8 @@
     "eslint-plugin-cypress": "^4.3.0",
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-vue": "^10.1.0",
+    "sass": "^1.89.2",
+    "sass-embedded": "^1.89.2",
     "vite": "^6.3.5"
   },
   "dependencies": {
