@@ -131,8 +131,9 @@ export default {
       <div class="page--content--row">
         <div class="data--list data--list--standard" v-if="accountsEnriched.length">
           <div v-for="(item, index) of accountsEnriched" :key="item"
+               class="data--list__item"
                :class="{ 'account-closed': !!item.closedAt }">
-            <div class="data--list__item">
+
               <div class="data--list__left">
                 <div class="data--list__line data--list__line--bold">
                   <span>{{ item.name }}</span>
@@ -155,7 +156,6 @@ export default {
               <div class="data--list__right">
                 <Button @click="navigateToAccountDetail(item.id)" @keydown.enter="navigateToAccountDetail(item.id)" icon="pi pi-caret-right" severity="contrast" variant="text" rounded aria-label="Ändern" />
               </div>
-            </div>
           </div>
         </div>
       </div>

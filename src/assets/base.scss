@@ -104,34 +104,30 @@
     --asparagus: #6baa75ff;
     --picton-blue: #00a6edff;
 
-    --page-background-color: white;
-    --page-text-color: black;
-    --page-text-color-emphasize: var(--sgbus-green);
-
-    --page-header-background-color: var(--eggplant);
+    --page-header-background-color: transparent;
     --page-header-text-color: var(--linen);
-    --page-header-font-size: 1.2em;
-    --page-header-font-weight: bold;
+    --page-header-font-size: 16px;
+    --page-header-font-weight: 500;
 
-    --page-content-background-color: var(--page-background-color);
-    --page-content-text-color: var(--page-text-color);
+    --page-content-background-color: transparent;
+    --page-content-text-color: var(--linen);
     --page-content-text-color-emphasize: var(--sgbus-green);
-    --page-content-font-size: 1em;
+    --page-content-font-size: 15px;
     --page-content-font-weight: normal;
 
-    --page-content-row-header-background-color: white;
-    --page-content-row-header-text-color: var(--hot-pink);
-    --page-content-row-header-text-color-emphasize: var(--sgbus-green);
-    --page-content-row-header-font-size: 1.2em;
-    --page-content-row-header-font-weight: bold;
+    --page-content-row-header-background-color: transparent;
+    --page-content-row-header-text-color: var(--linen);
+    --page-content-row-header-text-color-emphasize: var(--hot-pink);
+    --page-content-row-header-font-size: 18px;
+    --page-content-row-header-font-weight: 600;
 
-    --page-content-row-item-background-color: var(--page-content-background-color);
+    --page-content-row-item-background-color: white;
     --page-content-row-item-text-color: var(--page-content-text-color);
-    --page-content-row-item-text-color-emphasize: var(--sgbus-green);
-    --page-content-row-item-font-size: 1em;
-    --page-content-row-item-font-weight: normal;
-    --page-content-row-item-font-size-emphasize: 1.2em;
-    --page-content-row-item-font-weight-emphasize: bold;
+    --page-content-row-item-text-color-emphasize: var();
+    --page-content-row-item-font-size: 15px;
+    --page-content-row-item-font-weight: 400;
+    --page-content-row-item-font-size-emphasize: 18px;
+    --page-content-row-item-font-weight-emphasize: 600;
 
     --message-color-background: transparent;
     --message-color-text: black;
@@ -180,35 +176,35 @@
     --control-terciary-disabled-border-color: transparent;
     --control-terciary-disabled-text-color: var(--linen);
 
-    --data-list-background-color: var(--amaranth-pink);
+    --data-list-background-color: transparent;
     --data-list-background-color-emphasize: var(--linen);
     --data-list-border-color: var(--pale-dogwood);
     --data-list-text-color: black;
     --data-list-text-color-emphasize: var(--sgbus-green);
-    --data-list-font-size: 1em;
-    --data-list-font-weight: normal;
-    --data-list-font-size-emphasize: 1.2em;
-    --data-list-font-weight-emphasize: bold;
+    --data-list-font-size: 15em;
+    --data-list-font-weight: 400;
+    --data-list-font-size-emphasize: 16em;
+    --data-list-font-weight-emphasize: 600;
 
     --data-list-header-background-color: white;
     --data-list-header-background-color-emphasize: white;
     --data-list-header-border-color: white;
-    --data-list-header-text-color: var(--hot-pink);
-    --data-list-header-text-color-emphasize: var(--sgbus-green);
-    --data-list-header-font-size: 1em;
-    --data-list-header-font-weight: normal;
-    --data-list-header-font-size-emphasize: 1.2em;
-    --data-list-header-font-weight-emphasize: bold;
+    --data-list-header-text-color: var(--eggplant);
+    --data-list-header-text-color-emphasize: var(--hot-pink);
+    --data-list-header-font-size: 16px;
+    --data-list-header-font-weight: 500;
+    --data-list-header-font-size-emphasize: 18px;
+    --data-list-header-font-weight-emphasize: 600;
 
     --data-list-item-background-color: var(--page-content-row-item-background-color);
     --data-list-item-text-color: black;
     --data-list-item-text-color-emphasize: var(--sgbus-green);
-    --data-list-item-font-size: 1em;
-    --data-list-item-font-weight: normal;
-    --data-list-item-font-size-emphasize: 1.2em;
-    --data-list-item-font-weight-emphasize: bold;
-    --data-list-item-font-size-deemphasize: 0.8em;
-    --data-list-item-font-weight-deemphasize: normal;
+    --data-list-item-font-size: 15px;
+    --data-list-item-font-weight: 400;
+    --data-list-item-font-size-emphasize: 16px;
+    --data-list-item-font-weight-emphasize: 600;
+    --data-list-item-font-size-deemphasize: 14px;
+    --data-list-item-font-weight-deemphasize: 400;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -235,8 +231,7 @@ body {
     overflow: hidden;
     width: 100%;
     height: 100%;
-    color: var(--page-text-color);
-    background: var(--page-background-color);
+    color: var(--text-color);
     transition: color 0.5s, background-color 0.5s;
     line-height: 1.6;
     font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
@@ -289,6 +284,12 @@ button:hover svg .metaphor {
     flex-direction: column;
     align-items: stretch;
     flex: 1 1 auto;
+    backdrop-filter: blur(128px);
+    background-size: cover;
+    background: linear-gradient(to right bottom, var(--feldgrau) 0% /* bottom-right color */,
+      var(--eggplant) 70% /* middle color */,
+      var(--amaranth-pink) 100% /* top-left color */),
+    linear-gradient(rgba(0, 0, 0, 1), rgba(0, 0, 0, 1));
 }
 
 .page {
@@ -302,7 +303,8 @@ button:hover svg .metaphor {
 
 .page.page--is-my-accounts-view,
 .page.page--is-accounts-view,
-.page.page--is-transactions-list-view {
+.page.page--is-transactions-list-view,
+.page.page--is-transaction-detail-view {
     min-width: calc(var(--page-min-width) - (2 * var(--page-padding-inline)));
     max-width: var(--data-list-max-width);
 }
@@ -365,8 +367,8 @@ button:hover svg .metaphor {
 
 .page--content--row__heading {
     display: flex;
-    padding-inline: 5px;
-    padding-top: 5px;
+    padding-inline: 25px;
+    padding-top: 10px;
     background-color: var(--page-content-row-header-background-color);
     color: var(--page-content-row-header-text-color);
     font-size: var(--page-content-row-header-font-size);
@@ -385,7 +387,6 @@ button:hover svg .metaphor {
 
 .page--content--row .row--item {
     display: flex;
-    background-color: var(--page-content-row-item-background-color);
     color: var(--page-content-row-item-text-color);
     font-size: var(--page-content-row-item-font-size);
     font-weight: var(--page-content-row-item-font-weight);
@@ -400,13 +401,13 @@ button:hover svg .metaphor {
     display: flex;
 }
 
-.row--item--is-centered {
+.row--item.row--item--is-centered {
     justify-content: center;
     text-align: center;
     padding-block: 0.5em;
 }
 
-.row--item--is-emphasized {
+.row--item.row--item--is-emphasized {
     font-weight: var(--page-content-row-item-font-weight-emphasize);
     font-size: var(--page-content-row-item-font-size-emphasize);
 }
@@ -465,9 +466,8 @@ button:hover svg .metaphor {
     color: var(--data-list-item-text-color);
 }
 
-/* Standard-Liste */
+/* Standard-List */
 .data--list--standard {
-    background-color: var(--data-list-background-color);
     border: 1px solid var(--data-list-background-color);
     border-radius: var(--data-list-border-radius);
     gap: 1px;
@@ -479,8 +479,8 @@ button:hover svg .metaphor {
     gap: 1em;
     padding-block: 0.5em;
     --p-chip-padding-x: 6px;
-    --p-chip-padding-y: 3px;
-    --p-chip-icon-font-size: 12px;
+    --p-chip-padding-y: 1px;
+    --p-chip-icon-font-size: 16px;
 }
 
 .chips-container {
@@ -547,7 +547,6 @@ button:hover svg .metaphor {
 }
 
 .data--list--grouped .data--list__line {
-    font-size: var(--data-list-item-font-size);
 }
 
 .data--list__date-header {

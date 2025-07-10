@@ -13,7 +13,7 @@ import ToastService from 'primevue/toastservice';
 import Toast from 'primevue/toast';
 import ConfirmDialog from 'primevue/confirmdialog';
 import Fluid from 'primevue/fluid';
-import Button from "primevue/button";
+import Button from 'primevue/button';
 import ToggleButton from "primevue/togglebutton";
 import ToggleSwitch from 'primevue/toggleswitch';
 import InputText from "primevue/inputtext"
@@ -90,10 +90,10 @@ const MyPreset = definePreset(Aura, {
       100: 'var(--pale-dogwood)',
       200: 'var(--hot-pink)',
       300: 'var(--amaranth-pink)',
-      400: 'var(--sgbus-green)',
-      500: 'var(--sea-green)',
-      600: 'var(--feldgrau)',
-      700: 'var(--asparagus)',
+      400: 'var(--feldgrau)',
+      500: 'var(--asparagus)',
+      600: 'var(--sea-green)',
+      700: 'var(--sgbus-green)',
       800: 'var(--picton-blue)',
       900: 'var(--linen)',
       950: 'white'
