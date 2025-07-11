@@ -303,6 +303,7 @@ button:hover svg .metaphor {
 .page.page--is-my-accounts-view,
 .page.page--is-accounts-view,
 .page.page--is-transactions-list-view,
+.page.page--is-transaction-new-view,
 .page.page--is-transaction-detail-view {
     min-width: calc(var(--page-min-width) - (2 * var(--page-padding-inline)));
     max-width: var(--data-list-max-width);

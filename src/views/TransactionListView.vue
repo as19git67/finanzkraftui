@@ -29,6 +29,7 @@ export default {
       timespanList: this.timespanList,
       dateFilter: this.dateFilter,
       transactionsByDate: this.transactionsByDate,
+      accountTypeIsCash: this.accountTypeIsCash,
     };
   },
   computed: {
@@ -46,6 +47,9 @@ export default {
     ...mapActions(TransactionStore, ['getTransactions', 'setLastScrollTop', 'clearTransactions']),
     ...mapActions(AccountStore, ['getAccounts', 'getAccountById']),
     ...mapActions(UserStore, ['setNotAuthenticated']),
+    navigateToAddTransaction() {
+      router.push({name: 'AddTransaction', params: {accountId: this.idAccount}});
+    },
     navigateBack() {
       router.back();
     },
@@ -172,11 +176,13 @@ export default {
       } else if (this.accountsWhereIn.length === 1) {
         const account = this.getAccountById(this.accountsWhereIn[0]);
         const currencyDetails = this.getCurrencyDetails(account.currency);
+        this.idAccount = account.id;
         this.accountName = account.name;
         this.accountBalance = account.balance;
         this.accountBalanceDateStr = account.balanceDate ? DateTime.fromISO(account.balanceDate).toLocaleString() : '';
         this.currency = currencyDetails ? currencyDetails.id : 'EUR';
         this.currencyStr = currencyDetails ? currencyDetails.short : '';
+        this.accountTypeIsCash = account.type === 'cash';
       } else {
         this.accountName = 'Alle Buchungen';
       }
@@ -269,6 +275,7 @@ export default {
     this.loading = false;
     this.accountName = '';
     this.accountBalance = 0;
+    this.accountTypeIsCash = false;
     this.accountBalanceDateStr = '';
     this.currencyStr = '';
     this.searchTerm = '';
@@ -292,6 +299,8 @@ export default {
           <span v-if="!loading && accountBalanceDateStr"
                 class="element--is-grow is-de-emphasized">{{ accountBalanceDateStr }}</span>
         </div>
+        <Button v-if="accountTypeIsCash" @click="navigateToAddTransaction()" @keydown.enter="navigateToAddTransaction()"
+                icon="pi pi-plus" variant="text" aria-label="Buchung hinzufügen"/>
         <Button icon="pi pi-search" aria-label="Suche einblenden" @click="toggleSearch"/>
         <Popover ref="searchPopover" class="search-popover">
           <InputGroup>
