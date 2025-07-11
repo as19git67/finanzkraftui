@@ -15,7 +15,6 @@ import RolesView from '../views/RolesView.vue';
 import RoleEditView from '../views/RoleEditView.vue';
 import UserEditView from '../views/UserEditView.vue';
 import RegistrationView1 from '../views/RegistrationView1.vue';
-import AboutView from '../views/AboutView.vue';
 import TransactionNewView from '../views/TransactionNewView.vue';
 import NotAuthorizedView from '../views/NotAuthorizedView.vue';
 
@@ -119,14 +118,6 @@ const router = createRouter({
       path: '/registration1',
       name: 'Registration1',
       component: RegistrationView1,
-    },
-    {
-      path: '/about',
-      name: 'about',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: AboutView,
     },
   ],
 });

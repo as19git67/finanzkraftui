@@ -302,6 +302,7 @@ button:hover svg .metaphor {
 
 .page.page--is-my-accounts-view,
 .page.page--is-accounts-view,
+.page.page--is-account-detail-view,
 .page.page--is-transactions-list-view,
 .page.page--is-transaction-new-view,
 .page.page--is-transaction-detail-view {
@@ -388,6 +389,7 @@ button:hover svg .metaphor {
 
 .page--content--row .row--item {
     display: flex;
+    align-items: center;
     color: var(--page-content-row-item-text-color);
     font-size: var(--page-content-row-item-font-size);
     font-weight: var(--page-content-row-item-font-weight);
@@ -405,7 +407,6 @@ button:hover svg .metaphor {
 .row--item.row--item--is-centered {
     justify-content: center;
     text-align: center;
-    padding-block: 0.5em;
 }
 
 .row--item.row--item--is-emphasized {
@@ -415,6 +416,8 @@ button:hover svg .metaphor {
 
 .page--title {
     display: flex;
+    flex: 1 1 auto;
+    justify-content: center;
 }
 
 .page--title.title__with-buttons {
@@ -503,6 +506,7 @@ button:hover svg .metaphor {
     flex: 1 1 auto;
     gap: 0.5em;
     flex-wrap: wrap;
+    justify-content: space-between;
     overflow-wrap: anywhere;
     font-size: var(--data-list-item-font-size-deemphasize);
     font-weight: var(--data-list-item-font-weight-deemphasize);

@@ -223,7 +223,11 @@ export default {
 <template>
   <div class="page page--is-account-detail-view">
     <div class="page--header">
-      <div class="title">Konto: {{ name }}</div>
+      <div class="page--title title__with-buttons">
+        <Button label="Speichern" :disabled="!dirty" @click="saveAccount" size="large"/>
+        Konto: {{ name }}
+        <Button label="Abbrechen" @click="cancel" size="large"/>
+      </div>
     </div>
     <div class="page--content">
       <div class="page--content--row">
@@ -276,21 +280,23 @@ export default {
         </FloatLabel>
       </div>
       <div class="page--content--row">
-        <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <DatePicker v-model="closedAt" :disabled="!closed" inputId="closedAt" showIcon iconDisplay="input"
-                      variant="filled"/>
-          <label for="closedAt">geschlossen am</label>
-        </FloatLabel>
-        <ToggleSwitch v-model="closed"/>
+        <div class="page--content--row__inline">
+          <FloatLabel variant="in" class="row--item row--item--is-grow">
+            <DatePicker v-model="closedAt" :disabled="!closed" inputId="closedAt" showIcon iconDisplay="input"
+                        variant="filled"/>
+            <label for="closedAt">geschlossen am</label>
+          </FloatLabel>
+          <div class="closedToggle row--item row--item--is-centered">
+            <ToggleSwitch v-model="closed" />
+          </div>
+        </div>
       </div>
-    </div>
-    <div class="page--footer">
-      <Button label="Speichern" :disabled="!dirty" @click="saveAccount" size="large"/>
-      <Button label="Abbrechen" @click="cancel" size="large"/>
     </div>
   </div>
 </template>
 
 <style scoped>
-
+  .closedToggle {
+    padding-inline: 1em;
+  }
 </style>

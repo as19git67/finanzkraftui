@@ -1,131 +1,126 @@
 <script setup>
-import {DateTime} from "luxon";
-</script>
-
-<script>
-import { mapActions, mapState, mapStores } from "pinia";
-import { UserStore } from "@/stores/user";
-import { AccountStore } from "@/stores/accounts";
-import router from "@/router";
-import {MasterDataStore} from "@/stores/masterdata";
 import _ from "lodash";
 import {DateTime} from "luxon";
+import {ref, onMounted, computed} from 'vue';
+import {useRouter} from 'vue-router';
+import {UserStore} from "@/stores/user";
+import {AccountStore} from "@/stores/accounts";
+import {MasterDataStore} from "@/stores/masterdata";
 
-export default {
-  name: "AccountsView",
-  data() {
-    return {
-      loading: this.loading,
-      error: this.error,
-      accountType: this.accountType,
-      currency: this.currency,
-    };
-  },
-  computed: {
-    ...mapStores(UserStore),
-    ...mapStores(AccountStore),
-    ...mapState(UserStore, ["authenticated"]),
-    ...mapState(AccountStore, ["accounts"]),
-    accountsEnriched() {
-      return this.accounts.map(account => {
-        const currencyDetails = this.getCurrencyDetails(account.currency);
-        const typeDetails = this.getAccountTypeDetails(account.type);
-        const balanceDateStr = account.balanceDate ? DateTime.fromISO(account.balanceDate).toLocaleString() : '';
-        const closedDateStr = account.closedAt ? DateTime.fromISO(account.closedAt).toLocaleString() : '';
-        const readerNames = this.mapToUserEmail(account.readers);
-        const writerNames = this.mapToUserEmail(account.writers);
-        return {
-          ...account,
-          currencyStr: currencyDetails ? currencyDetails.short : '',
-          accountTypeStr: typeDetails ? typeDetails.name : '',
-          balanceDateStr,
-          closedDateStr,
-          readerNames,
-          writerNames,
-        }
-      });
-    }
-  },
-  methods: {
-    ...mapActions(UserStore, ["setNotAuthenticated", "getUsers", "getUser"]),
-    ...mapActions(AccountStore, ["getAccounts"]),
-    ...mapActions(MasterDataStore, ["getCurrencies", "getCurrencyDetails", "getAccountTypes", "getAccountTypeDetails"]),
-    async loadDataFromServer() {
-      this.error = '';
-      this.loading = true;
-      const promises = [];
-      promises.push(this.getUsers());
-      promises.push(this.getAccounts(true));
-      promises.push(this.getCurrencies(true));
-      promises.push(this.getAccountTypes(true));
-      const results = await Promise.all(promises);
-      this.loading = false;
-      let mustAuthenticate = false;
-      let notAuthorized = false;
-      let not_ok = false;
-      results.forEach((result) => {
-        let status = result;
-        if (_.isObject(result)) {
-          status = result.status;
-        }
+const router = useRouter();
+const userStore = UserStore();
+const accountStore = AccountStore();
+const masterDataStore = MasterDataStore();
 
-        switch (status) {
-          case 403:
-            notAuthorized = true;
-            break;
-          case 401:
-          case 404:
-            mustAuthenticate = true;
-            break;
-          case 200:
-            break;
-          default:
-            not_ok = true;
-        }
-      });
-      if (mustAuthenticate || not_ok) {
-        this.setNotAuthenticated();
-        router.replace({name: 'login'});
-        return;
+
+defineOptions({
+  name: 'AccountsView'
+})
+
+let error = ref('');
+let loading = ref(false);
+
+const accountsEnriched = computed(() => {
+    return accountStore.accounts.map(account => {
+      const currencyDetails = masterDataStore.getCurrencyDetails(account.currency);
+      const typeDetails = masterDataStore.getAccountTypeDetails(account.type);
+      const balanceDateStr = account.balanceDate ? DateTime.fromISO(account.balanceDate).toLocaleString() : '';
+      const closedDateStr = account.closedAt ? DateTime.fromISO(account.closedAt).toLocaleString() : '';
+      const readerNames = mapToUserEmail(account.readers);
+      const writerNames = mapToUserEmail(account.writers);
+      return {
+        ...account,
+        currencyStr: currencyDetails ? currencyDetails.short : '',
+        accountTypeStr: typeDetails ? typeDetails.name : '',
+        balanceDateStr,
+        closedDateStr,
+        readerNames,
+        writerNames,
       }
-      if (notAuthorized) {
-        router.replace({name: 'notAuthorized'});
-        return;
-      }
-    },
-    mapToUserEmail(userIds) {
-      return userIds.map(userId => {
-        const user = this.getUser(userId);
-        if (user) {
-          return {
-            email : user.Email,
-            initials: user.Initials ? user.Initials : user.Email,
-          };
-        }
-        return '';
-      });
-    },
-    navigateToAccountDetail(idAccount) {
-      router.push({ name: 'AccountDetail', params: { accountId: idAccount } });
+    });
+});
+
+async function loadDataFromServer() {
+  error = '';
+  loading = true;
+  const promises = [];
+  promises.push(userStore.getUsers());
+  promises.push(accountStore.getAccounts(true));
+  promises.push(masterDataStore.getCurrencies(true));
+  promises.push(masterDataStore.getAccountTypes(true));
+  const results = await Promise.all(promises);
+  loading = false;
+  let mustAuthenticate = false;
+  let notAuthorized = false;
+  let not_ok = false;
+  results.forEach((result) => {
+    let status = result;
+    if (_.isObject(result)) {
+      status = result.status;
     }
-  },
-  async mounted() {
-    this.error = undefined;
-    this.loading = false;
+
+    switch (status) {
+      case 403:
+        notAuthorized = true;
+        break;
+      case 401:
+      case 404:
+        mustAuthenticate = true;
+        break;
+      case 200:
+        break;
+      default:
+        not_ok = true;
+    }
+  });
+  if (mustAuthenticate || not_ok) {
+    userStore.setNotAuthenticated();
+    router.replace({name: 'login'});
+    return;
+  }
+  if (notAuthorized) {
+    router.replace({name: 'notAuthorized'});
+    return;
+  }
+}
+
+function mapToUserEmail(userIds) {
+  return userIds.map(userId => {
+    const user = userStore.getUser(userId);
+    if (user) {
+      return {
+        email : user.Email,
+        initials: user.Initials ? user.Initials : user.Email,
+      };
+    }
+    return '';
+  });
+}
+
+function navigateToAccountDetail(idAccount) {
+  router.push({ name: 'AccountDetail', params: { accountId: idAccount } });
+}
+
+onMounted(async () => {
+  error = '';
+  loading = false;
+  if (userStore.isAuthenticated) {
     try {
-      await this.loadDataFromServer();
+      await loadDataFromServer();
     } catch (ex) {
-      this.error = ex.message;
-      this.loading = false;
+      error = ex.message;
+      loading = false;
     }
-  },
-};
+  } else {
+    router.replace({name: 'login'});
+  }
+});
 </script>
 
 <template>
   <div class="page page--is-accounts-view">
     <div class="page--header">
-      <div class="title">Konten</div>
+      <div class="page--title">Alle Konten</div>
     </div>
     <div class="page--content">
       <div class="page--content--row">
