@@ -1,223 +1,232 @@
 <script setup>
-defineProps({
-  accountId: {type: String},
-});
-</script>
-
-<script>
 import _ from 'lodash';
 import {mapActions, mapState, mapStores} from 'pinia';
 import {DateTime} from 'luxon';
-import router from '@/router';
 import {AccountStore} from '@/stores/accounts';
 import {UserStore} from '@/stores/user';
 import {MasterDataStore} from '@/stores/masterdata';
+import {computed, onMounted, ref} from 'vue';
+import {useRouter} from 'vue-router';
 
-export default {
-  name: 'AccountView',
-  data() {
-    return {
-      id: this.accountId,
-      name: this.name,
-      accountTypeObj: this.accountTypeObj,
-      currencyObj: this.currencyObj,
-      typeObj: this.typeObj,
-      iban: this.iban,
-      startBalance: this.startBalance,
-      closed: this.closed,
-      closedAt: undefined,
-      readers: this.readers,
-      writers: this.writers,
-    };
-  },
-  computed: {
-    ...mapStores(UserStore),
-    ...mapStores(AccountStore),
-    ...mapStores(MasterDataStore),
-    ...mapState(UserStore, ['authenticated', 'users']),
-    ...mapState(MasterDataStore, ['currencies', 'accountTypes']),
-    ...mapState(AccountStore, ['accounts']),
-    dirty() {
-      const closedAt = this.closedAt ? (this.closed ? DateTime.fromJSDate(this.closedAt).toISO() : '') : '';
-      return this.originalData.name !== this.name ||
-          this.originalData.type !== this.typeObj.id ||
-          this.originalData.iban !== this.iban ||
-          this.originalData.currency !== this.currencyObj.id ||
-          this.originalData.startBalance !== this.startBalance ||
-          (this.originalData.closedAt ? this.originalData.closedAt.substring(0, 10) : '') !==
-          closedAt.substring(0, 10) ||
-          !_.isEqual(this.originalData.readers, this.integerSort(this.readers)) ||
-          !_.isEqual(this.originalData.writers, this.integerSort(this.writers));
-    },
-    type() {
-      if (this.typeObj) {
-        return this.typeObj.code;
-      }
-      return '';
-    },
-    currency() {
-      if (this.currencyObj) {
-        return this.currencyObj.id;
-      }
-      return '';
-    },
-    currencyName() {
-      if (this.currencyObj) {
-        return this.currencyObj.name;
-      }
-      return '';
-    },
-  },
-  methods: {
-    ...mapActions(UserStore, ['setNotAuthenticated', 'getUsers']),
-    ...mapActions(AccountStore, ['getAccounts', 'getAccountById', 'updateAccount']),
-    ...mapActions(MasterDataStore, ['getCurrencies', 'getAccountTypes']),
-    integerSort(arr) {
-      return arr.sort(function(a, b) {
-        return a - b;
-      });
-    },
-    async loadDataFromServer() {
-      this.error = '';
-      this.loading = true;
-      const promises = [];
-      promises.push(this.getUsers());
-      promises.push(this.getAccounts());
-      promises.push(this.getCurrencies());
-      promises.push(this.getAccountTypes());
-      const results = await Promise.all(promises);
-      this.loading = false;
-      let mustAuthenticate = false;
-      let notAuthorized = false;
-      let not_ok = false;
-      results.forEach((result) => {
-        let status = result;
-        if (_.isObject(result)) {
-          status = result.status;
-        }
+const props = defineProps({
+  accountId: {type: String},
+});
 
-        switch (status) {
-          case 403:
-            notAuthorized = true;
-            break;
-          case 401:
-          case 404:
-            mustAuthenticate = true;
-            break;
-          case 200:
-            break;
-          default:
-            not_ok = true;
-        }
-      });
-      if (mustAuthenticate || not_ok) {
-        this.setNotAuthenticated();
-        router.replace({name: 'login'});
-        return;
-      }
-      if (notAuthorized) {
-        router.replace({name: 'notAuthorized'});
-        return;
-      }
+defineOptions({
+  name: 'AccountView'
+});
 
-      // initialize view data
-      this.data = this.getAccountById(this.accountId);
-      this.integerSort(this.data.readers);
-      this.integerSort(this.data.writers);
-      this.originalData = _.cloneDeep(this.data);
-      this.name = this.data.name;
-      this.typeObj = _.find(this.accountTypes, (item) => {
-        return item.id === this.data.type;
-      });
-      this.currencyObj = _.find(this.currencies, (item) => {
-        return item.id === this.data.currency;
-      });
-      this.readers = this.data.readers;
-      this.writers = this.data.writers;
-      this.startBalance = this.data.startBalance;
-      this.iban = this.data.iban;
-      this.closed = this.data.closedAt !== null;
-      if (this.closed) {
-        this.closedAt = DateTime.fromISO(this.data.closedAt).toJSDate();
-      }
-    },
-    createUpdateData() {
-      const updateData = {
-        id: this.originalData.id,
-      };
-      if (this.originalData.name !== this.name) {
-        updateData.name = this.name;
-      }
-      if (this.originalData.type !== this.typeObj.id) {
-        updateData.idAccountType = this.typeObj.id;
-      }
-      if (this.originalData.iban !== this.iban) {
-        updateData.iban = this.iban;
-      }
-      if (this.originalData.currency !== this.currencyObj.id) {
-        updateData.idCurrency = this.currencyObj.id;
-      }
-      if (this.originalData.startBalance !== this.startBalance) {
-        updateData.startBalance = this.startBalance;
-      }
-      const closedAt = this.closedAt ? (this.closed ? DateTime.fromJSDate(this.closedAt).toISO() : '') : '';
-      if ((this.originalData.closedAt ? this.originalData.closedAt.substring(0, 10) : '') !==
-          closedAt.substring(0, 10)) {
-        if (closedAt === '') {
-          updateData.closedAt = null;
-        } else {
-          const d = new Date(
-              Date.UTC(this.closedAt.getFullYear(), this.closedAt.getMonth(), this.closedAt.getDate(), 0, 0, 0));
-          updateData.closedAt = DateTime.fromJSDate(d);
-        }
-      }
-      if (!_.isEqual(this.originalData.readers, this.integerSort(this.readers))) {
-        updateData.readers = this.readers;
-      }
-      if (!_.isEqual(this.originalData.writers, this.integerSort(this.writers))) {
-        updateData.writers = this.writers;
-      }
-      return updateData;
-    },
-    async saveAccount() {
-      this.error = undefined;
-      this.loading = false;
-      try {
-        const updateData = this.createUpdateData();
-        await this.updateAccount(updateData);
+const router = useRouter();
+const userStore = UserStore();
+const accountStore = AccountStore();
+const masterDataStore = MasterDataStore();
 
-        await this.loadDataFromServer();
-        router.replace({name: 'Accounts'});
-      } catch (ex) {
-        this.error = ex.message;
-        this.loading = false;
-        console.log(this.error);
-      }
-    },
-    cancel() {
-      router.replace({name: 'Accounts'});
-    },
-  },
-  created() {
-    this.originalData = {};
-    this.typeObj = {};
-    this.currencyObj = {};
-    this.readers = [];
-    this.writers = [];
-  },
-  async mounted() {
-    this.error = undefined;
-    this.loading = false;
-    try {
-      await this.loadDataFromServer();
-    } catch (ex) {
-      this.error = ex.message;
-      this.loading = false;
-      console.log(this.error);
-      router.replace({name: 'Accounts'});
+let error = ref('');
+let loading = ref(false);
+let id = ref('');
+let name = ref('');
+let iban = ref('');
+let startBalance = ref(0);
+let closed = ref(false);
+let closedAt = ref(DateTime.now().toJSDate());
+let originalData = ref({});
+let typeObj = ref({});
+let accountTypeObj = ref({});
+let currencyObj = ref({});
+let readers = ref([]);
+let writers = ref([]);
+
+onMounted(async () => {
+  error = undefined;
+  loading = false;
+  try {
+    await loadDataFromServer();
+  } catch (ex) {
+    error = ex.message;
+    loading = false;
+    console.log(error);
+    router.replace({name: 'Accounts'});
+  }
+});
+
+let dirty = computed(() => {
+  let ca = '';
+  if (closed.value && closedAt.value) {
+    ca = DateTime.fromJSDate(closedAt.value).toISO();
+  }
+  let originalClosedAt = '';
+  if (originalData.closedAt) {
+    originalClosedAt = originalData.closedAt.substring(0, 10);
+  }
+  return originalData.name !== name.value ||
+      originalData.type !== typeObj.value.id ||
+      originalData.iban !== iban.value ||
+      originalData.currency !== currencyObj.value.id ||
+      originalData.startBalance !== startBalance.value ||
+      originalClosedAt !== ca.substring(0, 10) ||
+      !_.isEqual(originalData.readers, integerSort(readers.value)) ||
+      !_.isEqual(originalData.writers, integerSort(writers.value));
+});
+
+let type = computed(() => {
+  if (typeObj) {
+    return typeObj.code;
+  }
+  return '';
+});
+
+let currency = computed(() => {
+  if (currencyObj) {
+    return currencyObj.id;
+  }
+  return '';
+});
+
+let currencyName = computed(() => {
+  if (currencyObj) {
+    return currencyObj.name;
+  }
+  return '';
+});
+
+function integerSort(arr) {
+  return arr.sort(function(a, b) {
+    return a - b;
+  });
+}
+
+async function loadDataFromServer() {
+  error = '';
+  loading = true;
+  const promises = [];
+  promises.push(userStore.getUsers());
+  promises.push(accountStore.getAccounts());
+  promises.push(masterDataStore.getCurrencies());
+  promises.push(masterDataStore.getAccountTypes());
+  const results = await Promise.all(promises);
+  loading = false;
+  let mustAuthenticate = false;
+  let notAuthorized = false;
+  let not_ok = false;
+  results.forEach((result) => {
+    let status = result;
+    if (_.isObject(result)) {
+      status = result.status;
     }
-  },
-};
+
+    switch (status) {
+      case 403:
+        notAuthorized = true;
+        break;
+      case 401:
+      case 404:
+        mustAuthenticate = true;
+        break;
+      case 200:
+        break;
+      default:
+        not_ok = true;
+    }
+  });
+  if (mustAuthenticate || not_ok) {
+    userStore.setNotAuthenticated();
+    router.replace({name: 'login'});
+    return;
+  }
+  if (notAuthorized) {
+    router.replace({name: 'notAuthorized'});
+    return;
+  }
+
+  // initialize view data
+  const data = accountStore.getAccountById(props.accountId);
+  integerSort(data.readers);
+  integerSort(data.writers);
+  originalData = _.cloneDeep(data);
+  name.value = data.name;
+  typeObj.value = _.find(masterDataStore.accountTypes, (item) => {
+    return item.id === data.type;
+  });
+  currencyObj.value = _.find(masterDataStore.currencies, (item) => {
+    return item.id === data.currency;
+  });
+  readers.value = data.readers;
+  writers.value = data.writers;
+  startBalance.value = data.startBalance;
+  iban.value = data.iban;
+  closed.value = data.closedAt !== null;
+  if (closed) {
+    if (data.closedAt) {
+      closedAt.value = DateTime.fromISO(data.closedAt).toJSDate();
+    } else {
+      closedAt.value = '';
+    }
+  }
+}
+function createUpdateData() {
+  const updateData = {
+    id: originalData.id,
+  };
+  if (originalData.name !== name.value) {
+    updateData.name = name.value;
+  }
+  if (originalData.type !== typeObj.value.id) {
+    updateData.idAccountType = typeObj.value.id;
+  }
+  if (originalData.iban !== iban.value) {
+    updateData.iban = iban.value;
+  }
+  if (originalData.currency !== currencyObj.value.id) {
+    updateData.idCurrency = currencyObj.value.id;
+  }
+  if (originalData.startBalance !== startBalance.value) {
+    updateData.startBalance = startBalance;
+  }
+  let ca = '';
+  if (closed.value && closedAt.value) {
+    ca = DateTime.fromJSDate(closedAt.value).toISO();
+  }
+  let originalClosedAt = '';
+  if (originalData.closedAt) {
+    originalClosedAt = originalData.closedAt.substring(0, 10);
+  }
+  if (originalClosedAt !== ca.substring(0, 10)) {
+    if (ca === '') {
+      updateData.closedAt = null;
+    } else {
+      const d = new Date(
+          Date.UTC(closedAt.value.getFullYear(), closedAt.value.getMonth(), closedAt.value.getDate(), 0, 0, 0));
+      updateData.closedAt = DateTime.fromJSDate(d);
+    }
+  }
+  if (!_.isEqual(originalData.readers, integerSort(readers.value))) {
+    updateData.readers = readers.value;
+  }
+  if (!_.isEqual(originalData.writers, integerSort(writers.value))) {
+    updateData.writers = writers.value;
+  }
+  return updateData;
+}
+
+async function saveAccount() {
+  error = undefined;
+  loading = false;
+  try {
+    const updateData = createUpdateData();
+    await accountStore.updateAccount(updateData);
+
+    await loadDataFromServer();
+    router.replace({name: 'Accounts'});
+  } catch (ex) {
+    error = ex.message;
+    loading = false;
+    console.log(error);
+  }
+}
+
+function cancel() {
+  router.replace({name: 'Accounts'});
+}
 </script>
 
 <template>
@@ -239,7 +248,7 @@ export default {
       </div>
       <div class="page--content--row">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <Select class="row--item" id="accountType" fluid v-model="typeObj" :options="accountTypes"
+          <Select class="row--item" id="accountType" fluid v-model="typeObj" :options="masterDataStore.accountTypes"
                   optionLabel="name"/>
           <label for="accountType">Kontoart</label>
         </FloatLabel>
@@ -253,7 +262,7 @@ export default {
       </div>
       <div class="page--content--row">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <Select id="accountCurrency" fluid v-model="currencyObj" :options="currencies" optionLabel="name"/>
+          <Select id="accountCurrency" fluid v-model="currencyObj" :options="masterDataStore.currencies" optionLabel="name"/>
           <label for="accountCurrency">Kontowährung</label>
         </FloatLabel>
       </div>
@@ -267,14 +276,14 @@ export default {
       </div>
       <div class="page--content--row">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <MultiSelect id="accountReader" fluid filter v-model="readers" :options="users" optionValue="id"
+          <MultiSelect id="accountReader" fluid filter v-model="readers" :options="userStore.users" optionValue="id"
                        optionLabel="Email"/>
           <label for="accountReader">Benutzer mit Leserechten</label>
         </FloatLabel>
       </div>
       <div class="page--content--row">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <MultiSelect id="accountWriter" fluid filter v-model="writers" :options="users" optionValue="id"
+          <MultiSelect id="accountWriter" fluid filter v-model="writers" :options="userStore.users" optionValue="id"
                        optionLabel="Email"/>
           <label for="accountWriter">Benutzer mit Recht zum Ändern</label>
         </FloatLabel>

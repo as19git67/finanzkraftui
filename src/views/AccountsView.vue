@@ -12,10 +12,9 @@ const userStore = UserStore();
 const accountStore = AccountStore();
 const masterDataStore = MasterDataStore();
 
-
 defineOptions({
   name: 'AccountsView'
-})
+});
 
 let error = ref('');
 let loading = ref(false);
@@ -130,12 +129,12 @@ onMounted(async () => {
                :class="{ 'account-closed': !!item.closedAt }">
 
               <div class="data--list__left">
-                <div class="data--list__line data--list__line--bold">
+                <div class="data--list__line data--list__line--bold data--list__line--space-between">
                   <span>{{ item.name }}</span>
                   <span>{{ item.accountTypeStr }}</span>
                 </div>
-                <div class="data--list__line" v-if="item.closedAt">{{ `Konto geschlossen: ${item.closedDateStr}` }}</div>
-                <div class="data--list__line">
+                <div class="data--list__line data--list__line--space-between" v-if="item.closedAt">{{ `Konto geschlossen: ${item.closedDateStr}` }}</div>
+                <div class="data--list__line data--list__line--space-between">
                   <span v-if="item.balance">Saldo: {{ item.balance }}{{item.currencyStr}}</span>
                   <span v-if="item.balanceDateStr">aktualisiert: {{item.balanceDateStr}}</span>
                 </div>

@@ -506,10 +506,13 @@ button:hover svg .metaphor {
     flex: 1 1 auto;
     gap: 0.5em;
     flex-wrap: wrap;
-    justify-content: space-between;
     overflow-wrap: anywhere;
     font-size: var(--data-list-item-font-size-deemphasize);
     font-weight: var(--data-list-item-font-weight-deemphasize);
+}
+
+.data--list__line--space-between {
+    justify-content: space-between;
 }
 
 .data--list__line--bold {
