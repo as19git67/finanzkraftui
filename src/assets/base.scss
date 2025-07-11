@@ -231,7 +231,6 @@ body {
     overflow: hidden;
     width: 100%;
     height: 100%;
-    color: var(--text-color);
     transition: color 0.5s, background-color 0.5s;
     line-height: 1.6;
     font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
@@ -352,6 +351,7 @@ button:hover svg .metaphor {
     flex-direction: column;
     flex-grow: 0;
     overflow-y: auto;
+    scrollbar-color: var(--asparagus) transparent;
     gap: 5px;
     background-color: var(--page-content-background-color);
     color: var(--page-content-text-color);
@@ -502,6 +502,7 @@ button:hover svg .metaphor {
     flex: 1 1 auto;
     gap: 0.5em;
     flex-wrap: wrap;
+    overflow-wrap: anywhere;
     font-size: var(--data-list-item-font-size-deemphasize);
     font-weight: var(--data-list-item-font-weight-deemphasize);
 }
