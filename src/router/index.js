@@ -1,7 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import StartView from '../views/StartView.vue';
 import LoginView from '../views/LoginView.vue';
-import LogoutView from '../views/LogoutView.vue';
 import TransactionListView from "../views/TransactionListView.vue";
 import TransactionDetailView from '../views/TransactionDetailView.vue';
 import TransactionRulesView from '../views/TransactionRulesView.vue';
@@ -35,11 +34,6 @@ const router = createRouter({
       path: '/login',
       name: 'login',
       component: LoginView,
-    },
-    {
-      path: '/logout',
-      name: 'logout',
-      component: LogoutView,
     },
     {
       path: '/transactionsOfAccount/:accountId*',
