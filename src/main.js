@@ -98,6 +98,23 @@ const MyPreset = definePreset(Aura, {
       900: 'var(--linen)',
       950: 'white'
     },
+    colorScheme: {
+      light: {
+        surface: {
+          50: 'var(--pale-dogwood)',  // control background variant filled
+          100: 'var(--pale-dogwood)', // background-dropdown
+          200: 'var(--linen)', // background-hover-dropdown
+          300: 'var(--pale-dogwood)', // control border
+          400: 'var(--linen)', // control border hover
+          500: 'var(--eggplant)', // floating label - not floated; control-border
+          600: 'var(--eggplant)',  // dropdown-icon
+          700: 'var(--eggplant)',  // input value
+          800: 'var(--eggplant)',  // select options hover
+          900: 'var(--eggplant)', // toggle button checked text color
+          950: 'var(--eggplant)' // calendar-icon, control-border-hover
+        }
+      }
+    }
   },
   components: {
     button: {

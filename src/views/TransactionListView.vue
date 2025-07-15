@@ -339,7 +339,7 @@ export default {
                 <div class="data--list__line" v-if="item.t_notes">{{ item.t_notes }}</div>
               </div>
               <div class="data--list__right">
-                <span>{{ item.amountStr }}</span>
+                <span :class="{'data--list__line--bold': !item.confirmed }">{{ item.amountStr }}</span>
               </div>
             </router-link>
           </div>

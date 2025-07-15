@@ -1,299 +1,332 @@
-<script>
+<script setup>
+import _ from "lodash";
 import {DateTime, Settings as DateTimeSettings} from 'luxon';
-import _ from 'lodash';
-import router from '@/router';
-import {mapActions, mapState, mapStores} from 'pinia';
-import {UserStore} from '@/stores/user';
-import {MasterDataStore} from '@/stores/masterdata';
+import {ref, onMounted, computed, watch} from 'vue';
+import {useRouter} from 'vue-router';
+import {UserStore} from "@/stores/user";
+import {AccountStore} from "@/stores/accounts";
+import {MasterDataStore} from "@/stores/masterdata";
 import {TransactionStore} from '@/stores/transactions';
-import {AccountStore} from '@/stores/accounts';
-import {useConfirm} from 'primevue/useconfirm';
+import {useConfirm} from "primevue/useconfirm";
 
-export default {
+const router = useRouter();
+const userStore = UserStore();
+const accountStore = AccountStore();
+const masterDataStore = MasterDataStore();
+const transactionStore = TransactionStore();
+
+
+const props = defineProps({
+  transactionId: {type: String},
+});
+
+defineOptions({
   name: 'TransactionDetailView',
-  components: {},
-  props: {
-    transactionId: String,
-  },
-  setup () {
-    const confirm = useConfirm();
-    return { confirm };
-  },
-  data() {
-    return {
-      transactionDate: this.transactionDate,
-      transactionNotes: this.transactionNotes,
-      transactionText: this.transactionText,
-      transactionPayee: this.transactionPayee,
-      transactionPayeeShortened: this.transactionPayeeShortened,
-      transactionEntryText: this.transactionEntryText,
-      transactionCategory: this.transactionCategory,
-      filteredCategories: this.filteredCategories,
-      transaction: this.transaction,
-      canDelete: this.canDelete,
-      error: this.error,
-      updateData: this.updateData,
-      categoryPreselection: 0,
-      confirmText: '',
-      editName: false,
-      amazonOrderId: '',
-    };
-  },
-  watch: {
-    transactionNotes: function(val, oldVal) {
-      if (oldVal === undefined || this.transaction === undefined) {
-        return;
-      }
-      this.updateData.t_notes = val;
-      this.transaction.t_notes = val;
+});
+
+const confirm = useConfirm();
+
+let dataChanged = _.debounce(handleDataChanged, 2000);
+
+let updateData = ref({});
+let stopUpdating = false;
+let transaction = {};
+
+let error = ref('');
+let loading = ref(false);
+let transactionLoaded = ref(false);
+let transactionConfirmed = ref(false);
+let canDelete = ref(false);
+let amazonOrderId = ref('');
+let transactionAmount = ref(0);
+let transactionEntryText = ref('');
+let transactionText = ref('');
+let transactionNotes = ref('');
+let transactionPayee = ref('');
+let transactionPayeeShortened = ref('');
+let transactionDate = ref('');
+let transactionCategory = ref({});
+let transactionMREF = ref('');
+let transactionEREF = ref('');
+let transactionCRED = ref('');
+let transactionAccountName = ref('');
+let transactionPayeePayerAcctNo = ref('');
+let transactionRuleSetId = ref();
+let transactionRuleSetName = ref('');
+let filteredCategories = ref([]);
+
+onMounted(async () => {
+  error = '';
+  loading = true;
+
+  if (!props.transactionId) {
+    await router.replace('/');
+    return;
+  }
+
+  transactionStore.setCurrentTransactionId(props.transactionId);
+  await loadDataFromServer();
+  loading = false;
+ });
+
+watch(transactionNotes, (val, oldVal) => {
+  if (transaction === undefined) {
+    return;
+  }
+  if (transaction.t_notes === val) {
+    return;
+  }
+  updateData.value.t_notes = val;
+});
+
+watch(transactionCategory, (val, oldVal) => {
+  if (transaction === undefined) {
+    return;
+  }
+  if (!_.isObject(val)) {
+    return;
+  }
+
+  if (transaction.category_id === val.id) {
+    // did not change
+    return;
+  }
+
+  updateData.value.category_id = val.id;
+  // if (masterDataStore.categories.length > 0) {
+  //   transaction.category_name = masterDataStore.getCategoryById(val.id).full_name;
+  // } else {
+  //   transaction.category_name = '';
+  // }
+});
+
+watch(transactionPayee, (val, oldVal) => {
+    if (oldVal === undefined || transaction.value === undefined) {
+      return;
+    }
+    if (transaction.value.t_payee === val) {
+      return;
+    }
+    updateData.value.t_payee = val;
+});
+
+let dirty = computed(() => {
+  const keyCount = Object.keys(updateData.value).length;
+  if (keyCount === 1 && updateData.value.confirmed !== undefined) {
+    return false;
+  }
+  return keyCount > 0;
+});
+
+async function loadDataFromServer() {
+  error = '';
+  loading = true;
+  const promises = [];
+  promises.push(transactionStore.getTransaction(props.transactionId));
+  promises.push(masterDataStore.getCategories());
+  promises.push(accountStore.getAccounts());
+  const results = await Promise.all(promises);
+  loading = false;
+  let mustAuthenticate = false;
+  let notAuthorized = false;
+  let not_ok = false;
+  results.forEach((result) => {
+    let status = result;
+    if (_.isObject(result)) {
+      status = result.status;
+    }
+
+    switch (status) {
+      case 403:
+        notAuthorized = true;
+        break;
+      case 401:
+      case 404:
+        mustAuthenticate = true;
+        break;
+      case 200:
+        break;
+      default:
+        console.log(result);
+        error = 'Fehler beim Laden der Daten';
+        transaction = ref({});
+        not_ok = true;
+    }
+  });
+  if (mustAuthenticate) {
+    userStore.setNotAuthenticated();
+    await router.replace({name: 'login'});
+    return;
+  }
+  if (notAuthorized) {
+    await router.replace({name: 'notAuthorized'});
+    return;
+  }
+  if (not_ok) {
+    transactionLoaded.value = false;
+    return;
+  }
+
+  transaction = {...(results[0].data)};
+  initReactiveData();
+  transactionLoaded.value = true;
+
+  if (!transaction.confirmed) {
+    updateData.value.confirmed = true;
+    dataChanged();
+  }
+}
+
+function initReactiveData() {
+  const account = accountStore.getAccountById(transaction.account_id);
+  canDelete = account.type === 'cash';
+
+  transactionCategory.value = _.find(masterDataStore.categories, (item) => {
+    return item.id === transaction.category_id;
+  });
+
+  transactionConfirmed.value = transaction.confirmed;
+  transactionDate.value = new Date(transaction.t_value_date);
+  transactionAmount.value = transaction.t_amount;
+  transactionNotes.value = transaction.t_notes;
+  transactionText.value = transaction.t_text;
+  transactionPayee.value = transaction.t_payee;
+  transactionPayeeShortened.value = transaction.payeeShortened;
+  transactionEntryText.value = transaction.t_entry_text;
+  transactionMREF.value = transaction.t_MREF;
+  transactionEREF.value = transaction.t_EREF;
+  transactionCRED.value = transaction.t_CRED;
+  transactionAccountName.value = transaction.account_name;
+  transactionPayeePayerAcctNo.value = transaction.t_payeePayerAcctNo;
+  if (transaction.t_text && transaction.t_payee &&
+      transaction.t_payee.startsWith('AMAZON')) {
+    const matches = transaction.t_text.match(/(\d{3}\-\d{7}\-\d{7})/);
+    if (matches.length > 0) {
+      amazonOrderId.value = matches[0];
+    } else {
+      amazonOrderId.value = '';
+    }
+  }
+  transactionRuleSetId.value = transaction.rule_set_id;
+  transactionRuleSetName.value = transaction.rule_set_name;
+}
+
+function searchCategory(event) {
+  if (!event.query.trim().length) {
+    filteredCategories.value = [...masterDataStore.categories];
+  } else {
+    filteredCategories.value = masterDataStore.categories.filter((category) => {
+      return category.full_name.toLowerCase().indexOf(event.query.toLowerCase()) >= 0;
+    });
+  }
+}
+
+function cancel() {
+  router.back();
+}
+
+function goToTransactionList() {
+  router.back();
+}
+
+async function saveTransaction() {
+  if (await handleDataChanged()) {
+    goToTransactionList();
+  }
+}
+
+async function handleDataChanged() {
+  if (stopUpdating) {
+    // no transaction to update - this can happen if transaction was deleted in the meanwhile
+    return false;
+  }
+  error = undefined;
+  updateData.value.id = props.transactionId;
+  const result = await transactionStore.updateTransaction(updateData.value);
+  let not_ok = false;
+  let mustAuthenticate = false;
+  let status = result.status;
+  switch (status) {
+    case 401:
+      mustAuthenticate = true;
+      break;
+    case 403:
+      error = 'Keine Berechtigung zum Ändern der Buchung';
+      not_ok = true;
+      break;
+    case 200:
+      break;
+    default:
+      not_ok = true;
+  }
+  if (mustAuthenticate) {
+    error = 'Benutzer muss angemeldet sein';
+    return false;
+  }
+  if (not_ok) {
+    if (!error.value) {
+      error = result.message;
+    }
+    return false;
+  }
+
+  if (updateData.value.confirmed !== undefined) {
+    transaction.confirmed = updateData.value.confirmed;
+  }
+  if (updateData.value.category_id !== undefined) {
+    transaction.category_id = updateData.value.category_id;
+  }
+  if (updateData.value.t_notes !== undefined) {
+    transaction.t_notes = updateData.value.t_notes;
+  }
+  initReactiveData();
+  updateData.value = {};
+
+  return true;
+}
+
+async function markUnconfirmed() {
+  updateData.value.confirmed = false;
+  await handleDataChanged();
+}
+
+function deleteTheTransaction() {
+  confirm.require({
+    message: 'Soll diese Buchung wirklich gelöscht werden?',
+    header: 'Buchung löschen',
+    icon: 'pi pi-exclamation-triangle',
+    rejectLabel: 'Abbrechen',
+    rejectProps: {
+      label: 'Abbrechen',
+      severity: 'secondary',
+      outlined: true,
     },
-    categoryId: function(val, oldVal) {
-      if (oldVal === undefined || this.transaction === undefined) {
-        return;
-      }
-      if (this.transaction.category_id === val) {
-        return;
-      }
-      this.updateData.category_id = val;
-      this.transaction.category_id = val;
-      if (val && this.categories.length > 0) {
-        this.transaction.category_name = this.getCategoryById(val).full_name;
-      } else {
-        this.transaction.category_name = '';
-      }
+    acceptProps: {
+      label: 'Löschen',
+      severity: 'danger',
     },
-    transactionPayee: function(val, oldVal) {
-      if (oldVal === undefined || this.transaction === undefined) {
-        return;
-      }
-      if (this.transaction.t_payee === val) {
-        return;
-      }
-      this.updateData.t_payee = val;
-    },
-  },
-  computed: {
-    confirmed() {
-      return this.transaction?.confirmed;
-    },
-    dirty() {
-      const keyCount = Object.keys(this.updateData).length;
-      if (keyCount === 1 && this.updateData.confirmed) {
-        return false;
-      }
-      return keyCount > 0;
-    },
-    ...mapStores(UserStore, MasterDataStore),
-    ...mapStores(AccountStore),
-    ...mapState(UserStore, ['authenticated']),
-    ...mapState(MasterDataStore, ['categories']),
-  },
-  methods: {
-    ...mapActions(TransactionStore,
-        ['getTransaction', 'updateTransaction', 'deleteTransaction', 'setCurrentTransactionId']),
-    ...mapActions(AccountStore, ['getAccounts', 'getAccountById']),
-    ...mapActions(MasterDataStore, ['getCategoryById', 'getCategories']),
-    goToTransactionList() {
-      router.back();
-    },
-    searchCategory(event) {
-      if (!event.query.trim().length) {
-        this.filteredCategories = [...this.categories];
-      } else {
-        this.filteredCategories = this.categories.filter((category) => {
-          return category.full_name.toLowerCase().indexOf(event.query.toLowerCase()) >= 0;
-        });
-      }
-    },
-    async saveTransaction() {
-      this.updateData.confirmed = true;
-      if (await this.handleDataChanged()) {
-        this.goToTransactionList();
-      }
-    },
-    cancel() {
-      router.back();
-    },
-    deleteTheTransaction() {
-      this.confirm.require({
-        message: 'Soll diese Buchung wirklich gelöscht werden?',
-        header: 'Buchung löschen',
-        icon: 'pi pi-exclamation-triangle',
-        rejectLabel: 'Abbrechen',
-        rejectProps: {
-          label: 'Abbrechen',
-          severity: 'secondary',
-          outlined: true,
-        },
-        acceptProps: {
-          label: 'Löschen',
-          severity: 'danger',
-        },
-        accept: async () => {
-          this.error = undefined;
-          try {
-            const result = await this.deleteTransaction(this.transactionId);
-            if (result.status !== 200) {
-              this.error = result.message;
-              return;
-            }
-            // this transaction is no more available - in case debounced handleDataChanged for confirmed flag gets called
-            this.stopUpdating = true;
-            router.back();
-          } catch (ex) {
-            this.error = ex.message;
-            console.log(ex);
-          }
-        },
-        reject: () => {
-          // do nothing when delete is canceled
-        },
-      });
-    },
-    async handleDataChanged() {
-      if (this.stopUpdating) {
-        // no transaction to update - this can happen if transaction was deleted in the meanwhile
-        return;
-      }
-      this.error = undefined;
-      this.updateData.id = this.transactionId;
-      if (this.updateData.category_id !== undefined) {
-        this.updateData.category_id = this.transactionCategory.id;
-        // update also the category_name, but it is only used in the transactions list and is
-        // not really being updated, because it is retrieved via joining Fk_Category
-        // this.updateData.category_name = this.getCategoryById(this.updateData.category_id).full_name;
-      }
-      const result = await this.updateTransaction(this.updateData);
-      let not_ok = false;
-      let mustAuthenticate = false;
-      let status = result.status;
-      switch (status) {
-        case 401:
-          mustAuthenticate = true;
-          break;
-        case 403:
-          this.error = 'Die Berechtigung zum Ändern der Buchung fehlt.';
-          not_ok = true;
-          break;
-        case 200:
-          break;
-        default:
-          not_ok = true;
-      }
-      if (mustAuthenticate) {
-        this.error = 'Benutzer muss angemeldet sein';
-        return false;
-      }
-      if (not_ok) {
-        if (!this.error) {
-          this.error = result.message;
+    accept: async () => {
+      error = undefined;
+      try {
+        const result = await transactionStore.deleteTransaction(props.transactionId);
+        if (result.status !== 200) {
+          error = result.message;
+          return;
         }
-        return false;
+        // this transaction is no more available - in case debounced handleDataChanged for confirmed flag gets called
+        stopUpdating = true;
+        router.back();
+      } catch (ex) {
+        error = ex.message;
+        console.log(ex);
       }
-
-      this.transaction = _.extend(this.transaction, this.updateData);
-      this.updateData = {};
-      return true;
     },
-    async markUnconfirmed() {
-      this.updateData.confirmed = false;
-      await this.handleDataChanged();
+    reject: () => {
+      // do nothing when delete is canceled
     },
-  },
-  created() {
-    this.stopUpdating = false;
-    this.canDelete = false;
-    this.dataChanged = _.debounce(this.handleDataChanged, 2000);
-    this.updateData = {};
-    this.transaction = {};
-  },
-  async mounted() {
-    this.error = undefined;
-    this.loading = true;
+  });
+}
 
-    if (!this.transactionId) {
-      router.replace('/');
-      return;
-    }
-
-    this.setCurrentTransactionId(this.transactionId);
-
-    const promises = [];
-    promises.push(this.getTransaction(this.transactionId));
-    promises.push(this.getCategories());
-    promises.push(this.getAccounts());
-    const results = await Promise.all(promises);
-    this.loading = false;
-
-    let mustAuthenticate = false;
-    let not_ok = false;
-    results.forEach((result, index) => {
-      let status = result;
-      if (_.isObject(result)) {
-        status = result.status;
-      }
-      switch (status) {
-        case 401:
-          mustAuthenticate = true;
-          break;
-        case 403:
-          if (index === 0) {
-            this.error = 'Die Berechtigung zum Laden der Buchung fehlt.';
-          } else {
-            if (this.error) {
-              this.error += ' ';
-            }
-            this.error += 'Die Berechtigung zum Laden der Kategorien fehlt.';
-          }
-          not_ok = true;
-          break;
-        case 200:
-          break;
-        default:
-          not_ok = true;
-      }
-    });
-    if (mustAuthenticate || not_ok) {
-      this.transaction = {};
-    }
-    if (mustAuthenticate) {
-      router.replace('/login');
-      return;
-    }
-    if (not_ok) {
-      return;
-    }
-
-    this.transaction = {...(results[0].data)};
-    const account = this.getAccountById(this.transaction.account_id);
-    this.canDelete = account.type === 'cash';
-
-    this.transactionCategory = _.find(this.categories, (item) => {
-      return item.id === this.transaction.category_id;
-    });
-
-    this.transactionDate = new Date(this.transaction.t_value_date);
-    this.transactionNotes = this.transaction.t_notes;
-    this.transactionText = this.transaction.t_text;
-    this.transactionPayee = this.transaction.t_payee;
-    this.transactionPayeeShortened = this.transaction.payeeShortened;
-    this.transactionEntryText = this.transaction.t_entry_text;
-    if (this.transaction.t_text && this.transaction.t_payee &&
-        this.transaction.t_payee.startsWith('AMAZON')) {
-      const matches = this.transaction.t_text.match(/(\d{3}\-\d{7}\-\d{7})/);
-      if (matches.length > 0) {
-        this.amazonOrderId = matches[0];
-      } else {
-        this.amazonOrderId = '';
-      }
-    }
-    if (!this.transaction.confirmed) {
-      this.transaction.confirmed = true;
-      this.updateData.confirmed = true;
-      this.dataChanged();
-    }
-  },
-};
 </script>
 
 <template>
@@ -333,8 +366,8 @@ export default {
           <FloatLabel variant="in" class="row--item row--item--is-grow">
             <InputNumber id="idTransactionAmount" locale="de-DE"
                          inputmode="decimal" currency="EUR"
-                         mode="currency" v-model="transaction.t_amount"
-                         variant="filled" readonly size="large"/>
+                         mode="currency" v-model="transactionAmount"
+                         readonly size="large" variant="filled"/>
             <label for="idTransactionAmount">Betrag</label>
           </FloatLabel>
         </div>
@@ -364,9 +397,9 @@ export default {
           <label for="idTransactionText">Text</label>
         </FloatLabel>
       </div>
-      <div class="page--content--row" v-if="transaction.t_MREF">
+      <div class="page--content--row" v-if="transactionMREF">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <InputText id="idTransactionMREF" v-model="transaction.t_MREF" variant="filled"
+          <InputText id="idTransactionMREF" v-model="transactionMREF" variant="filled"
                      readonly size="small"/>
           <label for="idTransactionMREF">Mandatsreferenz</label>
         </FloatLabel>
@@ -381,42 +414,45 @@ export default {
         </div>
       </div>
 
-      <div class="page--content--row" v-if="transaction.account_name">
+      <div class="page--content--row" v-if="transactionAccountName">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <InputText id="idTransactionAccountName" v-model="transaction.account_name" variant="filled"
+          <InputText id="idTransactionAccountName" v-model="transactionAccountName" variant="filled"
                      readonly size="small"/>
           <label for="idTransactionAccountName">Konto</label>
         </FloatLabel>
       </div>
-      <div class="page--content--row" v-if="transaction.t_payeePayerAcctNo">
+      <div class="page--content--row" v-if="transactionPayeePayerAcctNo">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <InputText id="idTransactionPayeePayeeAcctNo" v-model="transaction.t_payeePayerAcctNo" variant="filled"
+          <InputText id="idTransactionPayeePayeeAcctNo" v-model="transactionPayeePayerAcctNo" variant="filled"
                      readonly size="small"/>
           <label for="idTransactionPayeePayeeAcctNo">Zahlungsempfänger</label>
         </FloatLabel>
       </div>
-      <div class="page--content--row" v-if="transaction.t_EREF">
+      <div class="page--content--row" v-if="transactionEREF">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <InputText id="idTransactionEREF" v-model="transaction.t_EREF" variant="filled"
+          <InputText id="idTransactionEREF" v-model="transactionEREF" variant="filled"
                      readonly size="small"/>
           <label for="idTransactionEREF">ERef</label>
         </FloatLabel>
       </div>
-      <div class="page--content--row" v-if="transaction.t_CRED">
+      <div class="page--content--row" v-if="transactionCRED">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <InputText id="idTransactionCRED" v-model="transaction.t_CRED" variant="filled"
+          <InputText id="idTransactionCRED" v-model="transactionCRED" variant="filled"
                      readonly size="small"/>
           <label for="idTransactionCRED">Lieferant</label>
         </FloatLabel>
       </div>
-      <div class="page--content--row" v-if="transaction">
-        <router-link class="action" replace :to="{ path:'/', name: 'home'}">Tags bearbeiten</router-link>
+      <div class="page--content--row" v-if="transactionLoaded">
+        <div class="row--item">
+          <Button asChild v-slot="slotProps" variant="link">
+            <RouterLink append :to="{ path:'/', name: 'home'}" :class="slotProps.class">Tags bearbeiten</RouterLink>
+          </Button>
+        </div>
       </div>
-      <div class="page--content--row" v-if="transaction">
-        <router-link class="action" replace
-                     :to="{ name: 'TransactionRules', state: { ruleSetId: transaction.rule_set_id }, meta: { ruleSetId: transaction.rule_set_id } }">
-          Regeln <span v-if="transaction.rule_set_id">({{ transaction.rule_set_name }})</span>
-        </router-link>
+      <div class="page--content--row" v-if="transactionRuleSetId">
+        <div class="row--item">
+          <router-link class="action" append :to="{ name: 'TransactionRules', state: { ruleSetId: transactionRuleSetId }, meta: { ruleSetId: transactionRuleSetId } }">Regeln<span>({{ transactionRuleSetName }})</span></router-link>
+        </div>
       </div>
       <div class="page--content--row" v-if="error">
         <div class="error">{{ error }}</div>
