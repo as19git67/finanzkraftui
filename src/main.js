@@ -105,7 +105,7 @@ const MyPreset = definePreset(Aura, {
           100: 'var(--pale-dogwood)', // background-dropdown
           200: 'var(--linen)', // background-hover-dropdown
           300: 'var(--pale-dogwood)', // control border
-          400: 'var(--linen)', // control border hover
+          400: 'var(--pale-dogwood)', // control border hover
           500: 'var(--eggplant)', // floating label - not floated; control-border
           600: 'var(--eggplant)',  // dropdown-icon
           700: 'var(--eggplant)',  // input value

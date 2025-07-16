@@ -78,6 +78,17 @@ watch(transactionNotes, (val, oldVal) => {
   updateData.value.t_notes = val;
 });
 
+watch(transactionText, (val, oldVal) => {
+  if (transaction === undefined) {
+    return;
+  }
+  if (transaction.t_text === val) {
+    delete updateData.value.t_text;
+    return;
+  }
+  updateData.value.t_text = val;
+});
+
 watch(transactionCategory, (val, oldVal) => {
   if (transaction === undefined) {
     return;
