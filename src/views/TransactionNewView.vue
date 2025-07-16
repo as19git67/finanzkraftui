@@ -14,6 +14,7 @@ import {TransactionStore} from '@/stores/transactions';
 import {PreferencesStore} from '@/stores/preferences';
 import {MasterDataStore} from '@/stores/masterdata';
 import {AccountStore} from '@/stores/accounts';
+import * as sea from "node:sea";
 
 export default {
   name: 'TransactionNewView',
@@ -78,11 +79,12 @@ export default {
       }
     },
     searchPayee(event) {
-      if (!event.query.trim().length) {
+      const searchTerm = event.query.trim().toLowerCase();
+      if (!searchTerm.length) {
         this.filteredPayees = [...this.payees];
       } else {
         this.filteredPayees = this.payees.filter((payee) => {
-          return payee.toLowerCase().indexOf(event.query.toLowerCase()) >= 0;
+          return payee.toLowerCase().indexOf(searchTerm) >= 0;
         });
       }
     },
@@ -98,7 +100,8 @@ export default {
       this.transactions.forEach(transaction => {
         const payee = transaction.t_payee;
         if (payee) {
-          p[payee] = payee;
+          const trimmed = payee.trim();
+          p[trimmed] = trimmed;
         }
       });
       this.payees = Object.keys(p);
@@ -109,9 +112,7 @@ export default {
       try {
         const promises = [];
         promises.push(this.getAccounts(true));
-        promises.push(this.getTransactions({
-          accountsWhereIn: [parseInt(this.accountId)],
-        }));
+        promises.push(this.getTransactions({accountsWhereIn: [parseInt(this.accountId)]}));
         promises.push(this.getNewTransactionPresets());
         promises.push(this.getCategories(true));
         const results = await Promise.all(promises);
@@ -321,7 +322,7 @@ export default {
       </div>
       <div class="page--content--row">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <AutoComplete id="payeeSelection" class="transactionCategorySelection prevent-scroll"
+          <AutoComplete id="payeeSelection" class="transactionPayeeSelection prevent-scroll"
                         v-model="transactionPayee"
                         :suggestions="filteredPayees" @complete="searchPayee"/>
           <label for="payeeSelection">
@@ -377,29 +378,14 @@ export default {
 </template>
 
 <style scoped>
-.transactionCategorySelection {
+.transactionCategorySelection,
+.transactionPayeeSelection,
+.transactionCategorySelection > *,
+.transactionPayeeSelection > * {
   display: flex;
   flex-grow: 1;
   flex-basis: 100%;
   width: 100%;
-}
-
-.transactionCategorySelection > * {
-  display: flex;
-  flex-grow: 1;
-  flex-basis: 100%;
-  width: 100%;
-}
-
-.page--footer .p-button {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  flex: 1 1 auto;
-}
-
-.page--footer .p-button button {
-  flex-grow: 1;
 }
 </style>
 

@@ -31,12 +31,14 @@ let dataChanged = _.debounce(handleDataChanged, 2000);
 let updateData = ref({});
 let stopUpdating = false;
 let transaction = {};
+let payees = [];
 
 let error = ref('');
 let loading = ref(false);
 let transactionLoaded = ref(false);
 let transactionConfirmed = ref(false);
-let canDelete = ref(false);
+let isCash = ref(false);
+let isSpending = ref(true);
 let amazonOrderId = ref('');
 let transactionAmount = ref(0);
 let transactionEntryText = ref('');
@@ -54,11 +56,9 @@ let transactionPayeePayerAcctNo = ref('');
 let transactionRuleSetId = ref();
 let transactionRuleSetName = ref('');
 let filteredCategories = ref([]);
+let filteredPayees = ref([]);
 
 onMounted(async () => {
-  error = '';
-  loading = true;
-
   if (!props.transactionId) {
     await router.replace('/');
     return;
@@ -66,7 +66,6 @@ onMounted(async () => {
 
   transactionStore.setCurrentTransactionId(props.transactionId);
   await loadDataFromServer();
-  loading = false;
  });
 
 watch(transactionNotes, (val, oldVal) => {
@@ -93,21 +92,20 @@ watch(transactionCategory, (val, oldVal) => {
   }
 
   updateData.value.category_id = val.id;
-  // if (masterDataStore.categories.length > 0) {
-  //   transaction.category_name = masterDataStore.getCategoryById(val.id).full_name;
-  // } else {
-  //   transaction.category_name = '';
-  // }
 });
 
 watch(transactionPayee, (val, oldVal) => {
-    if (oldVal === undefined || transaction.value === undefined) {
-      return;
-    }
-    if (transaction.value.t_payee === val) {
-      return;
-    }
-    updateData.value.t_payee = val;
+  if (transaction === undefined) {
+    return;
+  }
+  if (!_.isString(val)) {
+    return;
+  }
+  if (transaction.t_payee === val) {
+    delete updateData.value.t_payee;
+    return;
+  }
+  updateData.value.t_payee = val;
 });
 
 let dirty = computed(() => {
@@ -119,14 +117,14 @@ let dirty = computed(() => {
 });
 
 async function loadDataFromServer() {
-  error = '';
-  loading = true;
+  error.value = '';
+  loading.value = true;
   const promises = [];
   promises.push(transactionStore.getTransaction(props.transactionId));
   promises.push(masterDataStore.getCategories());
   promises.push(accountStore.getAccounts());
   const results = await Promise.all(promises);
-  loading = false;
+  loading.value = false;
   let mustAuthenticate = false;
   let notAuthorized = false;
   let not_ok = false;
@@ -148,7 +146,7 @@ async function loadDataFromServer() {
         break;
       default:
         console.log(result);
-        error = 'Fehler beim Laden der Daten';
+        error.value = 'Fehler beim Laden der Daten';
         transaction = ref({});
         not_ok = true;
     }
@@ -169,6 +167,8 @@ async function loadDataFromServer() {
 
   transaction = {...(results[0].data)};
   initReactiveData();
+  extractPayees();
+
   transactionLoaded.value = true;
 
   if (!transaction.confirmed) {
@@ -177,17 +177,29 @@ async function loadDataFromServer() {
   }
 }
 
+function extractPayees() {
+  const p = {};
+  transactionStore.transactions.forEach(transaction => {
+    const payee = transaction.t_payee;
+    if (payee) {
+      const trimmed = payee.trim();
+      p[trimmed] = trimmed;
+    }
+  });
+  payees = Object.keys(p);
+}
+
 function initReactiveData() {
   const account = accountStore.getAccountById(transaction.account_id);
-  canDelete = account.type === 'cash';
-
+  isCash = account.type === 'cash';
+  isSpending = transaction.t_amount < 0;
   transactionCategory.value = _.find(masterDataStore.categories, (item) => {
     return item.id === transaction.category_id;
   });
 
   transactionConfirmed.value = transaction.confirmed;
   transactionDate.value = new Date(transaction.t_value_date);
-  transactionAmount.value = transaction.t_amount;
+  transactionAmount.value = Math.abs(transaction.t_amount);
   transactionNotes.value = transaction.t_notes;
   transactionText.value = transaction.t_text;
   transactionPayee.value = transaction.t_payee;
@@ -212,11 +224,23 @@ function initReactiveData() {
 }
 
 function searchCategory(event) {
-  if (!event.query.trim().length) {
+  const searchTerm = event.query.trim().toLowerCase();
+  if (!searchTerm.length) {
     filteredCategories.value = [...masterDataStore.categories];
   } else {
     filteredCategories.value = masterDataStore.categories.filter((category) => {
-      return category.full_name.toLowerCase().indexOf(event.query.toLowerCase()) >= 0;
+      return category.full_name.toLowerCase().indexOf(searchTerm) >= 0;
+    });
+  }
+}
+
+function searchPayee(event) {
+  const searchTerm = event.query.trim().toLowerCase();
+  if (!searchTerm.length) {
+    filteredPayees.value = [...payees];
+  } else {
+    filteredPayees.value = payees.filter((payee) => {
+      return payee.toLowerCase().indexOf(searchTerm) >= 0;
     });
   }
 }
@@ -240,9 +264,11 @@ async function handleDataChanged() {
     // no transaction to update - this can happen if transaction was deleted in the meanwhile
     return false;
   }
-  error = undefined;
+  error.value = '';
+  loading.value = true;
   updateData.value.id = props.transactionId;
   const result = await transactionStore.updateTransaction(updateData.value);
+  loading.value = false;
   let not_ok = false;
   let mustAuthenticate = false;
   let status = result.status;
@@ -251,7 +277,7 @@ async function handleDataChanged() {
       mustAuthenticate = true;
       break;
     case 403:
-      error = 'Keine Berechtigung zum Ändern der Buchung';
+      error.value = 'Keine Berechtigung zum Ändern der Buchung';
       not_ok = true;
       break;
     case 200:
@@ -260,12 +286,13 @@ async function handleDataChanged() {
       not_ok = true;
   }
   if (mustAuthenticate) {
-    error = 'Benutzer muss angemeldet sein';
+    error.value = 'Benutzer muss angemeldet sein';
     return false;
   }
   if (not_ok) {
+    console.log(result);
     if (!error.value) {
-      error = result.message;
+      error.value = result.message;
     }
     return false;
   }
@@ -306,8 +333,9 @@ function deleteTheTransaction() {
       severity: 'danger',
     },
     accept: async () => {
-      error = undefined;
       try {
+        error.value = '';
+        loading.value = true;
         const result = await transactionStore.deleteTransaction(props.transactionId);
         if (result.status !== 200) {
           error = result.message;
@@ -317,8 +345,10 @@ function deleteTheTransaction() {
         stopUpdating = true;
         router.back();
       } catch (ex) {
-        error = ex.message;
+        error.value = ex.message;
         console.log(ex);
+      } finally {
+        loading.value = false;
       }
     },
     reject: () => {
@@ -355,6 +385,17 @@ function deleteTheTransaction() {
           <label for="catSelection">Kategorie</label>
         </FloatLabel>
       </div>
+      <div class="page--content--row" v-if="isCash">
+        <FloatLabel variant="in" class="row--item row--item--is-grow">
+          <AutoComplete id="payeeSelection" class="transactionPayeeSelection prevent-scroll"
+                        v-model="transactionPayee"
+                        :suggestions="filteredPayees" @complete="searchPayee"/>
+          <label for="payeeSelection">
+            <span v-if="isSpending">Zahlungsempfänger</span>
+            <span v-else>Zahler</span>
+          </label>
+        </FloatLabel>
+      </div>
       <div class="page--content--row">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
           <InputText id="idTransactionNotes" v-model="transactionNotes"></InputText>
@@ -367,17 +408,20 @@ function deleteTheTransaction() {
             <InputNumber id="idTransactionAmount" locale="de-DE"
                          inputmode="decimal" currency="EUR"
                          mode="currency" v-model="transactionAmount"
-                         readonly size="large" variant="filled"/>
+                         :readonly="!isCash" size="large" :variant="!isCash ? 'filled' : null"/>
             <label for="idTransactionAmount">Betrag</label>
           </FloatLabel>
+          <ToggleButton v-model="isSpending" onLabel="Ausgabe" offLabel="Einnahme" onIcon="pi pi-minus"
+                        offIcon="pi pi-plus" size="large"/>
         </div>
       </div>
       <div class="page--content--row">
         <div class="page--content--row__inline">
           <FloatLabel variant="in" class="row--item row--item--is-grow">
-            <DatePicker v-model="transactionDate" inputId="transactionDate" showIcon readonly
+            <DatePicker v-model="transactionDate" inputId="transactionDate" showIcon
+                        :readonly="!isCash"
                         iconDisplay="input"
-                        variant="filled"/>
+                        :variant="!isCash ? 'filled' : null"/>
             <label for="transactionDate">Buchungsdatum</label>
           </FloatLabel>
         </div>
@@ -392,8 +436,10 @@ function deleteTheTransaction() {
       </div>
       <div class="page--content--row" v-if="transactionText">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <Textarea id="idTransactionText" v-model="transactionText" variant="filled"
-                    readonly size="small" autoResize></Textarea>
+          <Textarea id="idTransactionText" v-model="transactionText"
+                    :variant="!isCash ? 'filled' : null"
+                    :readonly="!isCash"
+                    size="small" autoResize></Textarea>
           <label for="idTransactionText">Text</label>
         </FloatLabel>
       </div>
@@ -457,7 +503,7 @@ function deleteTheTransaction() {
       <div class="page--content--row" v-if="error">
         <div class="error">{{ error }}</div>
       </div>
-      <div class="page--content--row" v-if="canDelete">
+      <div class="page--content--row" v-if="isCash">
         <div class="row--item row--item--is-centered">
           <Button label="Löschen" severity="danger" @click="deleteTheTransaction" size="large"/>
         </div>
@@ -468,4 +514,13 @@ function deleteTheTransaction() {
 </template>
 
 <style scoped>
+.transactionCategorySelection,
+.transactionPayeeSelection,
+.transactionCategorySelection > *,
+.transactionPayeeSelection > * {
+  display: flex;
+  flex-grow: 1;
+  flex-basis: 100%;
+  width: 100%;
+}
 </style>
