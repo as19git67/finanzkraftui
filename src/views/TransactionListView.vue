@@ -346,27 +346,26 @@ export default {
         <div class="data--list data--list--grouped" @scroll="tableScroll" v-if="transactionsByDate.length">
           <div class="data--list__group" v-for="(trOfDate, index) in transactionsByDate" :key="trOfDate">
             <div class="data--list__date-header data--list__date-header--sticky">{{ trOfDate.valueDateStr }}</div>
-            <div v-if="multiSelect">
-              <div class="data--list__item"
-                   v-for="(item, index) in trOfDate.transactions" :key="item.t_id"
-                   :id="'transaction-' + item.t_id" :class="{'alternate-row-background': index % 2 }">
-                <div class="data--list__prefix">
-                  <Checkbox v-if="multiSelect" v-model="item.selected" @click="onSelectionClicked" @change="onSelectionChange($event, item)" size="small" binary/>
+            <div v-if="multiSelect" class="data--list__item"
+                 v-for="(item, index) in trOfDate.transactions" :key="item.t_id"
+                 :id="'transaction-' + item.t_id" :class="{'alternate-row-background': index % 2 }">
+              <div class="data--list__prefix">
+                <Checkbox v-if="multiSelect" v-model="item.selected" @click="onSelectionClicked"
+                          @change="onSelectionChange($event, item)" size="small" binary/>
+              </div>
+              <div class="data--list__left">
+                <div class="data--list__line data--list__line--bold" v-if="item.payeeShortened">{{
+                    item.payeeShortened
+                  }}
                 </div>
-                <div class="data--list__left">
-                  <div class="data--list__line data--list__line--bold" v-if="item.payeeShortened">{{
-                      item.payeeShortened
-                    }}
-                  </div>
-                  <div class="data--list__line" v-if="item.textShortened">{{ item.textShortened }}</div>
-                  <div class="data--list__line" v-if="item.t_entry_text">{{ item.t_entry_text }}</div>
-                  <div class="data--list__line" v-if="item.accountName">{{ item.accountName }}</div>
-                  <div class="data--list__line" v-if="item.category_name">{{ item.category_name }}</div>
-                  <div class="data--list__line" v-if="item.t_notes">{{ item.t_notes }}</div>
-                </div>
-                <div class="data--list__right">
-                  <span :class="{'data--list__line--bold': !item.confirmed }">{{ item.amountStr }}</span>
-                </div>
+                <div class="data--list__line" v-if="item.textShortened">{{ item.textShortened }}</div>
+                <div class="data--list__line" v-if="item.t_entry_text">{{ item.t_entry_text }}</div>
+                <div class="data--list__line" v-if="item.accountName">{{ item.accountName }}</div>
+                <div class="data--list__line" v-if="item.category_name">{{ item.category_name }}</div>
+                <div class="data--list__line" v-if="item.t_notes">{{ item.t_notes }}</div>
+              </div>
+              <div class="data--list__right">
+                <span :class="{'data--list__line--bold': !item.confirmed }">{{ item.amountStr }}</span>
               </div>
             </div>
             <router-link  v-else class="data--list__item" append
