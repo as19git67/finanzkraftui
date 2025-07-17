@@ -1,6 +1,7 @@
 <script setup>
 defineProps({
   accountId: {type: Array},
+  givenSearchTerm: {type: String},
 });
 </script>
 
@@ -21,15 +22,16 @@ export default {
     return {
       error: this.error,
       loading: this.loading,
+      multiSelect: this.multiSelect,
       accountName: this.accountName,
       accountBalance: this.accountBalance,
       accountBalanceDateStr: this.accountBalanceDateStr,
       currencyStr: this.currencyStr,
-      searchTerm: this.searchTerm,
       timespanList: this.timespanList,
       dateFilter: this.dateFilter,
       transactionsByDate: this.transactionsByDate,
       accountTypeIsCash: this.accountTypeIsCash,
+      searchTermInput: '',
     };
   },
   computed: {
@@ -38,13 +40,19 @@ export default {
     ...mapStores(TransactionStore),
     ...mapStores(MasterDataStore),
     ...mapState(UserStore, ['authenticated']),
-    ...mapState(TransactionStore, ['transactions', 'incompleteTransactionList', 'maxTransactions', 'lastScrollTop']),
+    ...mapState(TransactionStore, [
+      'transactions',
+      'incompleteTransactionList',
+      'maxTransactions',
+      'lastScrollTop',
+      'searchTerm'
+    ]),
     ...mapState(AccountStore, ['accounts']),
     ...mapState(MasterDataStore, ['timespans']),
   },
   methods: {
     ...mapActions(MasterDataStore, ['getTimespans', 'getCurrencies', 'getCurrencyDetails']),
-    ...mapActions(TransactionStore, ['getTransactions', 'setLastScrollTop', 'clearTransactions']),
+    ...mapActions(TransactionStore, ['getTransactions', 'setLastScrollTop', 'clearTransactions', 'setSearchTerm']),
     ...mapActions(AccountStore, ['getAccounts', 'getAccountById']),
     ...mapActions(UserStore, ['setNotAuthenticated']),
     navigateToAddTransaction() {
@@ -53,11 +61,15 @@ export default {
     navigateBack() {
       router.back();
     },
+    toggleMultiSelect() {
+      this.multiSelect = !this.multiSelect;
+    },
     toggleSearch(event) {
       this.searchPopover.value.show(event);
     },
     clearSearch() {
-      this.searchTerm = '';
+      this.searchTermInput = '';
+      this.searchTransactions();
     },
     async popoverKeyDown(event) {
       if (event.key === 'Enter') {
@@ -71,6 +83,7 @@ export default {
       this.setLastScrollTop(ev.srcElement.scrollTop);
     },
     async searchTransactions() {
+      this.setSearchTerm(this.searchTermInput);
       await this.loadDataFromServer();
       // if (this.transactions.length > 0) {
       //   this.searchPopover.value.hide();
@@ -192,6 +205,7 @@ export default {
     _buildTransactionsPerDate() {
       const transactionsOfDate = {};
       this.transactions.forEach((t) => {
+        t.selected = false;
         const tDateShortStr = DateTime.fromISO(t.t_value_date).toISODate();
         if (transactionsOfDate[tDateShortStr] === undefined) {
           transactionsOfDate[tDateShortStr] = [];
@@ -238,6 +252,13 @@ export default {
         return {id: tsInfo.id, name: tsInfo.name};
       });
     },
+    onSelectionClicked(event) {
+      event.stopPropagation();
+    },
+    onSelectionChange(event, item) {
+      event.stopPropagation();
+      item.selected = event.target.checked;
+    },
     _updateAccountsWhereIn: function() {
       if (_.isArray(this.accountId)) {
         this.accountsWhereIn = this.accountId;
@@ -264,6 +285,7 @@ export default {
     } else {
       await this.loadDataFromServer();
     }
+    this.searchTermInput = this.searchTerm;
     if (this.lastScrollTop) {
       const list = document.querySelector('.transaction-list');
       list.scrollTop = this.lastScrollTop;
@@ -278,10 +300,10 @@ export default {
     this.accountTypeIsCash = false;
     this.accountBalanceDateStr = '';
     this.currencyStr = '';
-    this.searchTerm = '';
     this.accountsWhereIn = [];
     this.dateFilterFrom = undefined;
     this.dateFilterTo = undefined;
+    this.multiSelect = false;
   },
 };
 
@@ -300,22 +322,23 @@ export default {
                 class="element--is-grow is-de-emphasized">{{ accountBalanceDateStr }}</span>
         </div>
         <Button v-if="accountTypeIsCash" @click="navigateToAddTransaction()" @keydown.enter="navigateToAddTransaction()"
-                icon="pi pi-plus" variant="text" aria-label="Buchung hinzufügen"/>
-        <Button icon="pi pi-search" aria-label="Suche einblenden" @click="toggleSearch"/>
+                icon="pi pi-plus" variant="text" aria-label="Buchung hinzufügen" />
+        <Button icon="pi pi-search" aria-label="Suche einblenden" @click="toggleSearch" :severity="searchTermInput ? 'warn' : null"/>
         <Popover ref="searchPopover" class="search-popover">
           <InputGroup>
             <InputText placeholder="Suchen" inputmode="search" enterKeyHint="search"
-                       v-model="searchTerm"
+                       v-model="searchTermInput"
                        @keydown="popoverKeyDown"
                        autofocus
             ></InputText>
             <InputGroupAddon>
-              <Button v-if="searchTerm" icon="pi pi-times" severity="secondary" variant="text" @click="clearSearch"/>
+              <Button v-if="searchTermInput" icon="pi pi-times" severity="secondary" variant="text" @click="clearSearch"/>
               <Button icon="pi pi-search" severity="secondary" variant="text" @click="searchTransactions"/>
             </InputGroupAddon>
           </InputGroup>
           <Button icon="pi pi-times" aria-label="Schließen" @click="closeSearch"/>
         </Popover>
+        <Button  @click="toggleMultiSelect" :icon="multiSelect ? 'pi pi-pen-to-square' : 'pi pi-check-square'" :severity="multiSelect ? 'info' : null"/>
       </div>
     </div>
     <div class="page--content">
@@ -327,6 +350,10 @@ export default {
                          :to="{ path:'/transaction/:transactionId', name: 'TransactionDetail',  params: { transactionId: item.t_id }}"
                          v-for="(item, index) in trOfDate.transactions" :key="item.t_id"
                          :id="'transaction-' + item.t_id" :class="{'alternate-row-background': index % 2 }">
+              <div class="data--list__prefix">
+                <span v-if="!item.confirmed && !multiSelect" class="data--list__prefix-icon pi pi-circle-fill"></span>
+                <Checkbox v-if="multiSelect" v-model="item.selected" @click="onSelectionClicked" @change="onSelectionChange($event, item)" size="small" binary/>
+              </div>
               <div class="data--list__left">
                 <div class="data--list__line data--list__line--bold" v-if="item.payeeShortened">{{
                     item.payeeShortened
@@ -361,6 +388,11 @@ export default {
 </style>
 
 <style scoped>
+.data--list__prefix-icon {
+  font-size: 0.5em;
+  color: var(--p-primary-color);
+}
+
 .empty-message {
   height: 50vh;
   min-height: 10em;

@@ -495,6 +495,15 @@ button:hover svg .metaphor {
     padding-inline: 5px
 }
 
+.data--list__prefix {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    padding-inline-start: 5px;
+    min-width: 21px;
+}
+
 .data--list__left {
     flex-grow: 1;
     padding-inline: 5px;
@@ -563,7 +572,8 @@ button:hover svg .metaphor {
     font-size: 15px;
     background-color: var(--data-list-header-background-color);
     color: var(--data-list-header-text-color);
-    padding-inline: 5px;
+    padding-inline-start: 26px;
+    padding-inline-end: 5px;
     padding-top: 0.5em;
 }
 

@@ -374,7 +374,7 @@ function deleteTheTransaction() {
   <div class="page page--is-transaction-detail-view">
     <div class="page--header">
       <div class="page--title title__with-buttons">
-        <Button label="Abbrechen" @click="cancel">
+        <Button :label="dirty ? 'Abbrechen' : 'Zurück'" @click="cancel">
         </Button>
         Buchungsdetails
         <Button label="Speichern" :disabled="!dirty" @click="saveTransaction">
@@ -423,6 +423,7 @@ function deleteTheTransaction() {
             <label for="idTransactionAmount">Betrag</label>
           </FloatLabel>
           <ToggleButton v-model="isSpending" onLabel="Ausgabe" offLabel="Einnahme" onIcon="pi pi-minus"
+                        :readonly="!isCash"
                         offIcon="pi pi-plus" size="large"/>
         </div>
       </div>

@@ -9,12 +9,16 @@ export const TransactionStore = defineStore('transaction', {
     _maxTransactions: 500,
     _transactions: [],
     _transaction: {},
+    _searchTerm: '',
     _currentTransactionId: 0,
     _lastScrollTop: 0,
     _incomplete: false, // true if more transactions would exists but limited to max transactions
     _ruleSets: [],
   }),
   getters: {
+    searchTerm(state) {
+      return state._searchTerm;
+    },
     transaction(state) {
       return state._transaction;
     },
@@ -361,6 +365,9 @@ export const TransactionStore = defineStore('transaction', {
     },
     clearTransactions() {
       this._transactions = [];
+    },
+    setSearchTerm(term) {
+      this._searchTerm = term;
     },
     setCurrentTransactionId(id) {
       this._currentTransactionId = id;

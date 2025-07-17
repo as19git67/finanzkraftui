@@ -14,6 +14,7 @@ import Toast from 'primevue/toast';
 import ConfirmDialog from 'primevue/confirmdialog';
 import Fluid from 'primevue/fluid';
 import Button from 'primevue/button';
+import Checkbox from 'primevue/checkbox';
 import ToggleButton from "primevue/togglebutton";
 import ToggleSwitch from 'primevue/toggleswitch';
 import InputText from "primevue/inputtext"
@@ -162,6 +163,7 @@ app.component('ConfirmDialog', ConfirmDialog);
 app.component('AutoComplete', AutoComplete);
 app.component('Fluid', Fluid);
 app.component('Button', Button);
+app.component('Checkbox', Checkbox);
 app.component('ToggleButton', ToggleButton);
 app.component('ToggleSwitch', ToggleSwitch);
 app.component('InputText', InputText);
