@@ -56,6 +56,7 @@ let transactionPayeePayerAcctNo = ref('');
 let transactionRuleSetId = ref();
 let transactionRuleSetName = ref('');
 let transactionTags = ref([]);
+let transactionTagsList = ref([]);
 let filteredCategories = ref([]);
 let filteredPayees = ref([]);
 
@@ -106,6 +107,25 @@ watch(transactionCategory, (val, oldVal) => {
   updateData.value.category_id = val.id;
 });
 
+watch(transactionTags, (val, oldVal) => {
+  if (transaction === undefined) {
+    return;
+  }
+  if (!_.isObject(val)) {
+    return;
+  }
+
+  const selectedTagIds = transactionTags.value.toSorted();
+  const transactionTagIds = transaction.tagIds.toSorted();
+
+  if (_.isEqual(selectedTagIds, transactionTagIds)) {
+    // did not change
+    return;
+  }
+
+  updateData.value.tagIds = selectedTagIds;
+});
+
 watch(transactionPayee, (val, oldVal) => {
   if (transaction === undefined) {
     return;
@@ -134,6 +154,7 @@ async function loadDataFromServer() {
   const promises = [];
   promises.push(transactionStore.getTransaction(props.transactionId));
   promises.push(masterDataStore.getCategories());
+  promises.push(masterDataStore.getTags());
   promises.push(accountStore.getAccounts());
   const results = await Promise.all(promises);
   loading.value = false;
@@ -233,7 +254,18 @@ function initReactiveData() {
   }
   transactionRuleSetId.value = transaction.rule_set_id;
   transactionRuleSetName.value = transaction.rule_set_name;
-  transactionTags.value = transaction.tags ? transaction.tags.split('|') : [];
+
+  transactionTags.value = transaction.tagIds ? transaction.tagIds : [];
+  transactionTagsList.value = [];
+  const transactionTagsListRest = [];
+  masterDataStore.tags.forEach(tag => {
+    if (transactionTags.value.includes(tag.id )) {
+      transactionTagsList.value.push(tag);
+    } else {
+      transactionTagsListRest.push(tag);
+    }
+  });
+  transactionTagsList.value = transactionTagsList.value.concat(transactionTagsListRest);
 }
 
 function searchCategory(event) {
@@ -399,9 +431,11 @@ function deleteTheTransaction() {
         </FloatLabel>
       </div>
       <div class="page--content--row">
-        <div class="row--item" v-for="(item, index) in transactionTags" :key="item">
-          {{item}}
-        </div>
+        <FloatLabel variant="in" class="row--item row--item--is-grow">
+          <MultiSelect id="tags" fluid filter v-model="transactionTags" :options="transactionTagsList" optionValue="id"
+                       optionLabel="tag"/>
+          <label for="tags">Tags</label>
+        </FloatLabel>
       </div>
       <div class="page--content--row" v-if="isCash">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
