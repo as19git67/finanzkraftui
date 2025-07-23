@@ -241,7 +241,7 @@ function cancel() {
     <div class="page--content">
       <div class="page--content--row">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <InputText id="accountName" v-model="name" variant="filled"
+          <InputText id="accountName" v-model="name"
                      size="small"></InputText>
           <label for="accountName">Name</label>
         </FloatLabel>
@@ -255,7 +255,7 @@ function cancel() {
       </div>
       <div class="page--content--row">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <InputText id="accountIBAN" v-model="iban" variant="filled"
+          <InputText id="accountIBAN" v-model="iban"
                      size="small"></InputText>
           <label for="accountIBAN">IBAN</label>
         </FloatLabel>
@@ -270,7 +270,7 @@ function cancel() {
         <FloatLabel variant="in" class="row--item row--item--is-grow">
           <InputNumber id="accountStartBalance" locale="de-DE"
                        inputmode="decimal" currency="EUR"
-                       mode="currency" v-model=startBalance variant="filled"/>
+                       mode="currency" v-model=startBalance />
           <label for="accountStartBalance">Anfangssaldo</label>
         </FloatLabel>
       </div>
@@ -291,8 +291,7 @@ function cancel() {
       <div class="page--content--row">
         <div class="page--content--row__inline">
           <FloatLabel variant="in" class="row--item row--item--is-grow">
-            <DatePicker v-model="closedAt" :disabled="!closed" inputId="closedAt" showIcon iconDisplay="input"
-                        variant="filled"/>
+            <DatePicker v-model="closedAt" :disabled="!closed" inputId="closedAt" showIcon iconDisplay="input"/>
             <label for="closedAt">geschlossen am</label>
           </FloatLabel>
           <div class="closedToggle row--item row--item--is-centered">

@@ -55,6 +55,7 @@ let transactionAccountName = ref('');
 let transactionPayeePayerAcctNo = ref('');
 let transactionRuleSetId = ref();
 let transactionRuleSetName = ref('');
+let transactionTags = ref([]);
 let filteredCategories = ref([]);
 let filteredPayees = ref([]);
 
@@ -232,6 +233,7 @@ function initReactiveData() {
   }
   transactionRuleSetId.value = transaction.rule_set_id;
   transactionRuleSetName.value = transaction.rule_set_name;
+  transactionTags.value = transaction.tags ? transaction.tags.split('|') : [];
 }
 
 function searchCategory(event) {
@@ -395,6 +397,11 @@ function deleteTheTransaction() {
                         :suggestions="filteredCategories" @complete="searchCategory"/>
           <label for="catSelection">Kategorie</label>
         </FloatLabel>
+      </div>
+      <div class="page--content--row">
+        <div class="row--item" v-for="(item, index) in transactionTags" :key="item">
+          {{item}}
+        </div>
       </div>
       <div class="page--content--row" v-if="isCash">
         <FloatLabel variant="in" class="row--item row--item--is-grow">

@@ -66,6 +66,7 @@ export const TransactionStore = defineStore('transaction', {
         rule_set_id: transactionData.rule_set_id,
         rule_set_name: transactionData.rule_set_name,
         confirmed: transactionData.confirmed,
+        tags: transactionData.tags,
       };
       if (transactionData.t_payee && transactionData.t_text
         && transactionData.t_text.indexOf(transactionData.t_payee) === 0) {
