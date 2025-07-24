@@ -423,7 +423,7 @@ function deleteTheTransaction() {
       </div>
       <div class="page--content--row">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <AutoComplete id="catSelection" v-model="transactionCategory" class="transactionCategorySelection"
+          <AutoComplete id="catSelection" v-model="transactionCategory"
                         optionLabel="full_name"
                         dropdown size="small"
                         :suggestions="filteredCategories" @complete="searchCategory"/>
@@ -560,9 +560,7 @@ function deleteTheTransaction() {
 </template>
 
 <style scoped>
-.transactionCategorySelection,
 .transactionPayeeSelection,
-.transactionCategorySelection > *,
 .transactionPayeeSelection > * {
   display: flex;
   flex-grow: 1;
