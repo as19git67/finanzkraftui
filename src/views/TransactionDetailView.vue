@@ -423,7 +423,7 @@ function deleteTheTransaction() {
       </div>
       <div class="page--content--row">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <AutoComplete id="catSelection" v-model="transactionCategory"
+          <AutoComplete id="catSelection" v-model="transactionCategory" class="transactionCategorySelection"
                         optionLabel="full_name"
                         dropdown size="small"
                         :suggestions="filteredCategories" @complete="searchCategory"/>
@@ -439,7 +439,7 @@ function deleteTheTransaction() {
       </div>
       <div class="page--content--row" v-if="isCash">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <AutoComplete id="payeeSelection" class="transactionPayeeSelection prevent-scroll"
+          <AutoComplete id="payeeSelection" class="transactionPayeeSelection"
                         v-model="transactionPayee"
                         :suggestions="filteredPayees" @complete="searchPayee"/>
           <label for="payeeSelection">
@@ -540,13 +540,6 @@ function deleteTheTransaction() {
                      readonly size="small"/>
           <label for="idTransactionCRED">Lieferant</label>
         </FloatLabel>
-      </div>
-      <div class="page--content--row" v-if="transactionLoaded">
-        <div class="row--item">
-          <Button asChild v-slot="slotProps" variant="link">
-            <RouterLink append :to="{ path:'/', name: 'home'}" :class="slotProps.class">Tags bearbeiten</RouterLink>
-          </Button>
-        </div>
       </div>
       <div class="page--content--row" v-if="transactionRuleSetId">
         <div class="row--item">
