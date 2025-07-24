@@ -22,7 +22,7 @@ export default {
     return {
       error: this.error,
       loading: this.loading,
-      multiSelect: this.multiSelect,
+      isMultiSelectMode: this.isMultiSelectMode,
       accountName: this.accountName,
       accountBalance: this.accountBalance,
       accountBalanceDateStr: this.accountBalanceDateStr,
@@ -32,6 +32,10 @@ export default {
       transactionsByDate: this.transactionsByDate,
       accountTypeIsCash: this.accountTypeIsCash,
       searchTermInput: '',
+      transactionsCount: this.transactionsCount,
+      amountSumStr: this.amountSumStr,
+      isFiltered: this.isFiltered,
+      transactionsSelected: this.transactionsSelected,
     };
   },
   computed: {
@@ -61,8 +65,34 @@ export default {
     navigateBack() {
       router.back();
     },
-    toggleMultiSelect() {
-      this.multiSelect = !this.multiSelect;
+    toggleMultiSelect(event) {
+      this.isMultiSelectMode = !this.isMultiSelectMode;
+      if (this.isMultiSelectMode) {
+        this.multiSelectPopover.value.show(event);
+      } else {
+        this.closeMultiSelect();
+      }
+    },
+    closeMultiSelect() {
+      this.multiSelectPopover.value.hide();
+    },
+    selectAll() {
+      this.transactionsSelected = [];
+      this.transactions.forEach((item) => {
+        item.selected = true;
+        this.transactionsSelected.push(item);
+      });
+      this.updateTransactionCount();
+      this.calculateIsFiltered();
+      this.calculateSumAmountOfFiltered();
+    },
+    clearSelection() {
+      this.transactionsSelected = [];
+      this.transactions.forEach((item) => {
+        item.selected = false;
+      });
+      this.updateTransactionCount();
+      this.calculateIsFiltered();
     },
     toggleSearch(event) {
       this.searchPopover.value.show(event);
@@ -137,6 +167,7 @@ export default {
     async loadDataFromServer() {
       this.error = '';
       this.loading = true;
+      this.isFiltered = false;
       try {
         this._updateAccountsWhereIn();
         const promises = [];
@@ -183,7 +214,52 @@ export default {
         this.loading = false;
       }
     },
+    calculateIsFiltered() {
+      // calculate isFiltered: if a search term, date filter or selection of transactions exist, assume the list is filtered
+      if (this.searchTerm || this.dateFilterFrom || this.dateFilterTo || this.transactionsSelected.length > 0) {
+        this.isFiltered = true;
+      } else {
+        this.isFiltered = false;
+      }
+    },
+    calculateSumAmountOfFiltered() {
+      // calculate sum of filtered or selected (if at least one transaction is selected) transactions
+      const s = this.transactions.reduce((sum, item) => {
+        if (this.transactionsSelected.length > 0) {
+          if (item.selected) {
+            return sum + parseFloat(item.t_amount);
+          }
+          return sum;
+        }
+        return sum + parseFloat(item.t_amount);
+      }, 0);
+
+      // format sum as currency
+      this.amountSumStr = new Intl.NumberFormat(DateTimeSettings.defaultLocale, {
+        style: 'currency',
+        currency: this.currency ? this.currency : 'EUR',
+      }).format(s);
+    },
+    updateTransactionCount() {
+      if (this.transactionsSelected.length > 0) {
+        this.transactionsCount = this.transactionsSelected.length;
+      } else {
+        this.transactionsCount = this.transactions.length;
+      }
+    },
+    updateTransactionSelection(item) {
+      if (item.selected) {
+        this.transactionsSelected.push(item);
+      } else {
+        const index = this.transactionsSelected.indexOf(item);
+        if (index > -1) {
+          this.transactionsSelected.splice(index, 1);
+        }
+      }
+    },
     async prepareDataForList() {
+      this.transactionsSelected = [];
+      this.transactionsCount = this.transactions.length;
       if (this.accountsWhereIn.length === 0) {
         this.accountName = 'Alle Transaktionen';
       } else if (this.accountsWhereIn.length === 1) {
@@ -199,6 +275,10 @@ export default {
       } else {
         this.accountName = 'Alle Buchungen';
       }
+      this.updateTransactionCount();
+      this.calculateIsFiltered();
+      this.calculateSumAmountOfFiltered();
+
       this._fillTimespanList();
       this._buildTransactionsPerDate();
     },
@@ -258,6 +338,11 @@ export default {
     onSelectionChange(event, item) {
       event.stopPropagation();
       item.selected = event.target.checked;
+
+      this.updateTransactionSelection(item);
+      this.updateTransactionCount();
+      this.calculateIsFiltered();
+      this.calculateSumAmountOfFiltered();
     },
     _updateAccountsWhereIn: function() {
       if (_.isArray(this.accountId)) {
@@ -277,6 +362,7 @@ export default {
   },
   async mounted() {
     this.searchPopover = useTemplateRef('searchPopover');
+    this.multiSelectPopover = useTemplateRef('multiSelectPopover');
     if (this.accountId !== undefined) {
       this.clearTransactions(); // always load the transactions
     }
@@ -292,6 +378,7 @@ export default {
     }
   },
   created() {
+    this.transactionsSelected = [];
     this.transactionsByDate = [];
     this.error = null;
     this.loading = false;
@@ -303,7 +390,10 @@ export default {
     this.accountsWhereIn = [];
     this.dateFilterFrom = undefined;
     this.dateFilterTo = undefined;
-    this.multiSelect = false;
+    this.isMultiSelectMode = false;
+    this.transactionsCount = 0;
+    this.amountSumStr = '';
+    this.isFiltered = false;
   },
 };
 
@@ -316,7 +406,11 @@ export default {
         </Button>
         <span v-if="loading">Buchungen laden...</span>
         <span v-if="!loading" class="element--is-grow element--is-centered">{{ accountName }}</span>
-        <div class="element-as-columns">
+        <div class="element-as-columns" v-if="isFiltered">
+          <span class="element--is-grow">&sum;: {{ amountSumStr }}</span>
+          <span class="element--is-grow is-de-emphasized">{{ transactionsCount }} Buchungen</span>
+        </div>
+        <div class="element-as-columns" v-else>
           <span v-if="!loading && accountBalance" class="element--is-grow">{{ accountBalance }}{{ currencyStr }}</span>
           <span v-if="!loading && accountBalanceDateStr"
                 class="element--is-grow is-de-emphasized">{{ accountBalanceDateStr }}</span>
@@ -338,7 +432,16 @@ export default {
           </InputGroup>
           <Button icon="pi pi-times" aria-label="Schließen" @click="closeSearch"/>
         </Popover>
-        <Button  @click="toggleMultiSelect" :icon="multiSelect ? 'pi pi-pen-to-square' : 'pi pi-check-square'" :severity="multiSelect ? 'info' : null"/>
+        <Button @click="toggleMultiSelect" :icon="isMultiSelectMode ? 'pi pi-pen-to-square' : 'pi pi-check-square'" :severity="isMultiSelectMode ? 'info' : null"/>
+        <Popover ref="multiSelectPopover" class="multi-select-popover">
+          <div class="multi-select-popover__wrapper">
+            <div class="multi-select-popover__header">
+              <Button icon="pi pi-list-check" aria-label="Alle auswählen" @click="selectAll"/>
+              <Button icon="pi pi-list" aria-label="Nichts auswählen" @click="clearSelection"/>
+              <Button icon="pi pi-times" aria-label="Schließen" @click="closeMultiSelect"/>
+            </div>
+          </div>
+        </Popover>
       </div>
     </div>
     <div class="page--content">
@@ -346,11 +449,11 @@ export default {
         <div class="data--list data--list--grouped" @scroll="tableScroll" v-if="transactionsByDate.length">
           <div class="data--list__group" v-for="(trOfDate, index) in transactionsByDate" :key="trOfDate">
             <div class="data--list__date-header data--list__date-header--sticky">{{ trOfDate.valueDateStr }}</div>
-            <div v-if="multiSelect" class="data--list__item"
+            <div v-if="isMultiSelectMode" class="data--list__item"
                  v-for="(item, index) in trOfDate.transactions" :key="item.t_id"
                  :id="'transaction-' + item.t_id" :class="{'alternate-row-background': index % 2 }">
               <div class="data--list__prefix">
-                <Checkbox v-if="multiSelect" v-model="item.selected" @click="onSelectionClicked"
+                <Checkbox v-if="isMultiSelectMode" v-model="item.selected" @click="onSelectionClicked"
                           @change="onSelectionChange($event, item)" size="small" binary/>
               </div>
               <div class="data--list__left">
@@ -393,7 +496,9 @@ export default {
           </div>
         </div>
         <div v-else class="row--item.row--item--is-grow row--item--is-centered">
-          <div class="row--item--is-centered row--item--is-emphasized empty-message">Keine Ergebnisse</div>
+          <div v-if="loading" class="row--item--is-centered progress">
+            <progress-spinner strokeWidth="4" fill="transparent" animationDuration="1s"></progress-spinner></div>
+          <div v-else class="row--item--is-centered row--item--is-emphasized empty-message">Keine Ergebnisse</div>
         </div>
       </div>
     </div>
@@ -409,12 +514,32 @@ export default {
 </style>
 
 <style scoped>
+.multi-select-popover__wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+  align-items: center;
+}
+.multi-select-popover__header {
+  display: flex;
+  flex-direction: row;
+  gap: 0.5em;
+  align-items: center;
+}
 .data--list__prefix-icon {
   font-size: 0.5em;
   color: var(--p-primary-color);
 }
+.progress {
+  --p-progressspinner-color-one: var(--sgbus-green);
+  --p-progressspinner-color-two: var(--sgbus-green);
+  --p-progressspinner-color-three: var(--sgbus-green);
+  --p-progressspinner-color-four: var(--sgbus-green);
+}
 
+.progress,
 .empty-message {
+  display: flex;
   height: 50vh;
   min-height: 10em;
   align-content: center;

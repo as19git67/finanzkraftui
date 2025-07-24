@@ -6,7 +6,7 @@ import NumberParser from "@/NumberParser";
 
 export const TransactionStore = defineStore('transaction', {
   state: () => ({
-    _maxTransactions: 500,
+    _maxTransactions: 1500,
     _transactions: [],
     _transaction: {},
     _searchTerm: '',

@@ -31,6 +31,7 @@ import DatePicker from 'primevue/datepicker';
 import Chip from 'primevue/chip';
 import Textarea from 'primevue/textarea';
 import Popover from 'primevue/popover';
+import ProgressSpinner from 'primevue/progressspinner';
 import "primeicons/primeicons.css";
 import "./assets/main.scss";
 
@@ -179,5 +180,6 @@ app.component('Chip', Chip);
 app.component('Popover', Popover);
 app.component('InputGroup', InputGroup);
 app.component('InputGroupAddon', InputGroupAddon);
+app.component('ProgressSpinner', ProgressSpinner);
 
 app.mount("#app");
