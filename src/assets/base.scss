@@ -454,6 +454,15 @@ button:hover svg .metaphor {
     color: var(--data-list-item-text-color);
     font-size: var(--data-list-item-font-size);
     font-weight: var(--data-list-item-font-weight);
+
+    display: flex;
+    flex-direction: row;
+    gap: 1em;
+    padding-block: 0.5em;
+
+    --p-chip-padding-x: 6px;
+    --p-chip-padding-y: 0px;
+    --p-chip-icon-font-size: 16px;
 }
 
 .data--list__item:first-child {
@@ -478,13 +487,6 @@ button:hover svg .metaphor {
 }
 
 .data--list--standard .data--list__item {
-    display: flex;
-    flex-direction: row;
-    gap: 1em;
-    padding-block: 0.5em;
-    --p-chip-padding-x: 6px;
-    --p-chip-padding-y: 1px;
-    --p-chip-icon-font-size: 16px;
 }
 
 .chips-container {

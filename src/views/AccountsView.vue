@@ -162,6 +162,6 @@ onMounted(async () => {
 
 <style scoped>
 .account-closed {
-  color: var(--as-color-primary-4);
+  color: var(--amaranth-pink);
 }
 </style>

@@ -6,6 +6,7 @@ import { UserStore } from '@/stores/user';
 export const MasterDataStore = defineStore('masterdata', {
   state: () => ({
     _tags: [],
+    _tagsById: {},
     _accountTypes: [],
     _currencies: [],
     _timespans: [],
@@ -43,15 +44,21 @@ export const MasterDataStore = defineStore('masterdata', {
                   id: t.id,
                   tag: t.tag,
                 }));
+                this._tags.forEach((tag) => {
+                  this._tagsById[tag.id] = tag;
+                });
               } else {
                 this._tags = [];
+                this._tagsById = {};
               }
             } else {
               this._tags = [];
+              this._tagsById = {};
             }
             return response.status;
           } catch (ex) {
             this._tags = [];
+            this._tagsById = {};
             if (ex.response && ex.response.status) {
               if (ex.response.status === 401) {
                 userStore.setNotAuthenticated();
@@ -62,11 +69,15 @@ export const MasterDataStore = defineStore('masterdata', {
           }
         } else {
           this._tags = [];
+          this._tagsById = {};
           return 401;
         }
       } else {
         return 200; // status ok
       }
+    },
+    getTagById(id) {
+      return this._tagsById[id];
     },
     async getAccountTypes(force) {
       if (force || this._accountTypes.length === 0) {

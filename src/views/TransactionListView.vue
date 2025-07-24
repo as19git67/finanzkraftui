@@ -55,7 +55,7 @@ export default {
     ...mapState(MasterDataStore, ['timespans']),
   },
   methods: {
-    ...mapActions(MasterDataStore, ['getTimespans', 'getCurrencies', 'getCurrencyDetails']),
+    ...mapActions(MasterDataStore, ['getTimespans', 'getCurrencies', 'getCurrencyDetails', 'getTags', 'getTagById']),
     ...mapActions(TransactionStore, ['getTransactions', 'setLastScrollTop', 'clearTransactions', 'setSearchTerm']),
     ...mapActions(AccountStore, ['getAccounts', 'getAccountById']),
     ...mapActions(UserStore, ['setNotAuthenticated']),
@@ -172,6 +172,7 @@ export default {
         this._updateAccountsWhereIn();
         const promises = [];
         promises.push(this.getAccounts(true));
+        promises.push(this.getTags());
         promises.push(this.getCurrencies(true));
         promises.push(this.getTimespans());
         promises.push(this.getTransactions({
@@ -286,6 +287,27 @@ export default {
       const transactionsOfDate = {};
       this.transactions.forEach((t) => {
         t.selected = false;
+
+        // concatenate tags
+        t.tagsStr = t.tagIds ? t.tagIds.reduce((acc, id) => {
+          const tagInfo = this.getTagById(id);
+          if (tagInfo) {
+            if (acc.length > 0) {
+              acc += ', ';
+            }
+            acc += '#' + tagInfo.tag;
+          }
+          return acc;
+        }, '') : undefined;
+
+        t.tags = t.tagIds ? t.tagIds.map((id) => {
+          const tagInfo = this.getTagById(id);
+          if (tagInfo) {
+            return tagInfo.tag;
+          }
+          return '?';
+        }) : [];
+
         const tDateShortStr = DateTime.fromISO(t.t_value_date).toISODate();
         if (transactionsOfDate[tDateShortStr] === undefined) {
           transactionsOfDate[tDateShortStr] = [];
@@ -465,6 +487,7 @@ export default {
                 <div class="data--list__line" v-if="item.t_entry_text">{{ item.t_entry_text }}</div>
                 <div class="data--list__line" v-if="item.accountName">{{ item.accountName }}</div>
                 <div class="data--list__line" v-if="item.category_name">{{ item.category_name }}</div>
+                <div class="data--list__line" v-if="item.tagsStr">{{ item.tagsStr }}</div>
                 <div class="data--list__line" v-if="item.t_notes">{{ item.t_notes }}</div>
               </div>
               <div class="data--list__right">
@@ -487,6 +510,11 @@ export default {
                 <div class="data--list__line" v-if="item.t_entry_text">{{ item.t_entry_text }}</div>
                 <div class="data--list__line" v-if="item.accountName">{{ item.accountName }}</div>
                 <div class="data--list__line" v-if="item.category_name">{{ item.category_name }}</div>
+                <div class="data--list__line" v-if="item.tagsStr">
+                  <span v-for="(tag, index) of item.tags" :key="tag" >
+                    <Chip class="element--is-chip" :label="tag" :title="tag"/>
+                  </span>
+                </div>
                 <div class="data--list__line" v-if="item.t_notes">{{ item.t_notes }}</div>
               </div>
               <div class="data--list__right">
