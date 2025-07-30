@@ -33,8 +33,8 @@ let originalData = ref({});
 let typeObj = ref({});
 let accountTypeObj = ref({});
 let currencyObj = ref({});
-let readers = ref([]);
-let writers = ref([]);
+let reader = ref([]);
+let writer = ref([]);
 
 onMounted(async () => {
   error = undefined;
@@ -64,8 +64,8 @@ let dirty = computed(() => {
       originalData.currency !== currencyObj.value.id ||
       originalData.startBalance !== startBalance.value ||
       originalClosedAt !== ca.substring(0, 10) ||
-      !_.isEqual(originalData.readers, integerSort(readers.value)) ||
-      !_.isEqual(originalData.writers, integerSort(writers.value));
+      !_.isEqual(originalData.reader, integerSort(reader.value)) ||
+      !_.isEqual(originalData.writer, integerSort(writer.value));
 });
 
 let type = computed(() => {
@@ -140,8 +140,8 @@ async function loadDataFromServer() {
 
   // initialize view data
   const data = accountStore.getAccountById(props.accountId);
-  integerSort(data.readers);
-  integerSort(data.writers);
+  integerSort(data.reader);
+  integerSort(data.writer);
   originalData = _.cloneDeep(data);
   name.value = data.name;
   typeObj.value = _.find(masterDataStore.accountTypes, (item) => {
@@ -150,8 +150,8 @@ async function loadDataFromServer() {
   currencyObj.value = _.find(masterDataStore.currencies, (item) => {
     return item.id === data.currency;
   });
-  readers.value = data.readers;
-  writers.value = data.writers;
+  reader.value = data.reader;
+  writer.value = data.writer;
   startBalance.value = data.startBalance;
   iban.value = data.iban;
   closed.value = data.closedAt !== null;
@@ -199,11 +199,11 @@ function createUpdateData() {
       updateData.closedAt = DateTime.fromJSDate(d);
     }
   }
-  if (!_.isEqual(originalData.readers, integerSort(readers.value))) {
-    updateData.readers = readers.value;
+  if (!_.isEqual(originalData.reader, integerSort(reader.value))) {
+    updateData.reader = reader.value;
   }
-  if (!_.isEqual(originalData.writers, integerSort(writers.value))) {
-    updateData.writers = writers.value;
+  if (!_.isEqual(originalData.writer, integerSort(writer.value))) {
+    updateData.writer = writer.value;
   }
   return updateData;
 }
@@ -276,14 +276,14 @@ function cancel() {
       </div>
       <div class="page--content--row">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <MultiSelect id="accountReader" fluid filter v-model="readers" :options="userStore.users" optionValue="id"
+          <MultiSelect id="accountReader" fluid filter v-model="reader" :options="userStore.users" optionValue="id"
                        optionLabel="Email"/>
           <label for="accountReader">Benutzer mit Leserechten</label>
         </FloatLabel>
       </div>
       <div class="page--content--row">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <MultiSelect id="accountWriter" fluid filter v-model="writers" :options="userStore.users" optionValue="id"
+          <MultiSelect id="accountWriter" fluid filter v-model="writer" :options="userStore.users" optionValue="id"
                        optionLabel="Email"/>
           <label for="accountWriter">Benutzer mit Recht zum Ändern</label>
         </FloatLabel>

@@ -38,7 +38,7 @@ export default {
       });
       for (const accountType of accountTypes) {
         const filteredAccounts = active.filter(account => {
-          return account.type === accountType && (account.writers.includes(userId) || account.readers.includes(userId));
+          return account.type === accountType && (account.writer.includes(userId) || account.reader.includes(userId));
         });
         accounts = accounts.concat(filteredAccounts).map(account => {
           // const currencyDetails = this.getCurrencyDetails(account.currency);

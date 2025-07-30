@@ -25,8 +25,8 @@ const accountsEnriched = computed(() => {
       const typeDetails = masterDataStore.getAccountTypeDetails(account.type);
       const balanceDateStr = account.balanceDate ? DateTime.fromISO(account.balanceDate).toLocaleString() : '';
       const closedDateStr = account.closedAt ? DateTime.fromISO(account.closedAt).toLocaleString() : '';
-      const readerNames = mapToUserEmail(account.readers);
-      const writerNames = mapToUserEmail(account.writers);
+      const readerNames = mapToUserEmail(account.reader);
+      const writerNames = mapToUserEmail(account.writer);
       return {
         ...account,
         currencyStr: currencyDetails ? currencyDetails.short : '',
