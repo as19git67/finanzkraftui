@@ -65,7 +65,7 @@ export const TransactionStore = defineStore('transaction', {
         currency_short: transactionData.currency_short,
         rule_set_id: transactionData.rule_set_id,
         rule_set_name: transactionData.rule_set_name,
-        confirmed: transactionData.confirmed,
+        unseen: transactionData.unseen,
         tagIds: transactionData.tagIds ? transactionData.tagIds.split(',').map((id) => parseInt(id, 10)) : [],
       };
       if (transactionData.t_payee && transactionData.t_text

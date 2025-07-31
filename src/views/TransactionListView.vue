@@ -491,7 +491,7 @@ export default {
                 <div class="data--list__line" v-if="item.t_notes">{{ item.t_notes }}</div>
               </div>
               <div class="data--list__right">
-                <span :class="{'data--list__line--bold': !item.confirmed }">{{ item.amountStr }}</span>
+                <span :class="{'data--list__line--bold': item.unseen }">{{ item.amountStr }}</span>
               </div>
             </div>
             <router-link  v-else class="data--list__item" append
@@ -499,7 +499,7 @@ export default {
                          v-for="(item, index) in trOfDate.transactions" :key="item.t_id"
                          :id="'transaction-' + item.t_id" :class="{'alternate-row-background': index % 2 }">
               <div class="data--list__prefix">
-                <span v-if="!item.confirmed " class="data--list__prefix-icon pi pi-circle-fill"></span>
+                <span v-if="item.unseen" class="data--list__prefix-icon pi pi-circle-fill"></span>
               </div>
               <div class="data--list__left">
                 <div class="data--list__line data--list__line--bold" v-if="item.payeeShortened">{{
@@ -518,7 +518,7 @@ export default {
                 <div class="data--list__line" v-if="item.t_notes">{{ item.t_notes }}</div>
               </div>
               <div class="data--list__right">
-                <span :class="{'data--list__line--bold': !item.confirmed }">{{ item.amountStr }}</span>
+                <span :class="{'data--list__line--bold': item.unseen }">{{ item.amountStr }}</span>
               </div>
             </router-link>
           </div>

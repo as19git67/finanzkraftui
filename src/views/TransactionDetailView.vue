@@ -36,7 +36,7 @@ let payees = [];
 let error = ref('');
 let loading = ref(false);
 let transactionLoaded = ref(false);
-let transactionConfirmed = ref(false);
+let transactionUnseen = ref(true);
 let isCash = ref(false);
 let isSpending = ref(true);
 let amazonOrderId = ref('');
@@ -142,7 +142,7 @@ watch(transactionPayee, (val, oldVal) => {
 
 let dirty = computed(() => {
   const keyCount = Object.keys(updateData.value).length;
-  if (keyCount === 1 && updateData.value.confirmed !== undefined) {
+  if (keyCount === 1 && updateData.value.unseen !== undefined) {
     return false;
   }
   return keyCount > 0;
@@ -204,8 +204,8 @@ async function loadDataFromServer() {
 
   transactionLoaded.value = true;
 
-  if (!transaction.confirmed) {
-    updateData.value.confirmed = true;
+  if (transaction.unseen) {
+    updateData.value.unseen = false;
     dataChanged();
   }
 }
@@ -230,7 +230,7 @@ function initReactiveData() {
     return item.id === transaction.category_id;
   });
 
-  transactionConfirmed.value = transaction.confirmed;
+  transactionUnseen.value = transaction.unseen;
   transactionDate.value = new Date(transaction.t_value_date);
   transactionAmount.value = Math.abs(transaction.t_amount);
   transactionNotes.value = transaction.t_notes;
@@ -342,8 +342,8 @@ async function handleDataChanged() {
     return false;
   }
 
-  if (updateData.value.confirmed !== undefined) {
-    transaction.confirmed = updateData.value.confirmed;
+  if (updateData.value.unseen !== undefined) {
+    transaction.unseen = updateData.value.unseen;
   }
   if (updateData.value.category_id !== undefined) {
     transaction.category_id = updateData.value.category_id;
@@ -357,8 +357,8 @@ async function handleDataChanged() {
   return true;
 }
 
-async function markUnconfirmed() {
-  updateData.value.confirmed = false;
+async function markUnseen() {
+  updateData.value.unseen = true;
   await handleDataChanged();
 }
 
@@ -386,7 +386,7 @@ function deleteTheTransaction() {
           error = result.message;
           return;
         }
-        // this transaction is no more available - in case debounced handleDataChanged for confirmed flag gets called
+        // this transaction is no more available - in case debounced handleDataChanged for unseen flag gets called
         stopUpdating = true;
         router.back();
       } catch (ex) {
