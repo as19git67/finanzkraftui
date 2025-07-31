@@ -395,7 +395,7 @@ export default {
     }
     this.searchTermInput = this.searchTerm;
     if (this.lastScrollTop) {
-      const list = document.querySelector('.transaction-list');
+      const list = document.querySelector('.table-scroll');
       list.scrollTop = this.lastScrollTop;
     }
   },
@@ -424,8 +424,8 @@ export default {
   <div class="page page--is-transactions-list-view">
     <div class="page--header">
       <div class="page--title title__with-buttons">
-        <Button label="Zurück" @click="navigateBack" size="large">
-        </Button>
+        <Button v-if="searchTermInput" @click="navigateBack" icon="pi pi-angle-left"></Button>
+        <Button v-else label="Zurück" @click="navigateBack" size="large"></Button>
         <span v-if="loading">Buchungen laden...</span>
         <span v-if="!loading" class="element--is-grow element--is-centered">{{ accountName }}</span>
         <div class="element-as-columns" v-if="isFiltered">
@@ -466,9 +466,9 @@ export default {
         </Popover>
       </div>
     </div>
-    <div class="page--content">
+    <div class="page--content table-scroll" @scroll="tableScroll">
       <div class="page--content--row">
-        <div class="data--list data--list--grouped" @scroll="tableScroll" v-if="transactionsByDate.length">
+        <div class="data--list data--list--grouped" v-if="transactionsByDate.length">
           <div class="data--list__group" v-for="(trOfDate, index) in transactionsByDate" :key="trOfDate">
             <div class="data--list__date-header data--list__date-header--sticky">{{ trOfDate.valueDateStr }}</div>
             <div v-if="isMultiSelectMode" class="data--list__item"
