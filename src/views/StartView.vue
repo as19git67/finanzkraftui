@@ -41,12 +41,17 @@ export default {
           return account.type === accountType && (account.writer.includes(userId) || account.reader.includes(userId));
         });
         accounts = accounts.concat(filteredAccounts).map(account => {
-          // const currencyDetails = this.getCurrencyDetails(account.currency);
-          const balanceDateStr = account.balanceDate ? DateTime.fromISO(account.balanceDate).toLocaleString() : '';
-          const balanceStr = new Intl.NumberFormat(DateTimeSettings.defaultLocale, {
-            style: 'currency',
-            currency: account.currency,
-          }).format(account.balance);
+          let balanceStr;
+          let balanceDateStr;
+          // no balance for cash accounts
+          if (account.type !== 'cash') {
+            // const currencyDetails = this.getCurrencyDetails(account.currency);
+            balanceDateStr = account.balanceDate ? DateTime.fromISO(account.balanceDate).toLocaleString() : '';
+            balanceStr = new Intl.NumberFormat(DateTimeSettings.defaultLocale, {
+              style: 'currency',
+              currency: account.currency,
+            }).format(account.balance);
+          }
           return {
             ...account,
             balanceStr,
