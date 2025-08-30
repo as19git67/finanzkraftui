@@ -170,7 +170,7 @@ export default {
                   <div class="data--list__line data--list__line--bold">{{ item.name }}</div>
                 </router-link>
                 <router-link v-else append :to="{ name: 'Transactions',  params: { accountId: [item.id] }}">
-                  <div class="data--list__line data--list__line--bold">{{ item.name }}:</div>
+                  <div class="data--list__line data--list__line--bold">{{ item.name }}</div>
                   <div class="data--list__line">
                     <span v-if="item.balanceDateStr">aktualisiert: {{ item.balanceDateStr }}</span>
                   </div>
@@ -181,7 +181,12 @@ export default {
                 </div>
               </div>
               <div class="data--list__right">
-                <span v-if="item.balanceStr">{{ item.balanceStr }}</span>
+                <router-link v-if="item.type === 'all'" append :to="{ name: 'Transactions',  params: { accountId: item.accountsInGroup }}">
+                  <span v-if="item.balanceStr">{{ item.balanceStr }}</span>
+                </router-link>
+                <router-link v-else append :to="{ name: 'Transactions',  params: { accountId: [item.id] }}">
+                  <span v-if="item.balanceStr">{{ item.balanceStr }}</span>
+                </router-link>
               </div>
             </div>
           </div>

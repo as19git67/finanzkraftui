@@ -1,6 +1,5 @@
 <script setup>
 import _ from "lodash";
-import {DateTime, Settings as DateTimeSettings} from 'luxon';
 import {ref, onMounted, computed, watch} from 'vue';
 import {useRouter} from 'vue-router';
 import {UserStore} from "@/stores/user";
@@ -246,7 +245,7 @@ function initReactiveData() {
   if (transaction.t_text && transaction.t_payee &&
       transaction.t_payee.startsWith('AMAZON')) {
     const matches = transaction.t_text.match(/(\d{3}\-\d{7}\-\d{7})/);
-    if (matches.length > 0) {
+    if (Array.isArray(matches) && matches.length > 0) {
       amazonOrderId.value = matches[0];
     } else {
       amazonOrderId.value = '';

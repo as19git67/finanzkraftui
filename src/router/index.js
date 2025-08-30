@@ -15,6 +15,7 @@ import RoleEditView from '../views/RoleEditView.vue';
 import UserEditView from '../views/UserEditView.vue';
 import RegistrationView1 from '../views/RegistrationView1.vue';
 import TransactionNewView from '../views/TransactionNewView.vue';
+import BatchSetCategory from '../views/BatchSetCategory.vue';
 import NotAuthorizedView from '../views/NotAuthorizedView.vue';
 
 const router = createRouter({
@@ -46,6 +47,11 @@ const router = createRouter({
       name: 'TransactionDetail',
       props: true,
       component: TransactionDetailView,
+    },
+    {
+      path: '/batchSetCategory',
+      name: 'BatchSetCategory',
+      component: BatchSetCategory,
     },
     {
       path: '/transactionRules/:transactionId',

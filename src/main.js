@@ -32,6 +32,8 @@ import Chip from 'primevue/chip';
 import Textarea from 'primevue/textarea';
 import Popover from 'primevue/popover';
 import ProgressSpinner from 'primevue/progressspinner';
+import Listbox from 'primevue/listbox';
+
 import "primeicons/primeicons.css";
 import "./assets/main.scss";
 
@@ -181,5 +183,6 @@ app.component('Popover', Popover);
 app.component('InputGroup', InputGroup);
 app.component('InputGroupAddon', InputGroupAddon);
 app.component('ProgressSpinner', ProgressSpinner);
+app.component('Listbox', Listbox);
 
 app.mount("#app");

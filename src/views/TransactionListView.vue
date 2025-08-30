@@ -49,14 +49,15 @@ export default {
       'incompleteTransactionList',
       'maxTransactions',
       'lastScrollTop',
-      'searchTerm'
+      'searchTerm',
+      'selectedTransactions',
     ]),
     ...mapState(AccountStore, ['accounts']),
     ...mapState(MasterDataStore, ['timespans']),
   },
   methods: {
     ...mapActions(MasterDataStore, ['getTimespans', 'getCurrencies', 'getCurrencyDetails', 'getTags', 'getTagById']),
-    ...mapActions(TransactionStore, ['getTransactions', 'setLastScrollTop', 'clearTransactions', 'setSearchTerm']),
+    ...mapActions(TransactionStore, ['getTransactions', 'setLastScrollTop', 'clearTransactions', 'setSearchTerm', 'setSelectedTransactions']),
     ...mapActions(AccountStore, ['getAccounts', 'getAccountById']),
     ...mapActions(UserStore, ['setNotAuthenticated']),
     navigateToAddTransaction() {
@@ -82,6 +83,7 @@ export default {
         item.selected = true;
         this.transactionsSelected.push(item);
       });
+      this.setSelectedTransactions(this.transactionsSelected);
       this.updateTransactionCount();
       this.calculateIsFiltered();
       this.calculateSumAmountOfFiltered();
@@ -91,8 +93,21 @@ export default {
       this.transactions.forEach((item) => {
         item.selected = false;
       });
+      this.setSelectedTransactions(this.transactionsSelected);
       this.updateTransactionCount();
       this.calculateIsFiltered();
+    },
+    batchSetCategory() {
+      router.push({name: 'BatchSetCategory'});
+    },
+    batchSetTags() {
+    },
+    removeItemFromSelectionList(item) {
+      item.selected = false;
+      this.updateTransactionSelection(item);
+      this.updateTransactionCount();
+      this.calculateIsFiltered();
+      this.calculateSumAmountOfFiltered();
     },
     toggleSearch(event) {
       this.searchPopover.value.show(event);
@@ -257,9 +272,19 @@ export default {
           this.transactionsSelected.splice(index, 1);
         }
       }
+      this.setSelectedTransactions(this.transactionsSelected);
     },
     async prepareDataForList() {
       this.transactionsSelected = [];
+      const previouslySelected = this.selectedTransactions;
+      for (let i = 0; i < this.transactions.length; i++) {
+        const t = this.transactions[i];
+        if (previouslySelected.find(p => p.t_id === t.t_id)) {
+          t.selected = true;
+          this.transactionsSelected.push(t);
+        }
+      }
+      this.isMultiSelectMode = this.transactionsSelected.length > 0;
       this.transactionsCount = this.transactions.length;
       if (this.accountsWhereIn.length === 0) {
         this.accountName = 'Alle Transaktionen';
@@ -286,8 +311,6 @@ export default {
     _buildTransactionsPerDate() {
       const transactionsOfDate = {};
       this.transactions.forEach((t) => {
-        t.selected = false;
-
         // concatenate tags
         t.tagsStr = t.tagIds ? t.tagIds.reduce((acc, id) => {
           const tagInfo = this.getTagById(id);
@@ -458,9 +481,28 @@ export default {
         <Popover ref="multiSelectPopover" class="multi-select-popover">
           <div class="multi-select-popover__wrapper">
             <div class="multi-select-popover__header">
-              <Button icon="pi pi-list-check" aria-label="Alle auswählen" @click="selectAll"/>
-              <Button icon="pi pi-list" aria-label="Nichts auswählen" @click="clearSelection"/>
-              <Button icon="pi pi-times" aria-label="Schließen" @click="closeMultiSelect"/>
+              <div>
+                <Button severity="secondary" icon="pi pi-list-check" aria-label="Alle auswählen" @click="selectAll"/>
+                <Button severity="secondary" icon="pi pi-list" aria-label="Nichts auswählen" @click="clearSelection"/>
+                <Button severity="secondary" icon="pi pi-folder" aria-label="Kategorie setzen" @click="batchSetCategory"
+                        :disabled="transactionsSelected.length === 0"/>
+                <Button severity="secondary" icon="pi pi-tag" aria-label="Tag setzen" @click="batchSetTags"
+                        :disabled="transactionsSelected.length === 0"/>
+              </div>
+              <div>
+                <Button icon="pi pi-times" aria-label="Schließen" @click="closeMultiSelect"/>
+              </div>
+            </div>
+            <div class="multi-select-popover__content">
+              <div class="multi-select-popover__content__item" v-for="(item, index) in transactionsSelected" :key="item.t_id" :id="'transaction-' + item.t_id">
+                <div class="multi-select-popover__content__item__main">
+                  <div>{{item.payeeShortened}}</div>
+                  <div>{{item.textShortened}}</div>
+                </div>
+                <div class="multi-select-popover__content__item__suffix">
+                  <Button icon="pi pi-times-circle" variant="text" size="small" aria-label="Selection aufheben" @click="removeItemFromSelectionList(item)"/>
+                </div>
+              </div>
             </div>
           </div>
         </Popover>
@@ -547,11 +589,56 @@ export default {
   flex-direction: column;
   gap: 0.5em;
   align-items: center;
+  width: 250px;
 }
 .multi-select-popover__header {
   display: flex;
   flex-direction: row;
+  gap: 1em;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+.multi-select-popover__header > div {
+  display: flex;
+  flex-direction: row;
   gap: 0.5em;
+}
+.multi-select-popover__content {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background-color: var(--data-list-border-color);
+  max-width: 250px;
+  overflow-y: auto;
+  max-height: 70vH;
+}
+.multi-select-popover__content__item {
+  display: flex;
+  flex-direction: row;
+  gap: 0.25em;
+  background-color: var(--data-list-header-background-color);
+  width: 100%;
+}
+.multi-select-popover__content__item__main {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  overflow: hidden;
+  gap: 0.125em;
+}
+.multi-select-popover__content__item__main > div {
+  font-size: 0.7em;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.multi-select-popover__content__item__main > div:first-child {
+  font-size: 1em;
+}
+.multi-select-popover__content__item__suffix {
+  display: flex;
+  justify-content: flex-end;
   align-items: center;
 }
 .data--list__prefix-icon {

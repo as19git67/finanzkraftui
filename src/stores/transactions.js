@@ -8,6 +8,7 @@ export const TransactionStore = defineStore('transaction', {
   state: () => ({
     _maxTransactions: 1500,
     _transactions: [],
+    _selectedTransactions: [],
     _transaction: {},
     _searchTerm: '',
     _currentTransactionId: 0,
@@ -24,6 +25,9 @@ export const TransactionStore = defineStore('transaction', {
     },
     transactions(state) {
       return state._transactions;
+    },
+    selectedTransactions(state) {
+      return state._selectedTransactions;
     },
     maxTransactions(state) {
       return state._maxTransactions;
@@ -42,6 +46,9 @@ export const TransactionStore = defineStore('transaction', {
     },
   },
   actions: {
+    setSelectedTransactions(transactions = []) {
+      this._selectedTransactions = transactions;
+    },
     buildTransactionFromResponse(transactionData) {
       const res = {
         account_id: transactionData.account_id,
