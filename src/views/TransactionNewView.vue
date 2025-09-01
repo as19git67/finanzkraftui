@@ -14,7 +14,6 @@ import {TransactionStore} from '@/stores/transactions';
 import {PreferencesStore} from '@/stores/preferences';
 import {MasterDataStore} from '@/stores/masterdata';
 import {AccountStore} from '@/stores/accounts';
-import * as sea from "node:sea";
 
 export default {
   name: 'TransactionNewView',
@@ -31,6 +30,9 @@ export default {
       transactionCategory: this.transactionCategory,
       transactionNotes: this.transactionNotes,
       transactionPayee: this.transactionPayee,
+      transactionTags: this.transactionTags,
+      transactionTagsList: this.transactionTagsList,
+
       error: this.error,
       labelSave: this.labelSave,
     };
@@ -46,7 +48,7 @@ export default {
     ...mapState(AccountStore, ['accounts']),
     ...mapState(TransactionStore, ['transactions']),
     ...mapState(PreferencesStore, ['newTransactionPresets']),
-    ...mapState(MasterDataStore, ['categories']),
+    ...mapState(MasterDataStore, ['categories', 'tags']),
     saveEnabled() {
       return !this.loading && this.transactionAmount && (this.transactionNotes || this.transactionPayee) &&
           this.transactionDate && this.transactionCategory;
@@ -56,7 +58,7 @@ export default {
     ...mapActions(TransactionStore, ['getTransactions', 'addTransaction']),
     ...mapActions(PreferencesStore,
         ['getNewTransactionPresets', 'addNewTransactionPresets', 'saveNewTransactionPresets']),
-    ...mapActions(MasterDataStore, ['getCategoryById', 'getCategories']),
+    ...mapActions(MasterDataStore, ['getCategoryById', 'getCategories', 'getTags']),
     ...mapActions(UserStore, ['setNotAuthenticated']),
     ...mapActions(AccountStore, ['getAccounts', 'getAccountById']),
     filterShortcuts(searchTerm) {
@@ -93,7 +95,6 @@ export default {
       this.transactionCategory = this.categories.find(category => {
         return category.id === shortcut.categoryId;
       });
-      // todo: tags
     },
     extractPayees() {
       const p = {};
@@ -111,6 +112,7 @@ export default {
       this.loading = true;
       try {
         const promises = [];
+        promises.push(this.getTags());
         promises.push(this.getAccounts(true));
         promises.push(this.getTransactions({accountsWhereIn: [parseInt(this.accountId)]}));
         promises.push(this.getNewTransactionPresets());
@@ -149,6 +151,7 @@ export default {
         }
         this.filteredShortcuts = this.filterShortcuts();
         this.extractPayees();
+        this.transactionTagsList = this.tags;
         this.loading = false;
       } catch (ex) {
         this.error = ex.message;
@@ -190,6 +193,7 @@ export default {
       this.labelSave = 'speichern...';
       this.transactionPayee = this.transactionPayee ? this.transactionPayee.trim() : null;
       this.transactionNotes = this.transactionNotes ? this.transactionNotes.trim() : null;
+      const selectedTagIds = this.transactionTags.toSorted();
       const transactionData = {
         t_amount: this.transactionAmount * (this.isSpending ? -1 : 1),
         t_notes: this.transactionNotes,
@@ -197,6 +201,7 @@ export default {
         t_value_date: this.transactionDate,
         t_category_id: this.transactionCategory.id,
         idAccount: parseInt(this.accountId),
+        tagIds: selectedTagIds,
       };
 
       const s = this.newTransactionPresets.find(shortcut => {
@@ -294,6 +299,8 @@ export default {
     this.transactionAmount = undefined;
     this.transactionDate = DateTime.now().toJSDate();
     this.filteredCategories = [];
+    this.transactionTags = [];
+    this.transactionTagsList = [];
     this.filteredPayees = [];
     this.labelSave = 'Speichern';
   },
@@ -318,6 +325,13 @@ export default {
                         optionLabel="full_name"
                         :suggestions="filteredCategories" @complete="searchCategory"/>
           <label for="catSelection">Kategorie</label>
+        </FloatLabel>
+      </div>
+      <div class="page--content--row">
+        <FloatLabel variant="in" class="row--item row--item--is-grow">
+          <MultiSelect id="tags" fluid filter v-model="transactionTags" :options="transactionTagsList" optionValue="id"
+                       optionLabel="tag" autoFilterFocus/>
+          <label for="tags">Tags</label>
         </FloatLabel>
       </div>
       <div class="page--content--row">

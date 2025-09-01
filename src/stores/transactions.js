@@ -208,6 +208,7 @@ export const TransactionStore = defineStore('transaction', {
             amount: transactionData.t_amount,
             valueDate: transactionData.t_value_date,
             idCategory: transactionData.t_category_id,
+            tagIds: transactionData.tagIds,
           };
           const response = await axios.put('/api/transaction', tr, config);
           if (response.status === 200) {
