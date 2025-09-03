@@ -67,9 +67,14 @@ export default {
       router.back();
     },
     toggleMultiSelect(event) {
+      const popover = this.multiSelectPopover.value;
+      if (this.isMultiSelectMode !== popover.visible) {
+        popover.show(event);
+        return;
+      }
       this.isMultiSelectMode = !this.isMultiSelectMode;
       if (this.isMultiSelectMode) {
-        this.multiSelectPopover.value.show(event);
+        popover.show(event);
       } else {
         this.closeMultiSelect();
       }

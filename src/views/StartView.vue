@@ -8,6 +8,7 @@ import {mapActions, mapState, mapStores} from 'pinia';
 import {UserStore} from '@/stores/user';
 import {AccountStore} from '@/stores/accounts';
 import {MasterDataStore} from '@/stores/masterdata';
+import {TransactionStore} from "@/stores/transactions";
 import {DateTime, Settings as DateTimeSettings} from "luxon";
 
 export default {
@@ -30,6 +31,7 @@ export default {
     ...mapActions(UserStore, ['setNotAuthenticated', 'getUsers', 'getUser']),
     ...mapActions(AccountStore, ['getAccounts']),
     ...mapActions(MasterDataStore, ['getCurrencies', 'getCurrencyDetails', 'getAccountTypes', 'getAccountTypeDetails']),
+    ...mapActions(TransactionStore, ['setSelectedTransactions']),
     createAccountListByTypes(accountTypes) {
       let accounts = [];
       const userId = this.authenticatedUserId;
@@ -124,6 +126,7 @@ export default {
     this.loading = false;
     try {
       await this.loadDataFromServer();
+      this.setSelectedTransactions([]);
       this.accountGroups = [
         {
           name: 'Täglich',

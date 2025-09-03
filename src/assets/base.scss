@@ -459,6 +459,7 @@ button:hover svg .metaphor {
     display: flex;
     flex-direction: row;
     gap: 1em;
+    padding-inline: 5px;
     padding-block: 0.5em;
 
     --p-chip-padding-x: 6px;
@@ -503,13 +504,12 @@ button:hover svg .metaphor {
     flex: 0 0 auto;
     align-items: center;
     justify-content: center;
-    padding-inline-start: 5px;
+    padding-inline-start: 1em;
     min-width: 21px;
 }
 
 .data--list__left {
     flex-grow: 1;
-    padding-inline: 5px;
 }
 
 .data--list__line {
@@ -540,7 +540,6 @@ button:hover svg .metaphor {
     display: flex;
     flex: 0 0 auto;
     align-items: flex-end;
-    padding-inline: 0.5em;
     flex-direction: column;
     justify-content: center;
     gap: 0.1em;

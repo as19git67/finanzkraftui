@@ -20,7 +20,7 @@ let error = ref('');
 let loading = ref(false);
 let saving = ref(false);
 let categoryNames = ref([]);
-let selectedCategory = ref({});
+let selectedCategory = ref();
 
 onMounted(async () => {
   error.value = '';
@@ -33,8 +33,9 @@ onMounted(async () => {
     await loadDataFromServer();
   }
   categoryNames.value = masterDataStore.categories.map(category => {
-    return category.full_name;
-  })
+    return {id: category.id, name: category.full_name};
+  });
+  //categoryNames.value = [{id: -1, name: '- keine Kategorie -'}].concat(categoryNames.value);
 });
 
 async function loadDataFromServer() {
@@ -88,10 +89,39 @@ function cancel() {
   router.back();
 }
 
-function clearCategory() {
+function getSelectedTransactionIds() {
+  return transactionStore.selectedTransactions.map(t => {
+    return t.t_id;
+  });
 }
 
-function setCategory() {
+async function clearCategory() {
+  error.value = '';
+  saving = true;
+  const result = await transactionStore.updateTransactionCategories(getSelectedTransactionIds());
+  if (result.status !== 200) {
+    error.value = `Fehler: Kategorie konnte von den Buchungen nicht entfernt werden (${ex.message})`;
+    saving = false;
+    return;
+  }
+  saving = false;
+  router.back();
+}
+
+async function setCategory() {
+  error.value = '';
+  saving = true;
+  const result = await transactionStore.updateTransactionCategories(getSelectedTransactionIds(), selectedCategory.value.id);
+  if (result.status !== 200) {
+    error.value = `Fehler: Kategorie konnte nicht gesetzt werden (${result.message})`;
+    saving = false;
+    return;
+  }
+  saving = false;
+  router.back();
+}
+
+function newCategory() {
 }
 </script>
 
@@ -102,16 +132,20 @@ function setCategory() {
         <Button :label="selectedCategory ? 'Abbrechen' : 'Zurück'" @click="cancel"></Button>
         <span v-if="saving">Kategorie setzen...</span>
         <span v-if="!saving" class="element--is-grow element--is-centered">
-          Kategorie für {{transactionStore.selectedTransactions.length}} Buchungen auswählen
+          Kategorie für {{transactionStore.selectedTransactions.length}} Buchungen
         </span>
         <Button v-if="selectedCategory" label="Speichern" @click="setCategory"></Button>
         <Button v-if="!selectedCategory" label="Kategorie entfernen" @click="clearCategory"></Button>
+        <Button aria-label="Neue Kategorie" @click="newCategory" icon="pi pi-folder-plus" variant="text"></Button>
       </div>
     </div>
     <div class="page--content">
+      <div class="page--content--row" v-if="error">
+        <div class="error">{{ error }}</div>
+      </div>
       <div class="page--content--row row--is-full-height">
         <div class="row--item row--item__category-list">
-          <Listbox v-model="selectedCategory" :options="categoryNames" filter scrollHeight="auto" checkmark :highlightOnSelect="false"/>
+          <Listbox v-model="selectedCategory" :options="categoryNames" optionLabel="name" filter scrollHeight="auto" checkmark :highlightOnSelect="false"/>
         </div>
       </div>
     </div>
