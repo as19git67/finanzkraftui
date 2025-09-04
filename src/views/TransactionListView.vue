@@ -22,7 +22,9 @@ export default {
     return {
       error: this.error,
       loading: this.loading,
+      selectAllOrNoting: this.selectAllOrNoting,
       isMultiSelectMode: this.isMultiSelectMode,
+      selectionListShown: this.selectionListShown,
       accountName: this.accountName,
       accountBalance: this.accountBalance,
       accountBalanceDateStr: this.accountBalanceDateStr,
@@ -54,6 +56,24 @@ export default {
     ]),
     ...mapState(AccountStore, ['accounts']),
     ...mapState(MasterDataStore, ['timespans']),
+    isSelectionIndeterminate() {
+      return this.transactionsSelected.length > 0 &&
+        this.transactionsSelected.length < this.transactions.length;
+    },
+  },
+  watch: {
+    'transactionsSelected.length': function (val, oldVal) {
+      this.selectAllOrNoting = this.transactionsSelected.length === this.transactions.length;
+      if (this.transactionsSelected.length === 0) {
+        this.selectionListShown = false;
+      }
+    },
+    selectionListShown: function (val, oldVal) {
+      // can't implement show here, because show needs the event
+      if (!val && this.multiSelectPopover?.value) {
+        this.multiSelectPopover.value.hide();
+      }
+    }
   },
   methods: {
     ...mapActions(MasterDataStore, ['getTimespans', 'getCurrencies', 'getCurrencyDetails', 'getTags', 'getTagById']),
@@ -66,21 +86,22 @@ export default {
     navigateBack() {
       router.back();
     },
-    toggleMultiSelect(event) {
-      const popover = this.multiSelectPopover.value;
-      if (this.isMultiSelectMode !== popover.visible) {
-        popover.show(event);
-        return;
-      }
-      this.isMultiSelectMode = !this.isMultiSelectMode;
-      if (this.isMultiSelectMode) {
-        popover.show(event);
+    onSelectAllOrNotingChanged(event) {
+      if (this.selectAllOrNoting) {
+        this.selectAll();
       } else {
-        this.closeMultiSelect();
+        this.clearSelection();
       }
     },
-    closeMultiSelect() {
-      this.multiSelectPopover.value.hide();
+    toggleSelectionList(event) {
+      this.selectionListShown = !this.selectionListShown;
+      const popover = this.multiSelectPopover.value;
+      if (this.selectionListShown) {
+        popover.show(event);
+      }
+    },
+    toggleMultiSelectMode(event) {
+      this.isMultiSelectMode = !this.isMultiSelectMode;
     },
     selectAll() {
       this.transactionsSelected = [];
@@ -440,7 +461,9 @@ export default {
     this.accountsWhereIn = [];
     this.dateFilterFrom = undefined;
     this.dateFilterTo = undefined;
+    this.selectAllOrNoting = false;
     this.isMultiSelectMode = false;
+    this.selectionListShown = false;
     this.transactionsCount = 0;
     this.amountSumStr = '';
     this.isFiltered = false;
@@ -482,21 +505,12 @@ export default {
           </InputGroup>
           <Button icon="pi pi-times" aria-label="Schließen" @click="closeSearch"/>
         </Popover>
-        <Button @click="toggleMultiSelect" :icon="isMultiSelectMode ? 'pi pi-pen-to-square' : 'pi pi-check-square'" :severity="isMultiSelectMode ? 'info' : null"/>
+        <Button :disabled="transactionsSelected.length === 0" @click="toggleSelectionList" :icon="selectionListShown ? 'pi pi-list-check' : 'pi pi-list'" :severity="selectionListShown ? 'info' : null" aria-label="Ausgewählte einblenden"/>
+        <Button @click="toggleMultiSelectMode" :icon="isMultiSelectMode ? 'pi pi-pen-to-square' : 'pi pi-check-square'" :severity="isMultiSelectMode ? 'info' : null"/>
         <Popover ref="multiSelectPopover" class="multi-select-popover">
           <div class="multi-select-popover__wrapper">
             <div class="multi-select-popover__header">
-              <div>
-                <Button severity="secondary" icon="pi pi-list-check" aria-label="Alle auswählen" @click="selectAll"/>
-                <Button severity="secondary" icon="pi pi-list" aria-label="Nichts auswählen" @click="clearSelection"/>
-                <Button severity="secondary" icon="pi pi-folder" aria-label="Kategorie setzen" @click="batchSetCategory"
-                        :disabled="transactionsSelected.length === 0"/>
-                <Button severity="secondary" icon="pi pi-tag" aria-label="Tag setzen" @click="batchSetTags"
-                        :disabled="transactionsSelected.length === 0"/>
-              </div>
-              <div>
-                <Button icon="pi pi-times" aria-label="Schließen" @click="closeMultiSelect"/>
-              </div>
+              Ausgewählte Buchungen:
             </div>
             <div class="multi-select-popover__content">
               <div class="multi-select-popover__content__item" v-for="(item, index) in transactionsSelected" :key="item.t_id" :id="'transaction-' + item.t_id">
@@ -511,6 +525,19 @@ export default {
             </div>
           </div>
         </Popover>
+      </div>
+      <div v-if="isMultiSelectMode" class="page--title title__with-buttons">
+        <div class="title--action-buttons">
+          <Checkbox v-model="selectAllOrNoting"
+                    @change="onSelectAllOrNotingChanged($event)" size="small" :indeterminate="isSelectionIndeterminate" binary/>
+          <span>{{transactionsSelected.length}} ausgewählt</span>
+        </div>
+        <div class="title--action-buttons">
+          <Button severity="secondary" icon="pi pi-folder" aria-label="Kategorie setzen" @click="batchSetCategory"
+                  :disabled="transactionsSelected.length === 0"/>
+          <Button severity="secondary" icon="pi pi-tag" aria-label="Tag setzen" @click="batchSetTags"
+                  :disabled="transactionsSelected.length === 0"/>
+        </div>
       </div>
     </div>
     <div class="page--content table-scroll" @scroll="tableScroll">

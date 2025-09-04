@@ -313,6 +313,7 @@ button:hover svg .metaphor {
 
 .page--header {
     display: flex;
+    flex-direction: column;
     gap: 0.5em;
     justify-content: start;
     background-color: var(--page-header-background-color);
@@ -416,9 +417,10 @@ button:hover svg .metaphor {
 }
 
 .page--title {
-    display: flex;
-    flex: 1 1 auto;
-    justify-content: center;
+  display: flex;
+  flex-direction: row;
+  flex: 1 1 auto;
+  justify-content: center;
 }
 
 .page--title.title__with-buttons {
@@ -427,6 +429,14 @@ button:hover svg .metaphor {
     padding-block: 0.25em;
     flex: 1 1 auto;
     justify-content: space-between;
+}
+
+.page--title.title__with-buttons .title--action-buttons {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5em;
+  padding-inline-start: 1em;
 }
 
 .page--footer {
