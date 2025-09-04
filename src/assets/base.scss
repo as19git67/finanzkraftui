@@ -306,7 +306,8 @@ button:hover svg .metaphor {
 .page.page--is-transactions-list-view,
 .page.page--is-transaction-new-view,
 .page.page--is-transaction-detail-view,
-.page.page--is-batch-set-category-view {
+.page.page--is-batch-set-category-view,
+.page.page--is-batch-set-tags-view {
     min-width: calc(var(--page-min-width) - (2 * var(--page-padding-inline)));
     max-width: var(--data-list-max-width);
 }
@@ -362,13 +363,18 @@ button:hover svg .metaphor {
     font-size: var(--page-content-font-size);
     font-weight: var(--page-content-font-weight);
 }
+.page.page--content--has-no-overflow {
+  overflow-y: hidden;
+}
 
 .page--content--row {
     display: flex;
     flex-direction: column;
     gap: 0.5em;
 }
-
+.page--content--row.page--content--row__scrollable {
+  overflow-y: auto;
+}
 .page--content--row__heading {
     display: flex;
     padding-inline: 25px;

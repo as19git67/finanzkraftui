@@ -319,7 +319,50 @@ export const TransactionStore = defineStore('transaction', {
             const t = this._transactions.filter((tr) => {
               return tr.t_id === id;
             });
-            _.assign(t[0], updateData);
+            _.assign(t[0], {categoryId: updateData.categoryId});
+          }
+          return { status: response.status, data: resultData };
+        } catch (ex) {
+          return userStore.handleAxiosException(ex, userStore, resultData);
+        }
+      }
+      return { status: 401, data: resultData };
+    },
+    async updateTransactionTags(transactionIds, tagIds) {
+      const resultData = {};
+      const userStore = UserStore();
+      if (userStore.authenticated) {
+        const config = userStore.getBearerAuthRequestHeader();
+        if (!_.isArray(transactionIds)) {
+          throw new Error('transactionIds must be an array');
+        }
+        const tIds = transactionIds.map((tId) => {
+          const id = parseInt(tId);
+          if (isNaN(id)) {
+            throw new Error('Transaction id can\'t be parsed as integer');
+          }
+          return id;
+        });
+        const parsedTagIds = tagIds.map((tId) => {
+          const id = parseInt(tId);
+          if (isNaN(id)) {
+            throw new Error('Tag id can\'t be parsed as integer');
+          }
+          return id;
+        });
+
+        const updateData = {
+          tIds: tIds,
+          tagIds: parsedTagIds,
+        }
+        try {
+          const response = await axios.post(`/api/transaction/`, updateData, config);
+          if (response.status === 200) {
+            const id = parseInt(updateData.id, 10);
+            const t = this._transactions.filter((tr) => {
+              return tr.t_id === id;
+            });
+            _.assign(t[0], {tagIds: updateData.tagIds});
           }
           return { status: response.status, data: resultData };
         } catch (ex) {

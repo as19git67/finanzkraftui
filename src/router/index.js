@@ -15,7 +15,8 @@ import RoleEditView from '../views/RoleEditView.vue';
 import UserEditView from '../views/UserEditView.vue';
 import RegistrationView1 from '../views/RegistrationView1.vue';
 import TransactionNewView from '../views/TransactionNewView.vue';
-import BatchSetCategory from '../views/BatchSetCategory.vue';
+import BatchSetCategoryView from '../views/BatchSetCategoryView.vue';
+import BatchSetTagsView from "@/views/BatchSetTagsView.vue";
 import NotAuthorizedView from '../views/NotAuthorizedView.vue';
 
 const router = createRouter({
@@ -51,7 +52,12 @@ const router = createRouter({
     {
       path: '/batchSetCategory',
       name: 'BatchSetCategory',
-      component: BatchSetCategory,
+      component: BatchSetCategoryView,
+    },
+    {
+      path: '/batchSetTags',
+      name: 'BatchSetTags',
+      component: BatchSetTagsView,
     },
     {
       path: '/transactionRules/:transactionId',

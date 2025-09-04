@@ -8,7 +8,7 @@ import {useRouter} from 'vue-router';
 import {useConfirm} from "primevue/useconfirm";
 
 defineOptions({
-  name: 'BatchSetCategory'
+  name: 'BatchSetCategoryView'
 });
 
 const router = useRouter();
