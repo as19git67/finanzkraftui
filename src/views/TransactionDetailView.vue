@@ -69,11 +69,24 @@ onMounted(async () => {
   await loadDataFromServer();
  });
 
+watch(transactionAmount, (val, oldVal) => {
+  if (transaction === undefined) {
+    return;
+  }
+  const amount = isSpending ? val * -1 : val;
+  if (transaction.t_amount === amount) {
+    delete updateData.value.t_amount;
+    return;
+  }
+  updateData.value.t_amount = amount;
+});
+
 watch(transactionNotes, (val, oldVal) => {
   if (transaction === undefined) {
     return;
   }
   if (transaction.t_notes === val) {
+    delete updateData.value.t_notes;
     return;
   }
   updateData.value.t_notes = val;
@@ -100,6 +113,7 @@ watch(transactionCategory, (val, oldVal) => {
 
   if (transaction.category_id === val.id) {
     // did not change
+    delete updateData.value.category_id;
     return;
   }
 
@@ -119,6 +133,7 @@ watch(transactionTags, (val, oldVal) => {
 
   if (_.isEqual(selectedTagIds, transactionTagIds)) {
     // did not change
+    delete updateData.value.tagIds;
     return;
   }
 
