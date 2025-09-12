@@ -6,7 +6,7 @@ import NumberParser from "@/NumberParser";
 
 export const TransactionStore = defineStore('transaction', {
   state: () => ({
-    _maxTransactions: 1500,
+    _maxTransactions: 500,
     _transactions: [],
     _selectedTransactions: [],
     _transaction: {},
@@ -309,8 +309,10 @@ export const TransactionStore = defineStore('transaction', {
           throw new Error('Category id can\'t be parsed as integer');
         }
         const updateData = {
-          tIds: tIds,
-          categoryId: cId,
+          categoryForTransactions: {
+            tIds: tIds,
+            categoryId: cId,
+          }
         }
         try {
           const response = await axios.post(`/api/transaction/`, updateData, config);
@@ -328,35 +330,36 @@ export const TransactionStore = defineStore('transaction', {
       }
       return { status: 401, data: resultData };
     },
-    async updateTransactionTags(transactionIds, tagIds) {
+    async updateTransactionTags(updateData) {
       const resultData = {};
       const userStore = UserStore();
       if (userStore.authenticated) {
         const config = userStore.getBearerAuthRequestHeader();
-        if (!_.isArray(transactionIds)) {
-          throw new Error('transactionIds must be an array');
+
+        // check update data
+        if (!_.isArray(updateData)) {
+          throw new Error('updateData must be an array');
         }
-        const tIds = transactionIds.map((tId) => {
-          const id = parseInt(tId);
+        const data = updateData.map((t) => {
+          const id = parseInt(t.t_id);
           if (isNaN(id)) {
             throw new Error('Transaction id can\'t be parsed as integer');
           }
-          return id;
-        });
-        const parsedTagIds = tagIds.map((tId) => {
-          const id = parseInt(tId);
-          if (isNaN(id)) {
-            throw new Error('Tag id can\'t be parsed as integer');
-          }
-          return id;
+          const parsedTagIds = t.tagIds.map((tagId) => {
+            const id = parseInt(tagId);
+            if (isNaN(id)) {
+              throw new Error('Tag id can\'t be parsed as integer');
+            }
+            return id;
+          });
+          return {
+            t_id: id,
+            tagIds: parsedTagIds,
+          };
         });
 
-        const updateData = {
-          tIds: tIds,
-          tagIds: parsedTagIds,
-        }
         try {
-          const response = await axios.post(`/api/transaction/`, updateData, config);
+          const response = await axios.post(`/api/transaction/`, {tagsForTransactions: data}, config);
           if (response.status === 200) {
             const id = parseInt(updateData.id, 10);
             const t = this._transactions.filter((tr) => {

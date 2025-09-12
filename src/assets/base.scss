@@ -464,6 +464,7 @@ button:hover svg .metaphor {
     font-size: var(--data-list-font-size);
     font-weight: var(--data-list-font-weight);
     gap: 3px;
+    flex-grow: 1;
 }
 
 .data--list__item {
@@ -474,6 +475,7 @@ button:hover svg .metaphor {
 
     display: flex;
     flex-direction: row;
+    align-items: center;
     gap: 1em;
     padding-inline: 5px;
     padding-block: 0.5em;

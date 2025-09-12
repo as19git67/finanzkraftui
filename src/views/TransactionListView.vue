@@ -516,8 +516,11 @@ export default {
             <div class="multi-select-popover__content">
               <div class="multi-select-popover__content__item" v-for="(item, index) in transactionsSelected" :key="item.t_id" :id="'transaction-' + item.t_id">
                 <div class="multi-select-popover__content__item__main">
-                  <div>{{item.payeeShortened}}</div>
-                  <div>{{item.textShortened}}</div>
+                  <div v-if="item.payeeShortened">{{item.payeeShortened}}</div>
+                  <div v-if="item.textShortened">{{ item.textShortened }}</div>
+                  <div v-if="item.t_notes">{{ item.t_notes }}</div>
+                  <div v-if="item.t_entry_text && !item.t_notes && !item.textShortened && !item.payeeShortened">{{ item.t_entry_text }}</div>
+                  <div v-if="item.category_name">{{ item.category_name }}</div>
                 </div>
                 <div class="multi-select-popover__content__item__suffix">
                   <Button icon="pi pi-times-circle" variant="text" size="small" aria-label="Selection aufheben" @click="removeItemFromSelectionList(item)"/>
