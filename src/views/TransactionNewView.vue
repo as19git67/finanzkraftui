@@ -25,6 +25,7 @@ export default {
       filteredPayees: this.filteredPayees,
       filteredShortcuts: this.filteredShortcuts,
       isSpending: true,
+      amountRaw: '',
       transactionAmount: this.transactionAmount,
       transactionDate: this.transactionDate,
       transactionCategory: this.transactionCategory,
@@ -41,6 +42,10 @@ export default {
     transactionText: function(val, oldVal) {
       this.filteredShortcuts = this.filterShortcuts(val);
     },
+    amountRaw: function(val, oldVal) {
+      console.log('transactionAmount changed');
+      this.transactionAmount = val;
+    }
   },
   computed: {
     ...mapStores(UserStore, MasterDataStore, PreferencesStore, AccountStore),
@@ -357,6 +362,7 @@ export default {
           <FloatLabel variant="in" class="row--item row--item--is-grow">
             <InputNumber id="idTransactionAmount" locale="de-DE"
                          inputmode="decimal" currency="EUR"
+                         @input="(e) => (amountRaw = e.value)"
                          class="prevent-scroll"
                          mode="currency" v-model=transactionAmount size="large"/>
             <label for="idTransactionAmount">Betrag</label>
