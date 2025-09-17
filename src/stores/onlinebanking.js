@@ -1,0 +1,56 @@
+import axios from 'axios';
+import { defineStore } from 'pinia';
+import _ from 'lodash';
+import { UserStore } from '@/stores/user';
+
+export const OnlineBankingStore = defineStore('onlinebanking', {
+  state: () => ({
+    _bankcontacts: [],
+  }),
+  getters: {
+    bankcontacts(state) {
+      return state._bankcontacts;
+    },
+  },
+  actions: {
+    async getBankcontacts(force) {
+      if (force || this._bankcontacts.length === 0) {
+        const userStore = UserStore();
+        if (userStore.authenticated) {
+          const config = userStore.getBearerAuthRequestHeader();
+          try {
+            const response = await axios.get('/api/bankcontacts', config);
+            if (response.status === 200) {
+              if (_.isArray(response.data)) {
+                this._bankcontacts = _.map(response.data, (bankcontact) => ({
+                  id: bankcontact.id,
+                  name: bankcontact.name,
+                  fintsurl: bankcontact.fintsurl,
+                }));
+              } else {
+                this._bankcontacts = [];
+              }
+            } else {
+              this._bankcontacts = [];
+            }
+            return response.status;
+          } catch (ex) {
+            this._bankcontacts = [];
+            if (ex.response && ex.response.status) {
+              if (ex.response.status === 401) {
+                userStore.setNotAuthenticated();
+              }
+              return ex.response.status;
+            }
+            throw ex;
+          }
+        } else {
+          this._bankcontacts = [];
+          return 401;
+        }
+      } else {
+        return 200; // status ok
+      }
+    },
+  },
+});

@@ -18,6 +18,8 @@ import TransactionNewView from '../views/TransactionNewView.vue';
 import BatchSetCategoryView from '../views/BatchSetCategoryView.vue';
 import BatchSetTagsView from "@/views/BatchSetTagsView.vue";
 import NotAuthorizedView from '../views/NotAuthorizedView.vue';
+import BankcontactsView from "@/views/BankcontactsView.vue";
+import BankcontactView from "@/views/BankcontactView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -97,6 +99,17 @@ const router = createRouter({
       name: 'AccountDetail',
       props: true,
       component: AccountView,
+    },
+    {
+      path: '/bankcontacts',
+      name: 'Bankcontacts',
+      component: BankcontactsView,
+    },
+    {
+      path: '/bankcontact/:bankcontactId',
+      name: 'BankcontactDetail',
+      props: true,
+      component: BankcontactView,
     },
     {
       path: '/users',

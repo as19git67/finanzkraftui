@@ -3,6 +3,7 @@ import { RouterLink, RouterView } from "vue-router";
 import {UserStore} from "@/stores/user";
 import IconFinance from "@/components/icons/IconFinance.vue";
 import IconRuleSettings from "@/components/icons/IconRuleSettings.vue";
+import IconBriefcase from "@/components/icons/IconBriefcase.vue";
 import IconBankAccounts from "@/components/icons/IconBankAccounts.vue";
 import IconUserManagement from "@/components/icons/IconUserManagement.vue";
 import IconRoles from "@/components/icons/IconRoles.vue";
@@ -40,7 +41,8 @@ function logout() {
       <nav>
         <RouterLink to="/" v-if="authenticated && menuPermissions['user.accounts']" title="Buchungsliste"><IconFinance class="nav-icon"/></RouterLink>
         <RouterLink to="/RuleSets" v-if="authenticated && menuPermissions['admin.rules']" title="Regeln"><IconRuleSettings class="nav-icon"/></RouterLink>
-        <RouterLink to="/Accounts" v-if="authenticated && menuPermissions['admin.accounts']" title="Bankkonten"><IconBankAccounts class="nav-icon"/></RouterLink>
+        <RouterLink to="/Accounts" v-if="authenticated && menuPermissions['admin.accounts']" title="Bankkonten"><IconBriefcase class="nav-icon"/></RouterLink>
+        <RouterLink to="/Bankcontacts" v-if="authenticated && menuPermissions['admin.onlinebanking']" title="Online Banking"><IconBankAccounts class="nav-icon"/></RouterLink>
         <RouterLink to="/Users" v-if="authenticated && menuPermissions['admin.users']" title="Benutzerverwaltung"><IconUserManagement class="nav-icon"/></RouterLink>
         <RouterLink to="/Roles" v-if="authenticated && menuPermissions['admin.roles']" title="Benutzerrollen"><IconRoles class="nav-icon"/></RouterLink>
         <Button v-if="authenticated" title="ausloggen" link @click="logout"><IconLogout class="nav-icon"/></Button>
