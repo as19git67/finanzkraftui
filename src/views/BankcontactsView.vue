@@ -8,23 +8,25 @@ import {OnlineBankingStore} from "@/stores/onlinebanking";
 const router = useRouter();
 const userStore = UserStore();
 const onlinebankingStore = OnlineBankingStore();
+const bankcontacts = computed(() => onlinebankingStore.bankcontacts);
+const menuPermissions = computed(() => userStore.menuPermissions);
 
 defineOptions({
   name: 'BankcontactsView'
 });
 
-let error = ref('');
-let loading = ref(false);
-let bankcontacts = ref([]);
+const error = ref('');
+const loading = ref(false);
+const bankcontactName = ref('');
 
 async function loadDataFromServer() {
-  error = '';
-  loading = true;
+  error.value = '';
+  loading.value = true;
   const promises = [];
   promises.push(userStore.getUsers());
   promises.push(onlinebankingStore.getBankcontacts(true));
   const results = await Promise.all(promises);
-  loading = false;
+  loading.value = false;
   let mustAuthenticate = false;
   let notAuthorized = false;
   let not_ok = false;
@@ -57,41 +59,87 @@ async function loadDataFromServer() {
     router.replace({name: 'notAuthorized'});
     return;
   }
-
-  this.bankcontacts.value = onlinebankingStore.bankcontacts;
+  loading.value = false;
+  error.value = '';
 }
 
-function navigateToBankcontactDetail(idAccount) {
-  router.push({ name: 'BankcontactDetail', params: { accountId: idAccount } });
+function navigateToBankcontactDetail(item) {
+  router.push({name: 'BankcontactDetail', params: {bankcontactId: item.id}});
 }
 
 onMounted(async () => {
-  error = '';
-  loading = false;
+  error.value = '';
+  loading.value = false;
   if (userStore.isAuthenticated) {
     try {
       await loadDataFromServer();
     } catch (ex) {
-      error = ex.message;
-      loading = false;
+      error.value = ex.message;
+      loading.value = false;
     }
   } else {
     router.replace({name: 'login'});
   }
 });
+
+function createNew() {
+  onlinebankingStore.saveNewBankcontact({name: bankcontactName.value, fintsurl: ''}).then(result => {
+    if (result.status === 200) {
+      bankcontactName.value = '';
+      loadDataFromServer();
+    } else {
+      error.value = 'Fehler beim Erstellen des Bankkontaktes: ' + result.message + '';
+    }
+  }).catch((ex) => {
+    loading.value = false;
+    error.value = ex.message;
+  });
+}
+
 </script>
 
 <template>
   <div class="page page--is-bankcontacts-view">
     <div class="page--header">
-      <div class="page--title">Alle Bankkontakte</div>
+      <div class="page--title">
+        <span v-if="loading">Bankkontakte laden...</span>
+        <span v-if="!loading" class="element--is-grow element--is-centered">Alle Bankkontakte</span>
+      </div>
     </div>
+
     <div class="page--content">
-      <div class="page--content--row">
-        <div class="data--list data--list--standard" v-if="bankcontacts.length">
+      <div class="page--content--row" v-if="menuPermissions['admin.onlinebanking.new']">
+        <div class="page--content--row__inline">
+          <FloatLabel variant="in" class="row--item row--item--is-grow">
+            <InputText id="idName" v-model=bankcontactName size="small" class="prevent-scroll"></InputText>
+            <label for="idName">Bankkontakt Name</label>
+          </FloatLabel>
+          <Button :disabled="!bankcontactName" size="small" @click="createNew" label="Neu" icon="pi pi-plus"></Button>
         </div>
       </div>
-      <div class="page--content--row" v-if="error">
+      <div class="page--content--row">
+        <div class="data--list data--list--standard" v-if="bankcontacts">
+          <div v-for="(item, index) of bankcontacts" :key="item" class="data--list__item">
+            <div class="data--list__left">
+              <div class="data--list__line data--list__line--bold data--list__line--space-between">
+                <span>{{ item.name }}</span>
+                <span v-if="item.status">{{ item.status }}</span>
+              </div>
+              <div class="data--list__line data--list__line--space-between">
+                <span v-if="item.fintsurl">FinTS URL: {{ item.fintsurl }}</span>
+                <span v-if="item.lastUpdatedStr">aktualisiert: {{item.lastUpdatedStr}}</span>
+              </div>
+            </div>
+            <div class="data--list__right" v-if="menuPermissions['admin.onlinebanking.edit']">
+              <Button @click="navigateToBankcontactDetail(item)"
+                      @keydown.enter="navigateToBankcontactDetail(item)"
+                      icon="pi pi-caret-right" severity="contrast"
+                      variant="text" rounded aria-label="Ändern" />
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="page--content--row">
         <div class="error">{{ error }}</div>
       </div>
     </div>

@@ -1,7 +1,7 @@
 import axios from 'axios';
-import { defineStore } from 'pinia';
+import {defineStore} from 'pinia';
 import _ from 'lodash';
-import { UserStore } from '@/stores/user';
+import {UserStore} from '@/stores/user';
 
 export const OnlineBankingStore = defineStore('onlinebanking', {
   state: () => ({
@@ -51,6 +51,35 @@ export const OnlineBankingStore = defineStore('onlinebanking', {
       } else {
         return 200; // status ok
       }
+    },
+    getBankcontact(id) {
+      return this._bankcontacts.find((bankcontact) => bankcontact.id === id);
+    },
+    async saveNewBankcontact(bankcontact) {
+      const userStore = UserStore();
+      if (userStore.authenticated) {
+        const config = userStore.getBearerAuthRequestHeader();
+        try {
+          const response = await axios.put('/api/bankcontacts', bankcontact, config);
+          return {status: response.status, resultData: response.data};
+        } catch (ex) {
+          return userStore.handleAxiosException(ex, userStore, {});
+        }
+      }
+      return {status: 401};
+    },
+    async updateBankcontact(id, updateData) {
+      const userStore = UserStore();
+      if (userStore.authenticated) {
+        const config = userStore.getBearerAuthRequestHeader();
+        try {
+          const response = await axios.post(`/api/bankcontacts/${id}`, updateData, config);
+          return {status: response.status, resultData: response.data};
+        } catch (ex) {
+          return userStore.handleAxiosException(ex, userStore, {});
+        }
+      }
+      return {status: 401};
     },
   },
 });
