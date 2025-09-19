@@ -25,7 +25,10 @@ export const OnlineBankingStore = defineStore('onlinebanking', {
                 this._bankcontacts = _.map(response.data, (bankcontact) => ({
                   id: bankcontact.id,
                   name: bankcontact.name,
-                  fintsurl: bankcontact.fintsurl,
+                  fintsUrl: bankcontact.fintsUrl,
+                  fintsBankId: bankcontact.fintsBankId,
+                  fintsUserId: bankcontact.fintsUserId,
+                  fintsPassword: ''
                 }));
               } else {
                 this._bankcontacts = [];

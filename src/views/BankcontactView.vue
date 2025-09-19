@@ -84,7 +84,7 @@ async function loadDataFromServer() {
   if (bankcontact) {
     name.value = bankcontact.name;
     fintsUrl.value = bankcontact.fintsUrl;
-    fintsBankId.value = bankcontact.bankId;
+    fintsBankId.value = bankcontact.fintsBankId;
     fintsUserId.value = bankcontact.fintsUserId;
     fintsPassword.value = ''; // don't set the password, it is encrypted an does not help
   } else {
@@ -111,7 +111,7 @@ function save() {
   const updateData = {
     name: name.value,
     fintsUrl: fintsUrl.value,
-    bankId: fintsBankId.value,
+    fintsBankId: fintsBankId.value,
     fintsUserId: fintsUserId.value,
   };
   if (fintsPassword.value.trim().length > 0) {
