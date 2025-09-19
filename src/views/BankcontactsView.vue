@@ -112,7 +112,7 @@ function createNew() {
         <div class="page--content--row__inline">
           <FloatLabel variant="in" class="row--item row--item--is-grow">
             <InputText id="idName" v-model=bankcontactName size="small" class="prevent-scroll"></InputText>
-            <label for="idName">Bankkontakt Name</label>
+            <label for="idName">Name des neuen Bankkontakts:</label>
           </FloatLabel>
           <Button :disabled="!bankcontactName" size="small" @click="createNew" label="Neu" icon="pi pi-plus"></Button>
         </div>

@@ -22,12 +22,19 @@ const props = defineProps({
 const error = ref('');
 const loading = ref(false);
 const name = ref('');
-const fintsurl = ref('');
+const fintsUrl = ref('');
+const fintsBankId = ref('');
+const fintsUserId = ref('');
+const fintsPassword = ref('');
 let bankcontact = {};
 
 const menuPermissions = computed(() => userStore.menuPermissions);
 const dirty = computed(() => {
-  return name.value !== bankcontact.name || fintsurl.value !== bankcontact.fintsurl;
+  return name.value !== bankcontact.name
+      || fintsUrl.value !== bankcontact.fintsUrl
+      || fintsBankId.value !== bankcontact.fintsBankId
+      || fintsUserId.value !== bankcontact.fintsUserId
+      || fintsPassword.value.trim().length > 0;
 });
 
 async function loadDataFromServer() {
@@ -76,7 +83,10 @@ async function loadDataFromServer() {
   bankcontact = onlinebankingStore.getBankcontact(parseInt(props.bankcontactId));
   if (bankcontact) {
     name.value = bankcontact.name;
-    fintsurl.value = bankcontact.fintsurl;
+    fintsUrl.value = bankcontact.fintsUrl;
+    fintsBankId.value = bankcontact.bankId;
+    fintsUserId.value = bankcontact.fintsUserId;
+    fintsPassword.value = ''; // don't set the password, it is encrypted an does not help
   } else {
     error.value = 'Bankkontakt nicht gefunden';
   }
@@ -98,7 +108,17 @@ onMounted(async () => {
 });
 
 function save() {
-  onlinebankingStore.updateBankcontact(bankcontact.id, {name: name.value, fintsurl: fintsurl.value}).then(result => {
+  const updateData = {
+    name: name.value,
+    fintsUrl: fintsUrl.value,
+    bankId: fintsBankId.value,
+    fintsUserId: fintsUserId.value,
+  };
+  if (fintsPassword.value.trim().length > 0) {
+    // user set up a new password - server needs to encrypt it before saving
+    updateData.fintsPassword = fintsPassword.value;
+  }
+  onlinebankingStore.updateBankcontact(bankcontact.id, updateData).then(result => {
     if (result.status === 200) {
       router.back();
       return;
@@ -138,8 +158,26 @@ function deleteTheBankcontact() {
       </div>
       <div class="page--content--row">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <InputText id="idFintsUrl" v-model="fintsurl"></InputText>
+          <InputText id="idFintsUrl" v-model="fintsUrl"></InputText>
           <label for="idFintsUrl">FinTS URL</label>
+        </FloatLabel>
+      </div>
+      <div class="page--content--row">
+        <FloatLabel variant="in" class="row--item row--item--is-grow">
+          <InputText id="idBankId" v-model="fintsBankId"></InputText>
+          <label for="idBankId">Bank ID</label>
+        </FloatLabel>
+      </div>
+      <div class="page--content--row">
+        <FloatLabel variant="in" class="row--item row--item--is-grow">
+          <InputText id="idFintsUserId" v-model="fintsUserId"></InputText>
+          <label for="idFintsUserId">FinTS User Id</label>
+        </FloatLabel>
+      </div>
+      <div class="page--content--row">
+        <FloatLabel variant="in" class="row--item row--item--is-grow">
+          <InputText id="idFintsPassword" v-model="fintsPassword" type="password"></InputText>
+          <label for="idFintsPassword">FinTS PIN/Passwort (wird verschlüsselt gespeichert)</label>
         </FloatLabel>
       </div>
       <div class="page--content--row" v-if="error">
