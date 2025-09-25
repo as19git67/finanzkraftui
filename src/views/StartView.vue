@@ -170,10 +170,12 @@ export default {
             <div class="data--list__item" v-for="(item, index) of accountGroup.accounts" :key="item.id">
               <div class="data--list__left">
                 <router-link v-if="item.type === 'all'" append :to="{ name: 'Transactions',  params: { accountId: item.accountsInGroup }}">
-                  <div class="data--list__line data--list__line--bold">{{ item.name }}</div>
+                  <div class="data--list__line data--list__line--bold">
+                    {{ item.name }}<Chip v-if="item.unseen">{{item.unseen}}</Chip></div>
                 </router-link>
                 <router-link v-else append :to="{ name: 'Transactions',  params: { accountId: [item.id] }}">
-                  <div class="data--list__line data--list__line--bold">{{ item.name }}</div>
+                  <div class="data--list__line data--list__line--bold">
+                    {{ item.name }}<Chip v-if="item.unseen">{{item.unseen}}</Chip></div>
                   <div class="data--list__line">
                     <span v-if="item.balanceDateStr">aktualisiert: {{ item.balanceDateStr }}</span>
                   </div>

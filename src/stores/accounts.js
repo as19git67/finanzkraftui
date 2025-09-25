@@ -47,6 +47,7 @@ export const AccountStore = defineStore('account', {
                   closedAt: account.closedAt,
                   reader: account.reader ? account.reader : [],
                   writer: account.writer ? account.writer : [],
+                  unseen: account.unseen ? account.unseen : 0,
                   idBankcontact: account.idBankcontact,
                   fintsError: account.fintsError,
                   fintsAccountNumber: account.fintsAccountNumber,
