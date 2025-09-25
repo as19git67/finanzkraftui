@@ -4,6 +4,7 @@ import {DateTime} from 'luxon';
 import {AccountStore} from '@/stores/accounts';
 import {UserStore} from '@/stores/user';
 import {MasterDataStore} from '@/stores/masterdata';
+import {OnlineBankingStore} from '@/stores/onlinebanking';
 import {computed, onMounted, ref} from 'vue';
 import {useRouter} from 'vue-router';
 
@@ -18,11 +19,11 @@ defineOptions({
 const router = useRouter();
 const userStore = UserStore();
 const accountStore = AccountStore();
+const onlineBankingStore = OnlineBankingStore();
 const masterDataStore = MasterDataStore();
 
 let error = ref('');
 let loading = ref(false);
-let id = ref('');
 let name = ref('');
 let iban = ref('');
 let startBalance = ref(0);
@@ -30,10 +31,10 @@ let closed = ref(false);
 let closedAt = ref(DateTime.now().toJSDate());
 let originalData = ref({});
 let typeObj = ref({});
-let accountTypeObj = ref({});
 let currencyObj = ref({});
 let reader = ref([]);
 let writer = ref([]);
+let selectedBankcontact = ref({});
 
 onMounted(async () => {
   error = undefined;
@@ -60,6 +61,7 @@ let dirty = computed(() => {
   return originalData.name !== name.value ||
       originalData.type !== typeObj.value.id ||
       originalData.iban !== iban.value ||
+      originalData.idBankcontact !== selectedBankcontact.value?.id ||
       originalData.currency !== currencyObj.value.id ||
       originalData.startBalance !== startBalance.value ||
       originalClosedAt !== ca.substring(0, 10) ||
@@ -102,6 +104,7 @@ async function loadDataFromServer() {
   promises.push(accountStore.getAccounts());
   promises.push(masterDataStore.getCurrencies());
   promises.push(masterDataStore.getAccountTypes());
+  promises.push(onlineBankingStore.getBankcontacts());
   const results = await Promise.all(promises);
   loading = false;
   let mustAuthenticate = false;
@@ -146,6 +149,11 @@ async function loadDataFromServer() {
   typeObj.value = _.find(masterDataStore.accountTypes, (item) => {
     return item.id === data.type;
   });
+  if (data.idBankcontact) {
+    selectedBankcontact.value = _.find(onlineBankingStore.bankcontacts, (item) => {
+      return item.id === data.idBankcontact;
+    });
+  }
   currencyObj.value = _.find(masterDataStore.currencies, (item) => {
     return item.id === data.currency;
   });
@@ -162,6 +170,7 @@ async function loadDataFromServer() {
     }
   }
 }
+
 function createUpdateData() {
   const updateData = {
     id: originalData.id,
@@ -177,6 +186,13 @@ function createUpdateData() {
   }
   if (originalData.currency !== currencyObj.value.id) {
     updateData.idCurrency = currencyObj.value.id;
+  }
+  if (originalData.idBankcontact !== selectedBankcontact.value?.id) {
+    if (selectedBankcontact.value === null) {
+      updateData.idBankcontact = null;
+    } else {
+      updateData.idBankcontact = selectedBankcontact.value?.id;
+    }
   }
   if (originalData.startBalance !== startBalance.value) {
     updateData.startBalance = startBalance;
@@ -232,9 +248,9 @@ function cancel() {
   <div class="page page--is-account-detail-view">
     <div class="page--header">
       <div class="page--title title__with-buttons">
-        <Button label="Speichern" :disabled="!dirty" @click="saveAccount" size="large"/>
-        Konto: {{ name }}
         <Button label="Abbrechen" @click="cancel" size="large"/>
+        Konto: {{ name }}
+        <Button label="Speichern" :disabled="!dirty" @click="saveAccount" size="large"/>
       </div>
     </div>
     <div class="page--content">
@@ -252,7 +268,7 @@ function cancel() {
           <label for="accountType">Kontoart</label>
         </FloatLabel>
       </div>
-      <div class="page--content--row">
+      <div class="page--content--row" v-if="typeObj.id !== 'cash'">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
           <InputText id="accountIBAN" v-model="iban"
                      size="small"></InputText>
@@ -271,6 +287,13 @@ function cancel() {
                        inputmode="decimal" currency="EUR"
                        mode="currency" v-model=startBalance />
           <label for="accountStartBalance">Anfangssaldo</label>
+        </FloatLabel>
+      </div>
+      <div class="page--content--row" v-if="typeObj.id !== 'cash'">
+        <FloatLabel variant="in" class="row--item row--item--is-grow">
+          <Select class="row--item" id="bankcontact" fluid v-model="selectedBankcontact" :options="onlineBankingStore.bankcontacts"
+                  optionLabel="name" showClear/>
+          <label for="bankcontact">FinTS Bankkontakt</label>
         </FloatLabel>
       </div>
       <div class="page--content--row">

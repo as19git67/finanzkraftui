@@ -47,6 +47,7 @@ export const AccountStore = defineStore('account', {
                   closedAt: account.closedAt,
                   reader: account.reader ? account.reader : [],
                   writer: account.writer ? account.writer : [],
+                  idBankcontact: account.idBankcontact,
                 }));
               } else {
                 this._accounts = [];
