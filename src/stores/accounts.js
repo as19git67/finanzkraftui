@@ -49,6 +49,7 @@ export const AccountStore = defineStore('account', {
                   writer: account.writer ? account.writer : [],
                   unseen: account.unseen ? account.unseen : 0,
                   idBankcontact: account.idBankcontact,
+                  bankcontactName: account.bankcontact_name,
                   fintsError: account.fintsError,
                   fintsAccountNumber: account.fintsAccountNumber,
                 }));

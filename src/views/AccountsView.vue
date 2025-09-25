@@ -142,6 +142,9 @@ onMounted(async () => {
                   <span v-if="item.balanceDateStr">aktualisiert: {{item.balanceDateStr}}</span>
                 </div>
                 <div class="data--list__line">
+                  <span v-if="item.bankcontactName">Umsatzabruf mit Bankkontakt: {{ item.bankcontactName }}</span>
+                </div>
+                <div class="data--list__line">
                   <span v-for="(writer, index) of item.writerNames" :key="writer" >
                     <Chip class="element--is-chip" :label="writer.initials" icon="pi pi-pencil" :title="writer.email"/>
                   </span>
