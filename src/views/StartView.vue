@@ -182,6 +182,9 @@ export default {
                   <Button @click="navigateToAddTransaction(item.id)" @keydown.enter="navigateToAddTransaction(item.id)"
                           icon="pi pi-plus" variant="text" aria-label="Buchung hinzufügen" label="Buchung hinzufügen"/>
                 </div>
+                <div class="data--list__line data--list__line--error" v-if="item.type !== 'cash' && item.fintsError">
+                  <span>Fehler beim Abrufen der Umsätze: {{item.fintsError}}</span>
+                </div>
               </div>
               <div class="data--list__right">
                 <router-link v-if="item.type === 'all'" append :to="{ name: 'Transactions',  params: { accountId: item.accountsInGroup }}">

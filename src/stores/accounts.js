@@ -48,6 +48,8 @@ export const AccountStore = defineStore('account', {
                   reader: account.reader ? account.reader : [],
                   writer: account.writer ? account.writer : [],
                   idBankcontact: account.idBankcontact,
+                  fintsError: account.fintsError,
+                  fintsAccountNumber: account.fintsAccountNumber,
                 }));
               } else {
                 this._accounts = [];

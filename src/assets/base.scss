@@ -556,6 +556,12 @@ button:hover svg .metaphor {
     font-weight: var(--data-list-item-font-weight);
 }
 
+.data--list__line--error {
+  background-color: var(--message-color-background-error);
+  color: var(--message-color-text-error);
+  border-radius: 5px;
+  padding-inline: 0.5em;
+}
 .data--list__right {
     display: flex;
     flex: 0 0 auto;

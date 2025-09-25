@@ -35,6 +35,7 @@ let currencyObj = ref({});
 let reader = ref([]);
 let writer = ref([]);
 let selectedBankcontact = ref({});
+let fintsError = ref('');
 
 onMounted(async () => {
   error = undefined;
@@ -67,27 +68,6 @@ let dirty = computed(() => {
       originalClosedAt !== ca.substring(0, 10) ||
       !_.isEqual(originalData.reader, integerSort(reader.value)) ||
       !_.isEqual(originalData.writer, integerSort(writer.value));
-});
-
-let type = computed(() => {
-  if (typeObj) {
-    return typeObj.code;
-  }
-  return '';
-});
-
-let currency = computed(() => {
-  if (currencyObj) {
-    return currencyObj.id;
-  }
-  return '';
-});
-
-let currencyName = computed(() => {
-  if (currencyObj) {
-    return currencyObj.name;
-  }
-  return '';
 });
 
 function integerSort(arr) {
@@ -157,6 +137,9 @@ async function loadDataFromServer() {
   currencyObj.value = _.find(masterDataStore.currencies, (item) => {
     return item.id === data.currency;
   });
+  if (typeObj.value && typeObj.value.id !== 'cash') {
+    fintsError.value = data.fintsError;
+  }
   reader.value = data.reader;
   writer.value = data.writer;
   startBalance.value = data.startBalance;
@@ -187,11 +170,18 @@ function createUpdateData() {
   if (originalData.currency !== currencyObj.value.id) {
     updateData.idCurrency = currencyObj.value.id;
   }
-  if (originalData.idBankcontact !== selectedBankcontact.value?.id) {
-    if (selectedBankcontact.value === null) {
-      updateData.idBankcontact = null;
-    } else {
-      updateData.idBankcontact = selectedBankcontact.value?.id;
+  if (typeObj.value.id === 'cash' || closed.value && closedAt.value) {
+    // clear bankcontact if account type is cash or account is closed
+    updateData.idBankcontact = null;
+    updateData.fintsError = '';
+    updateData.fintsAccountNumber = '';
+  } else {
+    if (originalData.idBankcontact !== selectedBankcontact.value?.id) {
+      if (selectedBankcontact.value === null) {
+        updateData.idBankcontact = null;
+      } else {
+        updateData.idBankcontact = selectedBankcontact.value?.id;
+      }
     }
   }
   if (originalData.startBalance !== startBalance.value) {
@@ -296,6 +286,13 @@ function cancel() {
           <label for="bankcontact">FinTS Bankkontakt</label>
         </FloatLabel>
       </div>
+      <div class="page--content--row" v-if="fintsError && selectedBankcontact">
+        <FloatLabel variant="in" class="row--item row--item--is-grow">
+          <InputText id="idFintsError" v-model="fintsError" variant="filled"
+                     readonly invalid/>
+          <label for="idFintsError">FinTS Fehler</label>
+        </FloatLabel>
+      </div>
       <div class="page--content--row">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
           <MultiSelect id="accountReader" fluid filter v-model="reader" :options="userStore.users" optionValue="id"
@@ -328,5 +325,8 @@ function cancel() {
 <style scoped>
   .closedToggle {
     padding-inline: 1em;
+  }
+  #idFintsError {
+    --p-inputtext-filled-background: var(--message-color-background-error);
   }
 </style>
