@@ -52,6 +52,8 @@ export const AccountStore = defineStore('account', {
                   bankcontactName: account.bankcontact_name,
                   fintsError: account.fintsError,
                   fintsAccountNumber: account.fintsAccountNumber,
+                  fintsAuthRequired: account.fintsAuthRequired,
+                  fintsActivated: account.fintsActivated,
                 }));
               } else {
                 this._accounts = [];

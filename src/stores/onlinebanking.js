@@ -84,5 +84,18 @@ export const OnlineBankingStore = defineStore('onlinebanking', {
       }
       return {status: 401};
     },
+    async getAccountsOfBankcontact(idBankcontact) {
+      const userStore = UserStore();
+      if (userStore.authenticated) {
+        const config = userStore.getBearerAuthRequestHeader();
+        try {
+          const response = await axios.get(`/api/bankcontacts/${idBankcontact}/accounts`, config);
+          return {status: response.status, resultData: response.data};
+        } catch (ex) {
+          return userStore.handleAxiosException(ex, userStore, {});
+        }
+      }
+      return {status: 401};
+    }
   },
 });

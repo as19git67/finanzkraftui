@@ -136,6 +136,9 @@ onMounted(async () => {
                 <div class="data--list__line data--list__line--space-between data--list__line--error" v-if="item.fintsError">
                   <span v-if="item.fintsError" >FinTS Fehler: {{item.fintsError}}</span>
                 </div>
+                <div class="data--list__line data--list__line--space-between data--list__line--error" v-if="item.fintsAuthRequired">
+                  <span>TAN Freigabe notwendig</span>
+                </div>
                 <div class="data--list__line data--list__line--space-between" v-if="item.closedAt">{{ `Konto geschlossen: ${item.closedDateStr}` }}</div>
                 <div class="data--list__line data--list__line--space-between">
                   <span v-if="item.balance">Saldo: {{ item.balance }}{{item.currencyStr}}</span>

@@ -424,6 +424,16 @@ button:hover svg .metaphor {
     font-size: var(--page-content-row-item-font-size-emphasize);
 }
 
+.page--content--row .row--item.row-item--is-label-value {
+  gap: 0.5em;
+  padding-inline-end: 1em;
+  padding-inline-start: 10px;
+}
+
+.page--content--row .row--item.row-item--is-label-value label {
+  flex-grow: 1;
+}
+
 .page--title {
   display: flex;
   flex-direction: row;
