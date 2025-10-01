@@ -135,6 +135,7 @@
     --message-color-text-emphasize: black;
     --message-color-background-error: var(--hot-pink);
     --message-color-text-error: black;
+    --message-color-text-info: var(--picton-blue);
 
     --app-menu-color-background: var(--pale-dogwood);
     --app-menu-color-text: black;
@@ -300,6 +301,7 @@ button:hover svg .metaphor {
     overflow-y: hidden;
 }
 
+.page.page--is-rulesets-view,
 .page.page--is-bankcontacts-view,
 .page.page--is-bankcontact-view,
 .page.page--is-my-accounts-view,

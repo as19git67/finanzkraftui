@@ -40,46 +40,55 @@ const accountsEnriched = computed(() => {
 });
 
 async function loadDataFromServer() {
-  error = '';
-  loading = true;
-  const promises = [];
-  promises.push(userStore.getUsers());
-  promises.push(accountStore.getAccounts(true));
-  promises.push(masterDataStore.getCurrencies(true));
-  promises.push(masterDataStore.getAccountTypes(true));
-  const results = await Promise.all(promises);
-  loading = false;
-  let mustAuthenticate = false;
-  let notAuthorized = false;
-  let not_ok = false;
-  results.forEach((result) => {
-    let status = result;
-    if (_.isObject(result)) {
-      status = result.status;
+  try {
+    error.value = '';
+    loading.value = false;
+    const promises = [];
+    promises.push(userStore.getUsers());
+    promises.push(accountStore.getAccounts(true));
+    promises.push(masterDataStore.getCurrencies(true));
+    promises.push(masterDataStore.getAccountTypes(true));
+    const results = await Promise.all(promises);
+    loading.value = false;
+    let mustAuthenticate = false;
+    let notAuthorized = false;
+    let not_ok = false;
+    results.forEach((result) => {
+      let status = result;
+      if (_.isObject(result)) {
+        status = result.status;
+      }
+      switch (status) {
+        case 403:
+          notAuthorized = true;
+          break;
+        case 401:
+        case 404:
+          mustAuthenticate = true;
+          break;
+        case 200:
+          break;
+        default:
+          not_ok = true;
+      }
+    });
+    if (mustAuthenticate) {
+      userStore.setNotAuthenticated();
+      await router.replace({name: 'login'});
+      return;
     }
-
-    switch (status) {
-      case 403:
-        notAuthorized = true;
-        break;
-      case 401:
-      case 404:
-        mustAuthenticate = true;
-        break;
-      case 200:
-        break;
-      default:
-        not_ok = true;
+    if (notAuthorized) {
+      await router.replace({name: 'notAuthorized'});
+      return;
     }
-  });
-  if (mustAuthenticate || not_ok) {
-    userStore.setNotAuthenticated();
-    router.replace({name: 'login'});
-    return;
-  }
-  if (notAuthorized) {
-    router.replace({name: 'notAuthorized'});
-    return;
+    if (not_ok) {
+      error.value = 'Fehler beim Laden der Daten';
+    }
+  } catch (ex) {
+    error.value = ex.message;
+    console.log(error);
+  } finally {
+    loading.value = false;
   }
 }
 

@@ -36,6 +36,7 @@ import Listbox from 'primevue/listbox';
 
 import "primeicons/primeicons.css";
 import "./assets/main.scss";
+import {Divider} from "primevue";
 
 DateTimeSettings.defaultLocale = 'de-DE';
 
@@ -167,6 +168,7 @@ app.component('AutoComplete', AutoComplete);
 app.component('Fluid', Fluid);
 app.component('Button', Button);
 app.component('Checkbox', Checkbox);
+app.component('Divider', Divider);
 app.component('ToggleButton', ToggleButton);
 app.component('ToggleSwitch', ToggleSwitch);
 app.component('InputText', InputText);

@@ -1,109 +1,65 @@
-<template>
-  <div class="page page--has-no-overflow">
-    <h1 class="title">Regeln</h1>
-
-    <div class="section">
-      <form class="label-value-group in-row" v-on:submit.prevent v-on:keyup.enter="addRule">
-        <div class="label-value in-row">
-          <input class="value" type="text" autofocus v-model="newRuleSetName"
-                 placeholder="Name der Regel">
-          <button @click="addRule" :disabled="!newRuleSetName" class="btn btn--is-primary">Hinzufügen</button>
-        </div>
-      </form>
-    </div>
-
-    <div v-if="error" class="section">
-      <div class="error">{{ error }}</div>
-    </div>
-
-    <div class="section section--is-scrollable">
-      <table class="data-table" v-if="ruleSets && ruleSets.length">
-        <thead>
-        <tr>
-          <th>Name</th>
-          <th>Aktionen</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr v-for="item of ruleSets" :key="item.id">
-          <td>
-            <router-link class="action"
-                         :to="{ path:'/ruleSetEdit/:ruleSetId', name: 'RuleSetEdit', params: { ruleSetId: item.id }}">
-              {{ item.name }}
-            </router-link>
-          </td>
-          <td>
-            <div class="action-group">
-              <router-link class="action"
-                           :to="{ path:'/ruleSetEdit/:ruleSetId', name: 'RuleSetEdit', params: { ruleSetId: item.id }}">
-                <button class="btn-icon-only" aria-label="Regel ändern" tabindex="-1">
-                  <IconEdit/>
-                </button>
-              </router-link>
-              <button
-                  class="btn-icon-only"
-                  @click="deleteRuleSet(item.id)"
-                  title="Regel löschen"
-              >
-                <IconDelete/>
-              </button>
-            </div>
-          </td>
-        </tr>
-        </tbody>
-      </table>
-
-      <div class="label-value in-column" v-else><div class="label">Keine Regeln vom Server geladen</div></div>
-    </div>
-  </div>
-  <div v-if="showConfirmDialog" class="confirm">
-    <div class="confirm-backdrop"></div>
-    <div class="dialog confirm-dialog confirm--yes-no">
-      <span class="confirm-text">{{ confirmText }}</span>
-      <div class="btn-group">
-        <button class="btn btn-confirm" @click="confirmDialogButtonClicked('yes')">Ja</button>
-        <button class="btn btn-confirm btn--is-primary" v-focus
-                @click="confirmDialogButtonClicked('no')">Nein
-        </button>
-      </div>
-    </div>
-  </div>
-</template>
-
-<script>
-import {mapActions, mapState, mapStores} from "pinia";
-import {UserStore} from "@/stores/user";
-import router from "@/router";
-import IconAdd from "@/components/icons/IconAdd.vue";
-import IconEdit from "@/components/icons/IconEdit.vue";
-import IconDelete from "@/components/icons/IconDelete.vue";
-import ModalDialog from "@/components/ModalDialog.vue";
+<script setup>
+import {UserStore} from '@/stores/user';
 import {TransactionStore} from "@/stores/transactions";
+import {AccountStore} from "@/stores/accounts";
+import {OnlineBankingStore} from "@/stores/onlinebanking";
+import {computed, onMounted, ref, watch} from 'vue';
+import {useRouter} from 'vue-router';
+import _ from "lodash";
 
-export default {
-  name: "RuleSetsView",
-  components: {IconAdd, IconEdit, IconDelete, ModalDialog},
-  data() {
-    return {
-      newRuleSetName: this.newRuleSetName,
-      error: this.error,
-      showConfirmDialog: false,
-      confirmText: '',
-    };
-  },
-  computed: {
-    ...mapStores(UserStore),
-    ...mapStores(TransactionStore),
-    ...mapState(UserStore, ["authenticated"]),
-    ...mapState(TransactionStore, ["ruleSets"]),
-  },
-  methods: {
-    ...mapActions(TransactionStore, ["getRuleSets", "deleteRules"]),
-    _handleActionResult: function (result) {
-      let mustAuthenticate = false;
-      let not_ok = false;
-      switch (result.status) {
+defineOptions({
+  name: 'RuleSetsView'
+});
+
+const router = useRouter();
+const userStore = UserStore();
+const transactionStore = TransactionStore();
+const onlinebankingStore = OnlineBankingStore();
+const accountStore = AccountStore();
+const menuPermissions = computed(() => userStore.menuPermissions);
+
+const error = ref('');
+const loading = ref(false);
+const newRuleSetName = ref('');
+const ruleSets = ref([]);
+const accounts = ref([]);
+
+onMounted(async () => {
+  await loadDataFromServer();
+  prepareDataForPresentation();
+});
+
+function prepareDataForPresentation() {
+  const allAccounts = accountStore.accounts;
+  accounts.value = allAccounts.filter(account => {
+    return account.idBankcontact && account.fintsAccountNumber;
+  });
+}
+
+async function loadDataFromServer() {
+  try {
+    error.value = '';
+    loading.value = false;
+    const promises = [];
+    promises.push(userStore.getUsers());
+    promises.push(accountStore.getAccounts(true));
+    promises.push(transactionStore.getRuleSets());
+    const results = await Promise.all(promises);
+    loading.value = false;
+    let mustAuthenticate = false;
+    let notAuthorized = false;
+    let not_ok = false;
+    results.forEach((result) => {
+      let status = result;
+      if (_.isObject(result)) {
+        status = result.status;
+      }
+      switch (status) {
+        case 403:
+          notAuthorized = true;
+          break;
         case 401:
+        case 404:
           mustAuthenticate = true;
           break;
         case 200:
@@ -111,91 +67,130 @@ export default {
         default:
           not_ok = true;
       }
-      if (mustAuthenticate) {
-        router.replace("/login");
-        return false;
-      }
-      if (not_ok) {
-        this.error = result.message;
-        return false;
-      }
-      return true;
-    },
-    async loadRuleSets() {
-      const result = await this.getRuleSets();
-      this._handleActionResult(result);
-    },
-    async addRuleSet() {
-      this.error = "";
-    },
-    async deleteRuleSet(id) {
-      this.confirmText = 'Soll die Regel wirklich gelöscht werden?';
-      this.showConfirmDialog = true;
-      const res = await new Promise((resolve, reject) => {
-        this.dialogResolve = resolve;
-      });
-      switch (res) {
-        case 'yes':
-          await this.deleteRuleSetConfirmed(id);
-          break;
-        case 'no':
-          break;
-      }
-    },
-    confirmDialogButtonClicked(btnId) {
-      this.showConfirmDialog = false;
-      this.dialogResolve(btnId);
-    },
-    async deleteRuleSetConfirmed(id) {
-      try {
-        const resultData = await this.deleteRules(id);
-        let mustAuthenticate = false;
-        let not_ok = false;
-        let status = resultData.status;
-        switch (status) {
-          case 401:
-            mustAuthenticate = true;
-            break;
-          case 200:
-            break;
-          default:
-            not_ok = true;
-        }
-        if (mustAuthenticate) {
-          this.error = 'Keine Berechtigung';
-          return;
-        }
-        if (not_ok) {
-          this.error = resultData.message;
-          return;
-        }
-        this.error = "";
-        await this.loadRuleSets();
-      } catch (reason) {
-        await this.loadRuleSets();
-        this.error = reason.message;
-      }
-    },
-  },
-  created() {
-    this.newRuleSetName = '';
-    this.con
-  },
-  async mounted() {
-    this.error = null;
-    await this.loadRuleSets();
-  },
-};
+    });
+    if (mustAuthenticate) {
+      userStore.setNotAuthenticated();
+      await router.replace({name: 'login'});
+      return;
+    }
+    if (notAuthorized) {
+      await router.replace({name: 'notAuthorized'});
+      return;
+    }
+    if (not_ok) {
+      error.value = 'Fehler beim Laden der Daten';
+    }
+  } catch (ex) {
+    error.value = ex.message;
+    console.log(error);
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function createNewRule() {
+  error.value = "";
+}
+
+async function downloadStatements() {
+  for (let i = 0; i < accounts.value.length; i++) {
+    const account = accounts.value[i];
+    account.fintsProgress = 'loading';
+    const resultData = await onlinebankingStore.downloadStatements(account.id);
+    account.fintsProgress = '';
+
+    // refresh account data after each download
+    await loadDataFromServer();
+    prepareDataForPresentation();
+  }
+}
 </script>
 
+<template>
+  <div class="page page--is-rulesets-view">
+    <div class="page--header">
+      <div class="page--title">
+        <span v-if="loading">Regeln laden...</span>
+        <span v-if="!loading" class="element--is-grow element--is-centered">Regeln</span>
+      </div>
+    </div>
+    <div class="page--content">
+      <div class="page--content--row" v-if="menuPermissions['admin.rule']">
+        <div class="page--content--row__inline">
+          <FloatLabel variant="in" class="row--item row--item--is-grow">
+            <InputText id="idName" v-model=newRuleSetName size="small" class="prevent-scroll"></InputText>
+            <label for="idName">Name der neuen Regel:</label>
+          </FloatLabel>
+          <Button :disabled="!newRuleSetName" size="small" @click="createNewRule" label="Neu"
+                  icon="pi pi-plus"></Button>
+        </div>
+      </div>
+      <div class="page--content--row">
+        <div class="data--list data--list--standard" v-if="ruleSets.length">
+          <div v-for="(item, index) of ruleSets" :key="item" class="data--list__item">
+            <div class="data--list__left">
+              <router-link :to="{ path:'/ruleSetEdit/:ruleSetId', name: 'RuleSetEdit', params: { ruleSetId: item.id }}">
+                {{ item.name }}
+              </router-link>
+            </div>
+            <div class="data--list__right">
+              <Button icon="pi pi-caret-right" severity="contrast" variant="text" rounded aria-label="Ändern">
+                <router-link
+                    :to="{ path:'/ruleSetEdit/:ruleSetId', name: 'RuleSetEdit', params: { ruleSetId: item.id }}">
+                  {{ item.name }}
+                </router-link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <Divider/>
+      <div class="page--header">
+        <div class="page--title">
+          <span v-if="!loading" class="element--is-grow element--is-centered">Umsatzabruf</span>
+        </div>
+      </div>
+      <div class="page--content--row">
+        <div class="data--list data--list--standard" v-if="accounts.length">
+          <div v-for="(item, index) of accounts" :key="item" class="data--list__item">
+            <div class="data--list__left">
+              <div class="data--list__line data--list__line--space-between">
+                <span>{{ item.name }}</span>
+                <span>{{ item.fintsAccountNumber }}</span>
+              </div>
+              <div class="data--list__line data--list__line--error" v-if="item.fintsError">
+                <span>{{item.fintsError}}</span>
+              </div>
+              <div class="data--list__line data--list__line--error" v-if="item.fintsAuthRequired">
+                <span>Freigabe mit TAN notwendig</span>
+              </div>
+            </div>
+            <div class="data--list__right">
+              <ProgressSpinner class="progress-spinner" strokeWidth="5" v-if="item.fintsProgress === 'loading'" />
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="page--content--row" v-if="menuPermissions['admin.statements_download']">
+        <div class="page--content--row__inline">
+          <Button size="small" @click="downloadStatements" label="Umsätze herunterladen"
+                  icon="pi pi-download"></Button>
+        </div>
+      </div>
+      <div class="page--content--row" v-if="error">
+        <div class="error">{{ error }}</div>
+      </div>
+    </div>
+  </div>
+</template>
+
 <style scoped>
-th {
-  font-weight: bold;
-  text-align: start;
+.progress-spinner {
+  width: 1em;
+  height: 1em;
+  --p-progressspinner-color-one: var(--message-color-text-info);
+  --p-progressspinner-color-two: var(--message-color-text-info);
+  --p-progressspinner-color-three: var(--message-color-text-info);
+  --p-progressspinner-color-four: var(--message-color-text-info);
 }
-
-.data-table td .btn {
-  display: inline-flex;
-}
-
 </style>
