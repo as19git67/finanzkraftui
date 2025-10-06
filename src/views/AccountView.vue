@@ -298,7 +298,7 @@ async function saveAccount() {
     await accountStore.updateAccount(updateData);
 
     await loadDataFromServer();
-    router.replace({name: 'Accounts'});
+    router.back();
   } catch (ex) {
     error.value = ex.message;
     loading.value = false;
@@ -307,7 +307,7 @@ async function saveAccount() {
 }
 
 function cancel() {
-  router.replace({name: 'Accounts'});
+  router.back();
 }
 </script>
 

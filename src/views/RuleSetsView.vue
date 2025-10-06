@@ -23,6 +23,7 @@ const loading = ref(false);
 const newRuleSetName = ref('');
 const ruleSets = ref([]);
 const accounts = ref([]);
+const downloading = ref(false);
 
 onMounted(async () => {
   await loadDataFromServer();
@@ -93,15 +94,25 @@ async function createNewRule() {
 }
 
 async function downloadStatements() {
-  for (let i = 0; i < accounts.value.length; i++) {
-    const account = accounts.value[i];
-    account.fintsProgress = 'loading';
-    const resultData = await onlinebankingStore.downloadStatements(account.id);
-    account.fintsProgress = '';
+  try {
+    downloading.value = true;
+    for (let i = 0; i < accounts.value.length; i++) {
+      const account = accounts.value[i];
+      if (account.fintsActivated) {
+        account.fintsProgress = 'loading';
+        const resultData = await onlinebankingStore.downloadStatements(account.id);
+        account.fintsProgress = '';
 
-    // refresh account data after each download
-    await loadDataFromServer();
-    prepareDataForPresentation();
+        // refresh account data after each download
+        await loadDataFromServer();
+        prepareDataForPresentation();
+      }
+    }
+  } catch (error) {
+    error.value = error.message;
+  }
+  finally {
+    downloading.value = false;
   }
 }
 </script>
@@ -154,19 +165,23 @@ async function downloadStatements() {
         <div class="data--list data--list--standard" v-if="accounts.length">
           <div v-for="(item, index) of accounts" :key="item" class="data--list__item">
             <div class="data--list__left">
-              <div class="data--list__line data--list__line--space-between">
-                <span>{{ item.name }}</span>
-                <span>{{ item.fintsAccountNumber }}</span>
-              </div>
-              <div class="data--list__line data--list__line--error" v-if="item.fintsError">
-                <span>{{item.fintsError}}</span>
-              </div>
-              <div class="data--list__line data--list__line--error" v-if="item.fintsAuthRequired">
-                <span>Freigabe mit TAN notwendig</span>
-              </div>
+              <router-link :to="{ path:'/account/:accountId', name: 'AccountDetail', params: { accountId: item.id }}">
+                <div class="data--list__line data--list__line--space-between">
+                  <span>{{ item.name }}</span>
+                </div>
+                <div class="data--list__line data--list__line--error" v-if="item.fintsError">
+                  <span>{{item.fintsError}}</span>
+                </div>
+                <div class="data--list__line data--list__line--error" v-if="item.fintsAuthRequired">
+                  <span>Freigabe mit TAN notwendig</span>
+                </div>
+              </router-link>
             </div>
-            <div class="data--list__right">
+            <div v-if="item.fintsActivated" class="data--list__right">
               <ProgressSpinner class="progress-spinner" strokeWidth="5" v-if="item.fintsProgress === 'loading'" />
+            </div>
+            <div v-else class="data--list__right">
+              <i class="pi pi-ban" style="color: var(--hot-pink)"></i>
             </div>
           </div>
         </div>
@@ -174,7 +189,7 @@ async function downloadStatements() {
       <div class="page--content--row" v-if="menuPermissions['admin.statements_download']">
         <div class="page--content--row__inline">
           <Button size="small" @click="downloadStatements" label="Umsätze herunterladen"
-                  icon="pi pi-download"></Button>
+                  icon="pi pi-download" :disabled="downloading"></Button>
         </div>
       </div>
       <div class="page--content--row" v-if="error">
