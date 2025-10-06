@@ -52,6 +52,9 @@ let transactionEREF = ref('');
 let transactionCRED = ref('');
 let transactionAccountName = ref('');
 let transactionPayeePayerAcctNo = ref('');
+let transactionExchangeRate = ref(0);
+let transactionOriginalCurrency = ref('');
+let transactionOriginalAmount = ref(0);
 let transactionRuleSetId = ref();
 let transactionRuleSetName = ref('');
 let transactionTags = ref([]);
@@ -257,6 +260,9 @@ function initReactiveData() {
   transactionCRED.value = transaction.t_CRED;
   transactionAccountName.value = transaction.account_name;
   transactionPayeePayerAcctNo.value = transaction.t_payeePayerAcctNo;
+  transactionExchangeRate.value = transaction.t_exchangeRate && transaction.t_originalCurrency ? transaction.t_exchangeRate : undefined;
+  transactionOriginalCurrency.value = transaction.t_originalCurrency;
+  transactionOriginalAmount.value = transaction.t_originalAmount ? Math.abs(transaction.t_originalAmount) : 0;
   if (transaction.t_text && transaction.t_payee &&
       transaction.t_payee.startsWith('AMAZON')) {
     const matches = transaction.t_text.match(/(\d{3}\-\d{7}\-\d{7})/);
@@ -481,6 +487,16 @@ function deleteTheTransaction() {
                         :readonly="!isCash"
                         offIcon="pi pi-plus" size="large"/>
         </div>
+      </div>
+      <div v-if="transactionExchangeRate" class="page--content--row">
+        <FloatLabel variant="in" class="row--item row--item--is-grow">
+          <InputNumber id="idTransactionAmount" locale="de-DE"
+                       inputmode="decimal" :currency="transactionOriginalCurrency"
+                       mode="currency" v-model="transactionOriginalAmount"
+                       readonly size="large" variant="filled"/>
+
+          <label for="idTransactionOriginal">In Originalwährung (Wechselkurs: {{transactionExchangeRate}})</label>
+        </FloatLabel>
       </div>
       <div class="page--content--row">
         <div class="page--content--row__inline">
