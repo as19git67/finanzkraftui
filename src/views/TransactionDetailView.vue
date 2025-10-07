@@ -452,7 +452,7 @@ function deleteTheTransaction() {
       </div>
       <div class="page--content--row">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <MultiSelect id="tags" fluid filter v-model="transactionTags" :options="transactionTagsList" optionValue="id"
+          <MultiSelect id="tags" fluid filter showClear v-model="transactionTags" :options="transactionTagsList" optionValue="id"
                        optionLabel="tag" autoFilterFocus/>
           <label for="tags">Tags</label>
         </FloatLabel>

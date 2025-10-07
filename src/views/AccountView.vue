@@ -83,11 +83,11 @@ function integerSort(arr) {
   });
 }
 
-watch(selectedBankcontact, async (newVal) => {
-  if (newVal && (newVal.id !== originalData.idBankcontact)) {
-    await loadFintsAccountsOfBankcontact(selectedBankcontact.value.id);
-  }
-});
+// watch(selectedBankcontact, async (newVal) => {
+//   if (newVal && (newVal.id !== originalData.idBankcontact)) {
+//     await loadFintsAccountsOfBankcontact(selectedBankcontact.value.id);
+//   }
+// });
 
 async function loadFintsAccountsOfBankcontact(idBankcontact) {
   let not_ok = false;
@@ -192,10 +192,18 @@ async function loadDataFromServer() {
     selectedBankcontact.value = _.find(onlineBankingStore.bankcontacts, (item) => {
       return item.id === data.idBankcontact;
     });
-    await loadFintsAccountsOfBankcontact(data.idBankcontact);
-    selectedFintsAccountNumber.value = _.find(fintsAccountsOfBankcontact.value, (item) => {
-      return item.accountNumber === data.fintsAccountNumber;
-    });
+    // await loadFintsAccountsOfBankcontact(data.idBankcontact);
+    // selectedFintsAccountNumber.value = _.find(fintsAccountsOfBankcontact.value, (item) => {
+    //   return item.accountNumber === data.fintsAccountNumber;
+    // });
+    selectedFintsAccountNumber.value = {
+      accountNumber: data.fintsAccountNumber,
+      description: data.fintsAccountNumber, // temporarily use account number as description
+    };
+    fintsAccountsOfBankcontact.value = [{
+      accountNumber: data.fintsAccountNumber,
+      description: data.fintsAccountNumber, // temporarily use account number as description
+    }]
   }
   currencyObj.value = _.find(masterDataStore.currencies, (item) => {
     return item.id === data.currency;
@@ -309,6 +317,26 @@ async function saveAccount() {
 function cancel() {
   router.back();
 }
+
+async function onBeforeShow() {
+  if (selectedBankcontact.value) {
+    if (fintsAccountsOfBankcontact.value.length === 0 || !fintsAccountsOfBankcontact.value[0].name) {
+      try {
+        loading.value = true;
+        await loadFintsAccountsOfBankcontact(selectedBankcontact.value.id);
+        selectedFintsAccountNumber.value = _.find(fintsAccountsOfBankcontact.value, (item) => {
+          return item.accountNumber === originalData.fintsAccountNumber;
+        });
+      } catch (error) {
+        error.value = error.message;
+      } finally {
+        loading.value = false;
+      }
+    }
+  } else {
+    fintsAccountsOfBankcontact.value = [];
+  }
+}
 </script>
 
 <template>
@@ -316,41 +344,42 @@ function cancel() {
     <div class="page--header">
       <div class="page--title title__with-buttons">
         <Button label="Abbrechen" @click="cancel" size="large"/>
-        Konto: {{ name }}
-        <Button label="Speichern" :disabled="!dirty" @click="saveAccount" size="large"/>
+        <span v-if="loading">Kontendetails laden...</span>
+        <span v-if="!loading" class="element--is-grow element--is-centered">Konto: {{ name }}</span>
+        <Button label="Speichern" :disabled="!dirty || loading" @click="saveAccount" size="large"/>
       </div>
     </div>
     <div class="page--content">
       <div class="page--content--row">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <InputText id="accountName" v-model="name"
+          <InputText :disabled="loading" id="accountName" v-model="name"
                      size="small"></InputText>
           <label for="accountName">Name</label>
         </FloatLabel>
       </div>
       <div class="page--content--row">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <Select class="row--item" id="accountType" fluid v-model="typeObj" :options="masterDataStore.accountTypes"
+          <Select :disabled="loading" class="row--item" id="accountType" fluid v-model="typeObj" :options="masterDataStore.accountTypes"
                   optionLabel="name"/>
           <label for="accountType">Kontoart</label>
         </FloatLabel>
       </div>
       <div class="page--content--row" v-if="typeObj.id !== 'cash'">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <InputText id="accountIBAN" v-model="iban"
+          <InputText :disabled="loading" id="accountIBAN" v-model="iban"
                      size="small"></InputText>
           <label for="accountIBAN">IBAN</label>
         </FloatLabel>
       </div>
       <div class="page--content--row">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <Select id="accountCurrency" fluid v-model="currencyObj" :options="masterDataStore.currencies" optionLabel="name"/>
+          <Select :disabled="loading" id="accountCurrency" fluid v-model="currencyObj" :options="masterDataStore.currencies" optionLabel="name"/>
           <label for="accountCurrency">Kontowährung</label>
         </FloatLabel>
       </div>
       <div class="page--content--row">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <InputNumber id="accountStartBalance" locale="de-DE"
+          <InputNumber :disabled="loading" id="accountStartBalance" locale="de-DE"
                        inputmode="decimal" currency="EUR"
                        mode="currency" v-model=startBalance />
           <label for="accountStartBalance">Anfangssaldo</label>
@@ -358,29 +387,29 @@ function cancel() {
       </div>
       <div class="page--content--row">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <MultiSelect id="accountReader" fluid filter v-model="reader" :options="userStore.users" optionValue="id"
+          <MultiSelect :loading="loading" id="accountReader" fluid filter v-model="reader" :options="userStore.users" optionValue="id"
                        optionLabel="Email"/>
           <label for="accountReader">Benutzer mit Leserechten</label>
         </FloatLabel>
       </div>
       <div class="page--content--row">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <MultiSelect id="accountWriter" fluid filter v-model="writer" :options="userStore.users" optionValue="id"
+          <MultiSelect :loading="loading" id="accountWriter" fluid filter v-model="writer" :options="userStore.users" optionValue="id"
                        optionLabel="Email"/>
           <label for="accountWriter">Benutzer mit Recht zum Ändern</label>
         </FloatLabel>
       </div>
       <div class="page--content--row" v-if="typeObj.id !== 'cash'">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <Select class="row--item" id="bankcontact" fluid v-model="selectedBankcontact" :options="onlineBankingStore.bankcontacts"
+          <Select :loading="loading" class="row--item" id="bankcontact" fluid v-model="selectedBankcontact" :options="onlineBankingStore.bankcontacts"
                   optionLabel="name" showClear/>
           <label for="bankcontact">FinTS Bankkontakt</label>
         </FloatLabel>
       </div>
       <div class="page--content--row" v-if="typeObj.id !== 'cash' && selectedBankcontact">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <Select class="row--item" id="idFintsAccountNumber" fluid v-model="selectedFintsAccountNumber" :options="fintsAccountsOfBankcontact"
-                  optionLabel="description" showClear/>
+          <Select :loading="loading" class="row--item" id="idFintsAccountNumber" fluid v-model="selectedFintsAccountNumber" :options="fintsAccountsOfBankcontact"
+                  optionLabel="description" showClear @before-show="onBeforeShow"/>
           <label for="idFintsAccountNumber">FinTS Konto</label>
         </FloatLabel>
       </div>
@@ -400,17 +429,17 @@ function cancel() {
       <div class="page--content--row" v-if="selectedBankcontact">
         <div class="row--item row-item--is-label-value">
           <label for="idFintsActivated">Umsatzabruf aktiviert</label>
-          <ToggleSwitch v-model="fintsActivated" id="idFintsActivated"/>
+          <ToggleSwitch :disabled="loading" v-model="fintsActivated" id="idFintsActivated"/>
         </div>
       </div>
       <div class="page--content--row">
         <div class="page--content--row__inline">
           <FloatLabel variant="in" class="row--item row--item--is-grow">
-            <DatePicker v-model="closedAt" :disabled="!closed" inputId="closedAt" showIcon iconDisplay="input"/>
+            <DatePicker v-model="closedAt" :disabled="!closed || loading" inputId="closedAt" showIcon iconDisplay="input"/>
             <label for="closedAt">geschlossen am</label>
           </FloatLabel>
           <div class="closedToggle row--item row--item--is-centered">
-            <ToggleSwitch v-model="closed" />
+            <ToggleSwitch :disabled="loading" v-model="closed" />
           </div>
         </div>
       </div>

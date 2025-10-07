@@ -138,35 +138,37 @@ onMounted(async () => {
                :class="{ 'account-closed': !!item.closedAt }">
 
               <div class="data--list__left">
-                <div class="data--list__line data--list__line--bold data--list__line--space-between">
-                  <span>{{ item.name }}</span>
-                  <span>{{ item.accountTypeStr }}</span>
-                </div>
-                <div class="data--list__line data--list__line--space-between data--list__line--error" v-if="item.fintsError">
-                  <span v-if="item.fintsError" >FinTS Fehler: {{item.fintsError}}</span>
-                </div>
-                <div class="data--list__line data--list__line--space-between data--list__line--error" v-if="item.fintsAuthRequired">
-                  <span>TAN Freigabe notwendig</span>
-                </div>
-                <div class="data--list__line data--list__line--space-between" v-if="item.closedAt">{{ `Konto geschlossen: ${item.closedDateStr}` }}</div>
-                <div class="data--list__line data--list__line--space-between">
-                  <span v-if="item.balance">Saldo: {{ item.balance }}{{item.currencyStr}}</span>
-                  <span v-if="item.balanceDateStr">aktualisiert: {{item.balanceDateStr}}</span>
-                </div>
-                <div class="data--list__line">
-                  <span v-if="item.bankcontactName">Umsatzabruf mit Bankkontakt: {{ item.bankcontactName }}</span>
-                </div>
-                <div class="data--list__line">
-                  <span v-for="(writer, index) of item.writerNames" :key="writer" >
-                    <Chip class="element--is-chip" :label="writer.initials" icon="pi pi-pencil" :title="writer.email"/>
-                  </span>
-                  <span v-for="(reader, index) of item.readerNames" :key="reader" >
-                    <Chip class="element--is-chip" :label="reader.initials" icon="pi pi-eye" :title="reader.email"/>
-                  </span>
-                </div>
+                <router-link :to="{ path:'/account/:accountId', name: 'AccountDetail', params: { accountId: item.id }}">
+                  <div class="data--list__line data--list__line--bold data--list__line--space-between">
+                    <span>{{ item.name }}</span>
+                    <span>{{ item.accountTypeStr }}</span>
+                  </div>
+                  <div class="data--list__line data--list__line--space-between data--list__line--error" v-if="item.fintsError">
+                    <span v-if="item.fintsError" >FinTS Fehler: {{item.fintsError}}</span>
+                  </div>
+                  <div class="data--list__line data--list__line--space-between data--list__line--error" v-if="item.fintsAuthRequired">
+                    <span>TAN Freigabe notwendig</span>
+                  </div>
+                  <div class="data--list__line data--list__line--space-between" v-if="item.closedAt">{{ `Konto geschlossen: ${item.closedDateStr}` }}</div>
+                  <div class="data--list__line data--list__line--space-between">
+                    <span v-if="item.balance">Saldo: {{ item.balance }}{{item.currencyStr}}</span>
+                    <span v-if="item.balanceDateStr">aktualisiert: {{item.balanceDateStr}}</span>
+                  </div>
+                  <div class="data--list__line">
+                    <span v-if="item.bankcontactName">Umsatzabruf mit Bankkontakt: {{ item.bankcontactName }}</span>
+                  </div>
+                  <div class="data--list__line">
+                    <span v-for="(writer, index) of item.writerNames" :key="writer" >
+                      <Chip class="element--is-chip" :label="writer.initials" icon="pi pi-pencil" :title="writer.email"/>
+                    </span>
+                    <span v-for="(reader, index) of item.readerNames" :key="reader" >
+                      <Chip class="element--is-chip" :label="reader.initials" icon="pi pi-eye" :title="reader.email"/>
+                    </span>
+                  </div>
+                </router-link>
               </div>
               <div class="data--list__right">
-                <Button @click="navigateToAccountDetail(item.id)" @keydown.enter="navigateToAccountDetail(item.id)" icon="pi pi-caret-right" severity="contrast" variant="text" rounded aria-label="Ändern" />
+                <Button @click="navigateToAccountDetail(item.id)" @keydown.enter="navigateToAccountDetail(item.id)" icon="pi pi-caret-right" variant="text" rounded aria-label="Ändern" />
               </div>
           </div>
         </div>
