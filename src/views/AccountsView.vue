@@ -6,37 +6,39 @@ import {useRouter} from 'vue-router';
 import {UserStore} from "@/stores/user";
 import {AccountStore} from "@/stores/accounts";
 import {MasterDataStore} from "@/stores/masterdata";
+import {OnlineBankingStore} from "@/stores/onlinebanking";
 
 const router = useRouter();
 const userStore = UserStore();
 const accountStore = AccountStore();
 const masterDataStore = MasterDataStore();
+const onlinebankingStore = OnlineBankingStore();
 
 defineOptions({
   name: 'AccountsView'
 });
 
-let error = ref('');
-let loading = ref(false);
+const error = ref('');
+const loading = ref(false);
+const accountsEnriched = ref([]);
 
-const accountsEnriched = computed(() => {
-    return accountStore.accounts.map(account => {
-      const currencyDetails = masterDataStore.getCurrencyDetails(account.currency);
-      const typeDetails = masterDataStore.getAccountTypeDetails(account.type);
-      const balanceDateStr = account.balanceDate ? DateTime.fromISO(account.balanceDate).toLocaleString() : '';
-      const closedDateStr = account.closedAt ? DateTime.fromISO(account.closedAt).toLocaleString() : '';
-      const readerNames = mapToUserEmail(account.reader);
-      const writerNames = mapToUserEmail(account.writer);
-      return {
-        ...account,
-        currencyStr: currencyDetails ? currencyDetails.short : '',
-        accountTypeStr: typeDetails ? typeDetails.name : '',
-        balanceDateStr,
-        closedDateStr,
-        readerNames,
-        writerNames,
-      }
-    });
+accountsEnriched.value = accountStore.accounts.map(account => {
+  const currencyDetails = masterDataStore.getCurrencyDetails(account.currency);
+  const typeDetails = masterDataStore.getAccountTypeDetails(account.type);
+  const balanceDateStr = account.balanceDate ? DateTime.fromISO(account.balanceDate).toLocaleString() : '';
+  const closedDateStr = account.closedAt ? DateTime.fromISO(account.closedAt).toLocaleString() : '';
+  const readerNames = mapToUserEmail(account.reader);
+  const writerNames = mapToUserEmail(account.writer);
+  return {
+    ...account,
+    currencyStr: currencyDetails ? currencyDetails.short : '',
+    accountTypeStr: typeDetails ? typeDetails.name : '',
+    balanceDateStr,
+    closedDateStr,
+    readerNames,
+    writerNames,
+    fintsProgress: ''
+  }
 });
 
 async function loadDataFromServer() {
@@ -97,7 +99,7 @@ function mapToUserEmail(userIds) {
     const user = userStore.getUser(userId);
     if (user) {
       return {
-        email : user.Email,
+        email: user.Email,
         initials: user.Initials ? user.Initials : user.Email,
       };
     }
@@ -105,19 +107,27 @@ function mapToUserEmail(userIds) {
   });
 }
 
-function navigateToAccountDetail(idAccount) {
-  router.push({ name: 'AccountDetail', params: { accountId: idAccount } });
+async function downloadBankStatements(account) {
+  try {
+    account.fintsProgress = 'loading';
+    const resultData = await onlinebankingStore.downloadStatements(account.id);
+  } catch (error) {
+    error.value = error.message;
+  }
+  finally {
+    account.fintsProgress = '';
+  }
 }
 
 onMounted(async () => {
-  error = '';
-  loading = false;
+  error.value = '';
+  loading.value = false;
   if (userStore.isAuthenticated) {
     try {
       await loadDataFromServer();
     } catch (ex) {
-      error = ex.message;
-      loading = false;
+      error.value = ex.message;
+      loading.value = false;
     }
   } else {
     router.replace({name: 'login'});
@@ -137,39 +147,49 @@ onMounted(async () => {
                class="data--list__item"
                :class="{ 'account-closed': !!item.closedAt }">
 
-              <div class="data--list__left">
-                <router-link :to="{ path:'/account/:accountId', name: 'AccountDetail', params: { accountId: item.id }}">
-                  <div class="data--list__line data--list__line--bold data--list__line--space-between">
-                    <span>{{ item.name }}</span>
-                    <span>{{ item.accountTypeStr }}</span>
-                  </div>
-                  <div class="data--list__line data--list__line--space-between data--list__line--error" v-if="item.fintsError">
-                    <span v-if="item.fintsError" >FinTS Fehler: {{item.fintsError}}</span>
-                  </div>
-                  <div class="data--list__line data--list__line--space-between data--list__line--error" v-if="item.fintsAuthRequired">
-                    <span>TAN Freigabe notwendig</span>
-                  </div>
-                  <div class="data--list__line data--list__line--space-between" v-if="item.closedAt">{{ `Konto geschlossen: ${item.closedDateStr}` }}</div>
-                  <div class="data--list__line data--list__line--space-between">
-                    <span v-if="item.balance">Saldo: {{ item.balance }}{{item.currencyStr}}</span>
-                    <span v-if="item.balanceDateStr">aktualisiert: {{item.balanceDateStr}}</span>
-                  </div>
-                  <div class="data--list__line">
-                    <span v-if="item.bankcontactName">Umsatzabruf mit Bankkontakt: {{ item.bankcontactName }}</span>
-                  </div>
-                  <div class="data--list__line">
-                    <span v-for="(writer, index) of item.writerNames" :key="writer" >
-                      <Chip class="element--is-chip" :label="writer.initials" icon="pi pi-pencil" :title="writer.email"/>
+            <div class="data--list__left">
+              <router-link :to="{ path:'/account/:accountId', name: 'AccountDetail', params: { accountId: item.id }}">
+                <div class="data--list__line data--list__line--bold data--list__line--space-between">
+                  <span>{{ item.name }}</span>
+                  <span>{{ item.accountTypeStr }}</span>
+                </div>
+                <div class="data--list__line data--list__line--space-between data--list__line--error"
+                     v-if="item.fintsError">
+                  <span v-if="item.fintsError">FinTS Fehler: {{ item.fintsError }}</span>
+                </div>
+                <div class="data--list__line data--list__line--space-between data--list__line--error"
+                     v-if="item.fintsAuthRequired">
+                  <span>TAN Freigabe notwendig</span>
+                </div>
+                <div class="data--list__line data--list__line--space-between" v-if="item.closedAt">
+                  {{ `Konto geschlossen: ${item.closedDateStr}` }}
+                </div>
+                <div class="data--list__line data--list__line--space-between">
+                  <span v-if="item.balance">Saldo: {{ item.balance }}{{ item.currencyStr }}</span>
+                  <span v-if="item.balanceDateStr">aktualisiert: {{ item.balanceDateStr }}</span>
+                </div>
+                <div class="data--list__line">
+                  <span v-if="item.bankcontactName && item.fintsAccountNumber">Umsatzabruf mit Bankkontakt: {{ item.bankcontactName }}</span>
+                </div>
+                <div class="data--list__line">
+                    <span v-for="(writer, index) of item.writerNames" :key="writer">
+                      <Chip class="element--is-chip" :label="writer.initials" icon="pi pi-pencil"
+                            :title="writer.email"/>
                     </span>
-                    <span v-for="(reader, index) of item.readerNames" :key="reader" >
+                  <span v-for="(reader, index) of item.readerNames" :key="reader">
                       <Chip class="element--is-chip" :label="reader.initials" icon="pi pi-eye" :title="reader.email"/>
                     </span>
-                  </div>
-                </router-link>
-              </div>
-              <div class="data--list__right">
-                <Button @click="navigateToAccountDetail(item.id)" @keydown.enter="navigateToAccountDetail(item.id)" icon="pi pi-caret-right" variant="text" rounded aria-label="Ändern" />
-              </div>
+                </div>
+              </router-link>
+            </div>
+            <div class="data--list__right">
+              <Button v-if="item.fintsActivated && item.fintsProgress !== 'loading'"
+                      @click="downloadBankStatements(item)"
+                      @keydown.enter="downloadBankStatements(item)"
+                      icon="pi pi-download" title="Umsätze von der Bank laden"/>
+              <ProgressSpinner class="progress-spinner" strokeWidth="5"
+                               v-if="item.fintsActivated && item.fintsProgress === 'loading'"/>
+            </div>
           </div>
         </div>
       </div>
@@ -181,6 +201,14 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+.progress-spinner {
+  width: 32px;
+  height: 32px;
+  --p-progressspinner-color-one: var(--message-color-background-error);
+  --p-progressspinner-color-two: var(--message-color-background-error);
+  --p-progressspinner-color-three: var(--message-color-background-error);
+  --p-progressspinner-color-four: var(--message-color-background-error);
+}
 .account-closed {
   color: var(--amaranth-pink);
 }

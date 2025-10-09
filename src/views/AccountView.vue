@@ -35,12 +35,12 @@ const typeObj = ref({});
 const currencyObj = ref({});
 const reader = ref([]);
 const writer = ref([]);
-const selectedBankcontact = ref({});
+const selectedBankcontact = ref(null);
 const fintsError = ref('');
 const fintsActivated = ref(false);
 const fintsAuthRequired = ref(false);
 const fintsAccountsOfBankcontact = ref([]);
-const selectedFintsAccountNumber = ref({});
+const selectedFintsAccountNumber = ref(null);
 
 onMounted(async () => {
   error.value = '';
@@ -72,7 +72,7 @@ let dirty = computed(() => {
       (originalData.fintsAccountNumber ?? null) !== (selectedFintsAccountNumber.value?.accountNumber ?? null) ||
       originalData.currency !== currencyObj.value.id ||
       originalData.startBalance !== startBalance.value ||
-      originalClosedAt !== ca.substring(0, 10) !==
+      originalClosedAt !== ca.substring(0, 10) ||
       !_.isEqual(originalData.reader, integerSort(reader.value)) ||
       !_.isEqual(originalData.writer, integerSort(writer.value));
 });
@@ -196,14 +196,13 @@ async function loadDataFromServer() {
     // selectedFintsAccountNumber.value = _.find(fintsAccountsOfBankcontact.value, (item) => {
     //   return item.accountNumber === data.fintsAccountNumber;
     // });
-    selectedFintsAccountNumber.value = {
-      accountNumber: data.fintsAccountNumber,
-      description: data.fintsAccountNumber, // temporarily use account number as description
-    };
-    fintsAccountsOfBankcontact.value = [{
-      accountNumber: data.fintsAccountNumber,
-      description: data.fintsAccountNumber, // temporarily use account number as description
-    }]
+    if (data.fintsAccountNumber) {
+      fintsAccountsOfBankcontact.value = [{
+        accountNumber: data.fintsAccountNumber,
+        description: data.fintsAccountNumber, // temporarily use account number as description
+      }];
+      selectedFintsAccountNumber.value = fintsAccountsOfBankcontact.value[0];
+    }
   }
   currencyObj.value = _.find(masterDataStore.currencies, (item) => {
     return item.id === data.currency;
@@ -224,7 +223,7 @@ async function loadDataFromServer() {
     }
   }
   originalData.fintsActivated = !!data.fintsActivated;
-  fintsActivated.value = originalData.fintsActivated;
+  fintsActivated.value = originalData.fintsActivated && data.fintsAccountNumber && data.idBankcontact;
 }
 
 function createUpdateData() {
@@ -244,7 +243,7 @@ function createUpdateData() {
     updateData.idCurrency = currencyObj.value.id;
   }
   if (originalData.fintsActivated !== fintsActivated.value) {
-    updateData.fintsActivated = fintsActivated.value;
+    updateData.fintsActivated = fintsActivated.value ? true : false;
   }
   if (typeObj.value.id === 'cash' || closed.value && closedAt.value) {
     // clear bankcontact if account type is cash or account is closed
