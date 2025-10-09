@@ -127,7 +127,8 @@ async function loadFintsAccountsOfBankcontact(idBankcontact) {
     error.value = 'Fehler beim Abrufen der FinTS Konten';
     return;
   }
-  fintsAccountsOfBankcontact.value = result.resultData.map((item) => {
+  fintsAuthRequired.value = result.resultData.requiresTan;
+  fintsAccountsOfBankcontact.value = result.resultData.bankAccounts.map((item) => {
     return {
       ...item,
       description: `${item.name} (${item.type}, ${item.accountHolder}): ${item.accountNumber}`,
