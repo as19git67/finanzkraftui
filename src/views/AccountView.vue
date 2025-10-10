@@ -23,6 +23,8 @@ const onlineBankingStore = OnlineBankingStore();
 const masterDataStore = MasterDataStore();
 
 let originalData = {};
+let fintsTanReference = '';
+let fintsTan = '';
 
 const error = ref('');
 const loading = ref(false);
@@ -41,6 +43,7 @@ const fintsActivated = ref(false);
 const fintsAuthRequired = ref(false);
 const fintsAccountsOfBankcontact = ref([]);
 const selectedFintsAccountNumber = ref(null);
+const fintsTanChallenge = ref('');
 
 onMounted(async () => {
   error.value = '';
@@ -93,7 +96,9 @@ async function loadFintsAccountsOfBankcontact(idBankcontact) {
   let not_ok = false;
   let mustAuthenticate = false;
   let notAuthorized = false;
-  const result = await onlineBankingStore.getAccountsOfBankcontact(idBankcontact);
+  const result = await onlineBankingStore.getAccountsOfBankcontact(idBankcontact, fintsTanReference, fintsTan);
+  fintsTanReference = '';
+  fintsTan = '';
   let status = result;
   if (_.isObject(result)) {
     status = result.status;
@@ -111,6 +116,12 @@ async function loadFintsAccountsOfBankcontact(idBankcontact) {
     default:
       not_ok = true;
   }
+  if (result.resultData.success === false) {
+    fintsError.value = result.resultData.bankAnswers.map((item) => {
+      return item.message;
+    }).join(' ');
+    not_ok = true;
+  }
   if (mustAuthenticate) {
     userStore.setNotAuthenticated();
     fintsAccountsOfBankcontact.value = [];
@@ -127,13 +138,21 @@ async function loadFintsAccountsOfBankcontact(idBankcontact) {
     error.value = 'Fehler beim Abrufen der FinTS Konten';
     return;
   }
-  fintsAuthRequired.value = result.resultData.requiresTan;
-  fintsAccountsOfBankcontact.value = result.resultData.bankAccounts.map((item) => {
-    return {
-      ...item,
-      description: `${item.name} (${item.type}, ${item.accountHolder}): ${item.accountNumber}`,
-    };
-  });
+  fintsAuthRequired.value = result.resultData.tanInfo.requiresTan;
+  if (fintsAuthRequired.value) {
+    fintsAccountsOfBankcontact.value = [];
+    fintsTanChallenge.value = `${result.resultData.tanInfo.tanChallenge} (${result.resultData.tanInfo.tanMediaName})`;
+    fintsTanReference = result.resultData.tanInfo.tanReference;
+    fintsTan = result.resultData.tanInfo.tan;
+  } else {
+    fintsTanChallenge.value = '';
+    fintsAccountsOfBankcontact.value = result.resultData.bankAccounts.map((item) => {
+      return {
+        ...item,
+        description: `${item.name} (${item.type}, ${item.accountHolder}): ${item.accountNumber}`,
+      };
+    });
+  }
 }
 
 async function loadDataFromServer() {
@@ -224,7 +243,7 @@ async function loadDataFromServer() {
     }
   }
   originalData.fintsActivated = !!data.fintsActivated;
-  fintsActivated.value = originalData.fintsActivated && data.fintsAccountNumber && data.idBankcontact;
+  fintsActivated.value = originalData.fintsActivated && !!data.fintsAccountNumber > 0 && !!data.idBankcontact;
 }
 
 function createUpdateData() {
@@ -244,7 +263,7 @@ function createUpdateData() {
     updateData.idCurrency = currencyObj.value.id;
   }
   if (originalData.fintsActivated !== fintsActivated.value) {
-    updateData.fintsActivated = fintsActivated.value ? true : false;
+    updateData.fintsActivated = !!fintsActivated.value;
   }
   if (typeObj.value.id === 'cash' || closed.value && closedAt.value) {
     // clear bankcontact if account type is cash or account is closed
@@ -314,16 +333,12 @@ async function saveAccount() {
   }
 }
 
-function cancel() {
-  router.back();
-}
-
-async function onBeforeShow() {
+async function synchronizeBankcontact() {
   if (selectedBankcontact.value) {
     if (fintsAccountsOfBankcontact.value.length === 0 || !fintsAccountsOfBankcontact.value[0].name) {
       try {
         loading.value = true;
-        await loadFintsAccountsOfBankcontact(selectedBankcontact.value.id);
+        const result = await loadFintsAccountsOfBankcontact(selectedBankcontact.value.id);
         selectedFintsAccountNumber.value = _.find(fintsAccountsOfBankcontact.value, (item) => {
           return item.accountNumber === originalData.fintsAccountNumber;
         });
@@ -337,6 +352,19 @@ async function onBeforeShow() {
     fintsAccountsOfBankcontact.value = [];
   }
 }
+
+function cancel() {
+  router.back();
+}
+
+function onBeforeShow() {
+  synchronizeBankcontact();
+}
+
+function continueFintsSync() {
+  synchronizeBankcontact();
+}
+
 </script>
 
 <template>
@@ -406,13 +434,6 @@ async function onBeforeShow() {
           <label for="bankcontact">FinTS Bankkontakt</label>
         </FloatLabel>
       </div>
-      <div class="page--content--row" v-if="typeObj.id !== 'cash' && selectedBankcontact">
-        <FloatLabel variant="in" class="row--item row--item--is-grow">
-          <Select :loading="loading" class="row--item" id="idFintsAccountNumber" fluid v-model="selectedFintsAccountNumber" :options="fintsAccountsOfBankcontact"
-                  optionLabel="description" showClear @before-show="onBeforeShow"/>
-          <label for="idFintsAccountNumber">FinTS Konto</label>
-        </FloatLabel>
-      </div>
       <div class="page--content--row" v-if="fintsError && selectedBankcontact">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
           <InputText id="idFintsError" v-model="fintsError" variant="filled"
@@ -420,13 +441,27 @@ async function onBeforeShow() {
           <label for="idFintsError">FinTS Fehler</label>
         </FloatLabel>
       </div>
-      <div class="page--content--row" v-if="selectedBankcontact && fintsAuthRequired">
-        <div class="row--item row-item--is-label-value error">
-          <label for="idFintsAuthRequired">TAN Freigabe notwendig</label>
-          <Checkbox readonly v-model="fintsAuthRequired" id="idFintsAuthRequired"/>
+      <div class="page--content--row" v-if="fintsTanChallenge && selectedBankcontact">
+        <div class="page--content--row__inline">
+        <FloatLabel variant="in" class="row--item row--item--is-grow">
+          <InputText id="idFintsTanChallenge" v-model="fintsTanChallenge" variant="filled"
+                     readonly invalid/>
+          <label for="idFintsTanChallenge">Freigabe notwendig</label>
+        </FloatLabel>
+        <Button v-if="!loading&& fintsAuthRequired"
+                @click="continueFintsSync"
+                @keydown.enter="continueFintsSync"
+                icon="pi pi-forward" title="Weiter" severity="warn"/>
         </div>
       </div>
-      <div class="page--content--row" v-if="selectedBankcontact">
+      <div class="page--content--row" v-if="typeObj.id !== 'cash' && selectedBankcontact && !fintsAuthRequired">
+        <FloatLabel variant="in" class="row--item row--item--is-grow">
+          <Select :loading="loading" class="row--item" id="idFintsAccountNumber" fluid v-model="selectedFintsAccountNumber" :options="fintsAccountsOfBankcontact"
+                  optionLabel="description" showClear @before-show="onBeforeShow"/>
+          <label for="idFintsAccountNumber">FinTS Konto</label>
+        </FloatLabel>
+      </div>
+      <div class="page--content--row" v-if="(selectedBankcontact && selectedFintsAccountNumber) || fintsActivated">
         <div class="row--item row-item--is-label-value">
           <label for="idFintsActivated">Umsatzabruf aktiviert</label>
           <ToggleSwitch :disabled="loading" v-model="fintsActivated" id="idFintsActivated"/>

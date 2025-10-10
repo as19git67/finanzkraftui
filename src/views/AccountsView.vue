@@ -111,10 +111,13 @@ async function downloadBankStatements(account) {
   try {
     account.fintsProgress = 'loading';
     const resultData = await onlinebankingStore.downloadStatements(account.id);
+    loading.value = false;
+    await loadDataFromServer();
   } catch (error) {
     error.value = error.message;
   }
   finally {
+    loading.value = false;
     account.fintsProgress = '';
   }
 }
@@ -183,12 +186,12 @@ onMounted(async () => {
               </router-link>
             </div>
             <div class="data--list__right">
-              <Button v-if="item.fintsActivated && item.fintsProgress !== 'loading'"
+              <Button v-if="item.bankcontactName && item.fintsAccountNumber && item.fintsProgress !== 'loading'"
                       @click="downloadBankStatements(item)"
                       @keydown.enter="downloadBankStatements(item)"
                       icon="pi pi-download" title="Umsätze von der Bank laden"/>
               <ProgressSpinner class="progress-spinner" strokeWidth="5"
-                               v-if="item.fintsActivated && item.fintsProgress === 'loading'"/>
+                               v-if="item.bankcontactName && item.fintsAccountNumber && item.fintsProgress === 'loading'"/>
             </div>
           </div>
         </div>
