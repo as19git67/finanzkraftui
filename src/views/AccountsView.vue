@@ -22,24 +22,30 @@ const error = ref('');
 const loading = ref(false);
 const accountsEnriched = ref([]);
 
-accountsEnriched.value = accountStore.accounts.map(account => {
-  const currencyDetails = masterDataStore.getCurrencyDetails(account.currency);
-  const typeDetails = masterDataStore.getAccountTypeDetails(account.type);
-  const balanceDateStr = account.balanceDate ? DateTime.fromISO(account.balanceDate).toLocaleString() : '';
-  const closedDateStr = account.closedAt ? DateTime.fromISO(account.closedAt).toLocaleString() : '';
-  const readerNames = mapToUserEmail(account.reader);
-  const writerNames = mapToUserEmail(account.writer);
-  return {
-    ...account,
-    currencyStr: currencyDetails ? currencyDetails.short : '',
-    accountTypeStr: typeDetails ? typeDetails.name : '',
-    balanceDateStr,
-    closedDateStr,
-    readerNames,
-    writerNames,
-    fintsProgress: ''
-  }
-});
+function enrichAccounts(tanInfo) {
+  accountsEnriched.value = accountStore.accounts.map(account => {
+    const currencyDetails = masterDataStore.getCurrencyDetails(account.currency);
+    const typeDetails = masterDataStore.getAccountTypeDetails(account.type);
+    const balanceDateStr = account.balanceDate ? DateTime.fromISO(account.balanceDate).toLocaleString() : '';
+    const closedDateStr = account.closedAt ? DateTime.fromISO(account.closedAt).toLocaleString() : '';
+    const readerNames = mapToUserEmail(account.reader);
+    const writerNames = mapToUserEmail(account.writer);
+    const fintsTanChallenge = tanInfo?.idAccount === account.id ? tanInfo.tanChallenge : undefined;
+    const fintsTanReference = tanInfo?.idAccount === account.id ? tanInfo.tanReference : undefined;
+    return {
+      ...account,
+      currencyStr: currencyDetails ? currencyDetails.short : '',
+      accountTypeStr: typeDetails ? typeDetails.name : '',
+      balanceDateStr,
+      closedDateStr,
+      readerNames,
+      writerNames,
+      fintsProgress: '',
+      fintsTanChallenge,
+      fintsTanReference,
+    }
+  });
+}
 
 async function loadDataFromServer() {
   try {
@@ -110,9 +116,11 @@ function mapToUserEmail(userIds) {
 async function downloadBankStatements(account) {
   try {
     account.fintsProgress = 'loading';
-    const resultData = await onlinebankingStore.downloadStatements(account.id);
-    loading.value = false;
+    const result = await onlinebankingStore.downloadStatements(account.id, account.fintsTanReference, account.fintsTan);
+    loading.value = true;
     await loadDataFromServer();
+    result.resultData.tanInfo.idAccount = account.id;
+    enrichAccounts(result.resultData.tanInfo);
   } catch (error) {
     error.value = error.message;
   }
@@ -122,12 +130,17 @@ async function downloadBankStatements(account) {
   }
 }
 
+async function continueFintsStatementDownloadWithTan(account) {
+  await downloadBankStatements(account);
+}
+
 onMounted(async () => {
   error.value = '';
   loading.value = false;
   if (userStore.isAuthenticated) {
     try {
       await loadDataFromServer();
+      enrichAccounts();
     } catch (ex) {
       error.value = ex.message;
       loading.value = false;
@@ -163,6 +176,7 @@ onMounted(async () => {
                 <div class="data--list__line data--list__line--space-between data--list__line--error"
                      v-if="item.fintsAuthRequired">
                   <span>TAN Freigabe notwendig</span>
+                  <span v-if="item.fintsTanChallenge">{{item.fintsTanChallenge}}</span>
                 </div>
                 <div class="data--list__line data--list__line--space-between" v-if="item.closedAt">
                   {{ `Konto geschlossen: ${item.closedDateStr}` }}
@@ -172,7 +186,8 @@ onMounted(async () => {
                   <span v-if="item.balanceDateStr">aktualisiert: {{ item.balanceDateStr }}</span>
                 </div>
                 <div class="data--list__line">
-                  <span v-if="item.bankcontactName && item.fintsAccountNumber">Umsatzabruf mit Bankkontakt: {{ item.bankcontactName }}</span>
+                  <span v-if="item.bankcontactName && item.fintsAccountNumber && item.fintsActivated">Automatischer Umsatzabruf mit Bankkontakt: {{ item.bankcontactName }}</span>
+                  <span v-if="item.bankcontactName && item.fintsAccountNumber && !item.fintsActivated">Manueller Umsatzabruf mit Bankkontakt: {{ item.bankcontactName }}</span>
                 </div>
                 <div class="data--list__line">
                     <span v-for="(writer, index) of item.writerNames" :key="writer">
@@ -186,10 +201,16 @@ onMounted(async () => {
               </router-link>
             </div>
             <div class="data--list__right">
-              <Button v-if="item.bankcontactName && item.fintsAccountNumber && item.fintsProgress !== 'loading'"
+              <Button v-if="item.bankcontactName && item.fintsAccountNumber && item.fintsAuthRequired && !item.fintsTanChallenge"
+                      :disabled="item.fintsProgress === 'loading' || loading"
                       @click="downloadBankStatements(item)"
                       @keydown.enter="downloadBankStatements(item)"
                       icon="pi pi-download" title="Umsätze von der Bank laden"/>
+              <Button v-if="item.bankcontactName && item.fintsAccountNumber && item.fintsAuthRequired && item.fintsTanChallenge"
+                      :disabled="item.fintsProgress === 'loading' || loading"
+                      @click="continueFintsStatementDownloadWithTan(item)"
+                      @keydown.enter="continueFintsStatementDownloadWithTan(item)"
+                      icon="pi pi-forward" title="Weiter" severity="warn"/>
               <ProgressSpinner class="progress-spinner" strokeWidth="5"
                                v-if="item.bankcontactName && item.fintsAccountNumber && item.fintsProgress === 'loading'"/>
             </div>

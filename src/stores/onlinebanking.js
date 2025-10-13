@@ -103,13 +103,19 @@ export const OnlineBankingStore = defineStore('onlinebanking', {
       }
       return {status: 401};
     },
-    async downloadStatements(idAccount) {
+    async downloadStatements(idAccount, tanReference, tan) {
       const userStore = UserStore();
       if (userStore.authenticated) {
         const config = userStore.getBearerAuthRequestHeader();
         try {
-          const response = await axios.get(`/api/accounts/${idAccount}/statements`, config);
-          return {status: response.status, resultData: response.data};
+          if (tanReference) {
+            const tanInfo = {tanReference: tanReference, tan: tan};
+            const response = await axios.post(`/api/accounts/${idAccount}/statements`, tanInfo, config);
+            return {status: response.status, resultData: response.data};
+          } else {
+            const response = await axios.get(`/api/accounts/${idAccount}/statements`, config);
+            return {status: response.status, resultData: response.data};
+          }
         } catch (ex) {
           return userStore.handleAxiosException(ex, userStore, {});
         }
