@@ -119,8 +119,8 @@ async function downloadBankStatements(account) {
     const result = await onlinebankingStore.downloadStatements(account.id, account.fintsTanReference, account.fintsTan);
     loading.value = true;
     await loadDataFromServer();
-    result.resultData.tanInfo.idAccount = account.id;
-    enrichAccounts(result.resultData.tanInfo);
+    result.data.tanInfo.idAccount = account.id;
+    enrichAccounts(result.data.tanInfo);
   } catch (error) {
     error.value = error.message;
   }

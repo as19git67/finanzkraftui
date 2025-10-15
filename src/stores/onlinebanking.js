@@ -3,8 +3,18 @@ import {defineStore} from 'pinia';
 import _ from 'lodash';
 import {UserStore} from '@/stores/user';
 
+
 export const OnlineBankingStore = defineStore('onlinebanking', {
   state: () => ({
+    statusOK: 0,
+    statusError: 1,
+    statusWrongPIN: 2,
+    statusRequiresTAN: 3,
+    statusNoBankAccounts: 4,
+    statusNoBankMessages: 5,
+    statusNoBankingInformation: 6,
+    statusNoBankingInformationUpdated: 7,
+    statusNoTanMethods: 8,
     _bankcontacts: [],
   }),
   getters: {
@@ -90,15 +100,15 @@ export const OnlineBankingStore = defineStore('onlinebanking', {
         const config = userStore.getBearerAuthRequestHeader();
         try {
           if (tanReference) {
-            const tanInfo = {tanReference: tanReference, tan: tan};
-            const response = await axios.post(`/api/bankcontacts/${idBankcontact}/accounts`, tanInfo, config);
-            return {status: response.status, resultData: response.data};
+            const data = {tanReference: tanReference, tan: tan};
+            const response = await axios.post(`/api/bankcontacts/${idBankcontact}/accounts`, data, config);
+            return {status: response.status, data: response.data};
           } else {
             const response = await axios.get(`/api/bankcontacts/${idBankcontact}/accounts`, config);
-            return {status: response.status, resultData: response.data};
+            return {status: response.status, data: response.data};
           }
         } catch (ex) {
-          return userStore.handleAxiosException(ex, userStore, {});
+          return userStore.handleAxiosException(ex, userStore, {status: this.statusError});
         }
       }
       return {status: 401};
@@ -111,13 +121,13 @@ export const OnlineBankingStore = defineStore('onlinebanking', {
           if (tanReference) {
             const tanInfo = {tanReference: tanReference, tan: tan};
             const response = await axios.post(`/api/accounts/${idAccount}/statements`, tanInfo, config);
-            return {status: response.status, resultData: response.data};
+            return {status: response.status, data: response.data};
           } else {
             const response = await axios.get(`/api/accounts/${idAccount}/statements`, config);
-            return {status: response.status, resultData: response.data};
+            return {status: response.status, data: response.data};
           }
         } catch (ex) {
-          return userStore.handleAxiosException(ex, userStore, {});
+          return userStore.handleAxiosException(ex, userStore, {status: this.statusError});
         }
       }
       return {status: 401};

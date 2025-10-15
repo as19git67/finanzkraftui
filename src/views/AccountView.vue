@@ -96,6 +96,8 @@ async function loadFintsAccountsOfBankcontact(idBankcontact) {
   let not_ok = false;
   let mustAuthenticate = false;
   let notAuthorized = false;
+  fintsError.value = '';
+  fintsAuthRequired.value = false;
   const result = await onlineBankingStore.getAccountsOfBankcontact(idBankcontact, fintsTanReference, fintsTan);
   fintsTanReference = '';
   fintsTan = '';
@@ -116,10 +118,8 @@ async function loadFintsAccountsOfBankcontact(idBankcontact) {
     default:
       not_ok = true;
   }
-  if (result.resultData.success === false) {
-    fintsError.value = result.resultData.bankAnswers.map((item) => {
-      return item.message;
-    }).join(' ');
+  if (result.data.status === onlineBankingStore.statusWrongPIN) {
+    fintsError.value = result.resultData.message;
     not_ok = true;
   }
   if (mustAuthenticate) {
@@ -134,25 +134,35 @@ async function loadFintsAccountsOfBankcontact(idBankcontact) {
     return;
   }
   if (not_ok) {
+    fintsError.value = 'Fehler beim Abrufen der FinTS Konten';
     fintsAccountsOfBankcontact.value = [];
-    error.value = 'Fehler beim Abrufen der FinTS Konten';
+    fintsAuthRequired.value = false;
+    fintsTanChallenge.value = '';
+    fintsTanReference = '';
     return;
   }
-  fintsAuthRequired.value = result.resultData.tanInfo.requiresTan;
-  if (fintsAuthRequired.value) {
+  if (result.data.status === onlineBankingStore.statusRequiresTAN) {
+    fintsAuthRequired.value = true;
     fintsAccountsOfBankcontact.value = [];
-    fintsTanChallenge.value = `${result.resultData.tanInfo.tanChallenge} (${result.resultData.tanInfo.tanMediaName})`;
-    fintsTanReference = result.resultData.tanInfo.tanReference;
-    fintsTan = result.resultData.tanInfo.tan;
-  } else {
-    fintsTanChallenge.value = '';
-    fintsAccountsOfBankcontact.value = result.resultData.bankAccounts.map((item) => {
+    fintsTanChallenge.value = `${result.data.tanInfo.tanChallenge} (${result.data.tanInfo.tanMediaName})`;
+    fintsTanReference = result.data.tanInfo.tanReference;
+    return;
+  }
+  fintsTanChallenge.value = '';
+  fintsTanReference = '';
+  if (result.data.status === onlineBankingStore.statusOK) {
+    fintsError.value = '';
+    fintsAuthRequired.value = false;
+    fintsAccountsOfBankcontact.value = result.data.bankAccounts.map((item) => {
       return {
         ...item,
         description: `${item.name} (${item.type}, ${item.accountHolder}): ${item.accountNumber}`,
       };
     });
+    return;
   }
+
+  fintsError.value = 'Fehler beim Abrufen der FinTS Konten';
 }
 
 async function loadDataFromServer() {
@@ -338,7 +348,7 @@ async function synchronizeBankcontact() {
     if (fintsAccountsOfBankcontact.value.length === 0 || !fintsAccountsOfBankcontact.value[0].name) {
       try {
         loading.value = true;
-        const result = await loadFintsAccountsOfBankcontact(selectedBankcontact.value.id);
+        await loadFintsAccountsOfBankcontact(selectedBankcontact.value.id);
         selectedFintsAccountNumber.value = _.find(fintsAccountsOfBankcontact.value, (item) => {
           return item.accountNumber === originalData.fintsAccountNumber;
         });
@@ -477,6 +487,9 @@ function continueFintsSync() {
             <ToggleSwitch :disabled="loading" v-model="closed" />
           </div>
         </div>
+      </div>
+      <div class="page--content--row" v-if="error">
+        <div class="error">{{ error }}</div>
       </div>
     </div>
   </div>
