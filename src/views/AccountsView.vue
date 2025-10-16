@@ -119,8 +119,14 @@ async function downloadBankStatements(account) {
     const result = await onlinebankingStore.downloadStatements(account.id, account.fintsTanReference, account.fintsTan);
     loading.value = true;
     await loadDataFromServer();
-    result.data.tanInfo.idAccount = account.id;
-    enrichAccounts(result.data.tanInfo);
+    if (result.data.tanInfo) {
+      enrichAccounts({
+        ...(result.data.tanInfo),
+        idAccount: account.id,
+      });
+    } else {
+      enrichAccounts();
+    }
   } catch (error) {
     error.value = error.message;
   }
@@ -201,13 +207,13 @@ onMounted(async () => {
               </router-link>
             </div>
             <div class="data--list__right">
-              <Button v-if="item.bankcontactName && item.fintsAccountNumber && item.fintsAuthRequired && !item.fintsTanChallenge"
-                      :disabled="item.fintsProgress === 'loading' || loading"
+              <Button v-if="item.bankcontactName && item.fintsAccountNumber && !item.fintsAuthRequired && !item.fintsTanChallenge && item.fintsProgress !== 'loading'"
+                      :disabled="loading"
                       @click="downloadBankStatements(item)"
                       @keydown.enter="downloadBankStatements(item)"
                       icon="pi pi-download" title="Umsätze von der Bank laden"/>
-              <Button v-if="item.bankcontactName && item.fintsAccountNumber && item.fintsAuthRequired && item.fintsTanChallenge"
-                      :disabled="item.fintsProgress === 'loading' || loading"
+              <Button v-if="item.bankcontactName && item.fintsAccountNumber && item.fintsAuthRequired && item.fintsTanChallenge && item.fintsProgress !== 'loading'"
+                      :disabled="loading"
                       @click="continueFintsStatementDownloadWithTan(item)"
                       @keydown.enter="continueFintsStatementDownloadWithTan(item)"
                       icon="pi pi-forward" title="Weiter" severity="warn"/>
