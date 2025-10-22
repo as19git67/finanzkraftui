@@ -24,6 +24,7 @@ export default {
       loading: this.loading,
       selectAllOrNoting: this.selectAllOrNoting,
       isMultiSelectMode: this.isMultiSelectMode,
+      isSearchMode: this.isSearchMode,
       selectionListShown: this.selectionListShown,
       accountName: this.accountName,
       accountBalance: this.accountBalance,
@@ -38,6 +39,8 @@ export default {
       amountSumStr: this.amountSumStr,
       isFiltered: this.isFiltered,
       transactionsSelected: this.transactionsSelected,
+      filterSelectedCategories: [],
+      categoryList: [],
     };
   },
   computed: {
@@ -52,10 +55,11 @@ export default {
       'maxTransactions',
       'lastScrollTop',
       'searchTerm',
+      'searchCategories',
       'selectedTransactions',
     ]),
     ...mapState(AccountStore, ['accounts']),
-    ...mapState(MasterDataStore, ['timespans']),
+    ...mapState(MasterDataStore, ['timespans', 'categories']),
     isSelectionIndeterminate() {
       return this.transactionsSelected.length > 0 &&
         this.transactionsSelected.length < this.transactions.length;
@@ -76,8 +80,8 @@ export default {
     }
   },
   methods: {
-    ...mapActions(MasterDataStore, ['getTimespans', 'getCurrencies', 'getCurrencyDetails', 'getTags', 'getTagById']),
-    ...mapActions(TransactionStore, ['getTransactions', 'setLastScrollTop', 'clearTransactions', 'setSearchTerm', 'setSelectedTransactions']),
+    ...mapActions(MasterDataStore, ['getTimespans', 'getCurrencies', 'getCurrencyDetails', 'getTags', 'getTagById', 'getCategories']),
+    ...mapActions(TransactionStore, ['getTransactions', 'setLastScrollTop', 'clearTransactions', 'setSearchTerm', 'setSearchCategories', 'setSelectedTransactions']),
     ...mapActions(AccountStore, ['getAccounts', 'getAccountById']),
     ...mapActions(UserStore, ['setNotAuthenticated']),
     navigateToAddTransaction() {
@@ -137,9 +141,15 @@ export default {
       this.calculateSumAmountOfFiltered();
     },
     toggleSearch(event) {
-      this.searchPopover.value.show(event);
+      this.isSearchMode = !this.isSearchMode;
     },
     clearSearch() {
+      this.searchTermInput = '';
+      this.filterSelectedCategories = [];
+      this.searchTransactions();
+      this.isSearchMode = false;
+    },
+    clearSearchTerm() {
       this.searchTermInput = '';
       this.searchTransactions();
     },
@@ -148,14 +158,12 @@ export default {
         await this.searchTransactions();
       }
     },
-    closeSearch() {
-      this.searchPopover.value.hide();
-    },
     tableScroll(ev) {
       this.setLastScrollTop(ev.srcElement.scrollTop);
     },
     async searchTransactions() {
       this.setSearchTerm(this.searchTermInput);
+      this.setSearchCategories(this.filterSelectedCategories);
       await this.loadDataFromServer();
       // if (this.transactions.length > 0) {
       //   this.searchPopover.value.hide();
@@ -215,10 +223,12 @@ export default {
         const promises = [];
         promises.push(this.getAccounts(true));
         promises.push(this.getTags());
+        promises.push(this.getCategories());
         promises.push(this.getCurrencies(true));
         promises.push(this.getTimespans());
         promises.push(this.getTransactions({
           maxItems: this.maxTransactions + 10, searchTerm: this.searchTerm,
+          categoriesWhereIn: this.searchCategories,
           accountsWhereIn: this.accountsWhereIn, dateFilterFrom: this.dateFilterFrom,
           dateFilterTo: this.dateFilterTo,
         }));
@@ -228,7 +238,11 @@ export default {
         let notAuthorized = false;
         let not_ok = false;
         results.forEach((result) => {
-          switch (result) {
+          let status = result;
+          if (_.isObject(result)) {
+            status = result.status;
+          }
+          switch (status) {
             case 403:
               notAuthorized = true;
               break;
@@ -242,13 +256,17 @@ export default {
               not_ok = true;
           }
         });
-        if (mustAuthenticate || not_ok) {
+        if (mustAuthenticate) {
           this.setNotAuthenticated();
           router.replace({name: 'login'});
           return;
         }
         if (notAuthorized) {
           router.replace({name: 'notAuthorized'});
+          return;
+        }
+        if (not_ok) {
+          this.error = result.message;
           return;
         }
         await this.prepareDataForList();
@@ -259,7 +277,7 @@ export default {
     },
     calculateIsFiltered() {
       // calculate isFiltered: if a search term, date filter or selection of transactions exist, assume the list is filtered
-      if (this.searchTerm || this.dateFilterFrom || this.dateFilterTo || this.transactionsSelected.length > 0) {
+      if (this.searchTerm || this.dateFilterFrom || this.dateFilterTo || this.transactionsSelected.length > 0 || this.filterSelectedCategories.length > 0) {
         this.isFiltered = true;
       } else {
         this.isFiltered = false;
@@ -431,6 +449,15 @@ export default {
         });
       }
     },
+    getSeverityForSearchToggleButton() {
+      if (this.searchTermInput || (this.filterSelectedCategories && this.filterSelectedCategories.length > 0)) {
+        return 'warn';
+      }
+      if (this.isSearchMode) {
+        return 'info';
+      }
+      return null;
+    },
   },
   async mounted() {
     this.searchPopover = useTemplateRef('searchPopover');
@@ -464,6 +491,7 @@ export default {
     this.dateFilterTo = undefined;
     this.selectAllOrNoting = false;
     this.isMultiSelectMode = false;
+    this.isSearchMode = false;
     this.selectionListShown = false;
     this.transactionsCount = 0;
     this.amountSumStr = '';
@@ -478,34 +506,20 @@ export default {
       <div class="page--title title__with-buttons">
         <Button v-if="searchTermInput" @click="navigateBack" icon="pi pi-angle-left"></Button>
         <Button v-else label="Zurück" @click="navigateBack" size="large"></Button>
-        <span v-if="loading">Buchungen laden...</span>
+        <span v-if="loading" class="element--is-grow element--is-centered">Buchungen laden...</span>
         <span v-if="!loading" class="element--is-grow element--is-centered">{{ accountName }}</span>
-        <div class="element-as-columns" v-if="isFiltered">
+        <div class="element-as-columns element--is-right-aligned" v-if="isFiltered">
           <span class="element--is-grow">&sum;: {{ amountSumStr }}</span>
           <span class="element--is-grow is-de-emphasized">{{ transactionsCount }} Buchungen</span>
         </div>
-        <div class="element-as-columns" v-else>
+        <div class="element-as-columns element--is-right-aligned" v-else>
           <span v-if="!loading && accountBalance" class="element--is-grow">{{ accountBalance }}{{ currencyStr }}</span>
           <span v-if="!loading && accountBalanceDateStr"
                 class="element--is-grow is-de-emphasized">{{ accountBalanceDateStr }}</span>
         </div>
         <Button v-if="accountTypeIsCash" @click="navigateToAddTransaction()" @keydown.enter="navigateToAddTransaction()"
                 icon="pi pi-plus" variant="text" aria-label="Buchung hinzufügen" />
-        <Button icon="pi pi-search" aria-label="Suche einblenden" @click="toggleSearch" :severity="searchTermInput ? 'warn' : null"/>
-        <Popover ref="searchPopover" class="search-popover">
-          <InputGroup>
-            <InputText placeholder="Suchen" inputmode="search" enterKeyHint="search"
-                       v-model="searchTermInput"
-                       @keydown="popoverKeyDown"
-                       autofocus
-            ></InputText>
-            <InputGroupAddon>
-              <Button v-if="searchTermInput" icon="pi pi-times" severity="secondary" variant="text" @click="clearSearch"/>
-              <Button icon="pi pi-search" severity="secondary" variant="text" @click="searchTransactions"/>
-            </InputGroupAddon>
-          </InputGroup>
-          <Button icon="pi pi-times" aria-label="Schließen" @click="closeSearch"/>
-        </Popover>
+        <Button @click="toggleSearch" :icon="isSearchMode ? 'pi pi-filter-fill' : 'pi pi-filter'" :severity="getSeverityForSearchToggleButton()" aria-label="Suche einblenden" />
         <Button :disabled="transactionsSelected.length === 0" @click="toggleSelectionList" :icon="selectionListShown ? 'pi pi-list-check' : 'pi pi-list'" :severity="selectionListShown ? 'info' : null" aria-label="Ausgewählte einblenden"/>
         <Button @click="toggleMultiSelectMode" :icon="isMultiSelectMode ? 'pi pi-pen-to-square' : 'pi pi-check-square'" :severity="isMultiSelectMode ? 'info' : null"/>
         <Popover ref="multiSelectPopover" class="multi-select-popover">
@@ -529,6 +543,26 @@ export default {
             </div>
           </div>
         </Popover>
+      </div>
+      <div v-if="isSearchMode" class="page--title title__with-buttons">
+        <div class="element-as-columns">
+          <InputGroup>
+            <InputText fluid placeholder="Suchen" inputmode="text" enterKeyHint="search"
+                       v-model="searchTermInput" class="element--is-grow"
+                       @keydown="popoverKeyDown"
+                       autofocus></InputText>
+            <InputGroupAddon>
+              <Button severity="secondary" variant="text" icon="pi pi-times" title="Suchbegriff löschen" @click="clearSearchTerm"/>
+            </InputGroupAddon>
+          </InputGroup>
+          <MultiSelect class="element--is-grow" id="categories" fluid filter showClear v-model="filterSelectedCategories"
+                       :options="categories" optionValue="id"
+                       optionLabel="full_name" autoFilterFocus placeholder="Mögliche Kategorien auswählen"/>
+        </div>
+        <div class="title--action-buttons">
+          <Button :severity="getSeverityForSearchToggleButton()" icon="pi pi-search" title="Suche ausführen" @click="searchTransactions"/>
+          <Button severity="secondary" icon="pi pi-times" title="Kriterien zurücksetzen" @click="clearSearch"/>
+        </div>
       </div>
       <div v-if="isMultiSelectMode" class="page--title title__with-buttons">
         <div class="title--action-buttons">

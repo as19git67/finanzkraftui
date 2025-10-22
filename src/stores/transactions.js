@@ -11,6 +11,7 @@ export const TransactionStore = defineStore('transaction', {
     _selectedTransactions: [],
     _transaction: {},
     _searchTerm: '',
+    _searchCategories: [],
     _currentTransactionId: 0,
     _lastScrollTop: 0,
     _incomplete: false, // true if more transactions would exists but limited to max transactions
@@ -19,6 +20,9 @@ export const TransactionStore = defineStore('transaction', {
   getters: {
     searchTerm(state) {
       return state._searchTerm;
+    },
+    searchCategories(state) {
+      return state._searchCategories;
     },
     transaction(state) {
       return state._transaction;
@@ -116,12 +120,16 @@ export const TransactionStore = defineStore('transaction', {
             'maxItems',
             'searchTerm',
             'accountsWhereIn',
+            'categoriesWhereIn',
             'dateFilterFrom',
             'dateFilterTo',
           );
         }
         if (_.isArray(config.params.accountsWhereIn)) {
           config.params.accountsWhereIn = config.params.accountsWhereIn.join(',');
+        }
+        if (_.isArray(config.params.categoriesWhereIn)) {
+          config.params.categoriesWhereIn = config.params.categoriesWhereIn.join(',');
         }
         try {
           const response = await axios.get('/api/transaction', config);
@@ -466,6 +474,9 @@ export const TransactionStore = defineStore('transaction', {
     },
     setSearchTerm(term) {
       this._searchTerm = term;
+    },
+    setSearchCategories(categoryIds) {
+      this._searchCategories = categoryIds;
     },
     setCurrentTransactionId(id) {
       this._currentTransactionId = id;

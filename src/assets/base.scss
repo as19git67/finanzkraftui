@@ -345,7 +345,8 @@ button:hover svg .metaphor {
   display: flex;
   flex-direction: column;
   gap: 0.1em;
-  align-items: flex-end;
+  flex-grow: 1;
+  overflow: hidden;
 }
 
 .page--header .element--is-right-aligned {
@@ -452,9 +453,9 @@ button:hover svg .metaphor {
 .page--title.title__with-buttons {
   align-items: center;
   gap: 0.5em;
-  padding-block: 0.25em;
   flex: 1 1 auto;
   justify-content: space-between;
+  min-height: 52px;
 }
 
 .page--title.title__with-buttons .title--action-buttons {
