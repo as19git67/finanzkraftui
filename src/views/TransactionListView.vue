@@ -41,6 +41,7 @@ export default {
       transactionsSelected: this.transactionsSelected,
       filterSelectedCategories: [],
       categoryList: [],
+      dataFilter: null,
     };
   },
   computed: {
@@ -165,16 +166,13 @@ export default {
       this.setSearchTerm(this.searchTermInput);
       this.setSearchCategories(this.filterSelectedCategories);
       await this.loadDataFromServer();
-      // if (this.transactions.length > 0) {
-      //   this.searchPopover.value.hide();
-      // }
     },
     accountChanged() {
       this.loadDataFromServer();
     },
     dateFilterChanged() {
       const tsInfos = this.timespans.filter((item) => {
-        return item.id === this.dateFilter;
+        return item.id === this.dateFilter?.id;
       });
       if (tsInfos.length > 0) {
         this.dateFilterTo = undefined;
@@ -450,7 +448,7 @@ export default {
       }
     },
     getSeverityForSearchToggleButton() {
-      if (this.searchTermInput || (this.filterSelectedCategories && this.filterSelectedCategories.length > 0)) {
+      if (this.isFiltered) {
         return 'warn';
       }
       if (this.isSearchMode) {
@@ -460,7 +458,6 @@ export default {
     },
   },
   async mounted() {
-    this.searchPopover = useTemplateRef('searchPopover');
     this.multiSelectPopover = useTemplateRef('multiSelectPopover');
     if (this.accountId !== undefined) {
       this.clearTransactions(); // always load the transactions
@@ -471,6 +468,7 @@ export default {
       await this.loadDataFromServer();
     }
     this.searchTermInput = this.searchTerm;
+    this.filterSelectedCategories = this.searchCategories;
     if (this.lastScrollTop) {
       const list = document.querySelector('.table-scroll');
       list.scrollTop = this.lastScrollTop;
@@ -504,10 +502,10 @@ export default {
   <div class="page page--is-transactions-list-view">
     <div class="page--header">
       <div class="page--title title__with-buttons">
-        <Button v-if="searchTermInput" @click="navigateBack" icon="pi pi-angle-left"></Button>
+        <Button v-if="searchTermInput || filterSelectedCategories.length > 0" @click="navigateBack" icon="pi pi-angle-left"></Button>
         <Button v-else label="Zurück" @click="navigateBack" size="large"></Button>
-        <span v-if="loading" class="element--is-grow element--is-centered">Buchungen laden...</span>
-        <span v-if="!loading" class="element--is-grow element--is-centered">{{ accountName }}</span>
+        <span v-if="loading && !isFiltered" class="element--is-grow element--is-centered">Buchungen laden...</span>
+        <span v-if="!loading && !isFiltered" class="element--is-grow element--is-centered">{{ accountName }}</span>
         <div class="element-as-columns element--is-right-aligned" v-if="isFiltered">
           <span class="element--is-grow">&sum;: {{ amountSumStr }}</span>
           <span class="element--is-grow is-de-emphasized">{{ transactionsCount }} Buchungen</span>
@@ -547,7 +545,7 @@ export default {
       <div v-if="isSearchMode" class="page--title title__with-buttons">
         <div class="element-as-columns">
           <InputGroup>
-            <InputText fluid placeholder="Suchen" inputmode="text" enterKeyHint="search"
+            <InputText fluid placeholder="Text oder Betrag suchen" inputmode="text" enterKeyHint="search"
                        v-model="searchTermInput" class="element--is-grow"
                        @keydown="popoverKeyDown"
                        autofocus></InputText>
@@ -558,6 +556,8 @@ export default {
           <MultiSelect class="element--is-grow" id="categories" fluid filter showClear v-model="filterSelectedCategories"
                        :options="categories" optionValue="id"
                        optionLabel="full_name" autoFilterFocus placeholder="Mögliche Kategorien auswählen"/>
+          <Select :loading="loading" placeholder="Zeitspanne einschränken" class="element--is-grow" id="timespans" fluid v-model="dateFilter" :options="timespanList"
+                  optionLabel="name" showClear @change="dateFilterChanged"/>
         </div>
         <div class="title--action-buttons">
           <Button :severity="getSeverityForSearchToggleButton()" icon="pi pi-search" title="Suche ausführen" @click="searchTransactions"/>
