@@ -332,7 +332,8 @@ button:hover svg .metaphor {
   padding-block: 0.25em;
 }
 
-.page--header .element--is-grow {
+.page--header .element--is-grow,
+.page--header .element-as-columns.element--is-grow {
   flex-grow: 1;
 }
 
@@ -345,7 +346,7 @@ button:hover svg .metaphor {
   display: flex;
   flex-direction: column;
   gap: 0.1em;
-  flex-grow: 1;
+  flex: 1 1 auto;
   overflow: hidden;
 }
 
@@ -463,7 +464,10 @@ button:hover svg .metaphor {
   flex-direction: row;
   align-items: center;
   gap: 0.5em;
-  padding-inline-start: 1em;
+}
+
+.page--title.title__with-buttons .title--action-buttons-vertical {
+  flex-direction: column;
 }
 
 .page--footer {

@@ -12,6 +12,7 @@ export const TransactionStore = defineStore('transaction', {
     _transaction: {},
     _searchTerm: '',
     _searchCategories: [],
+    _searchDateFilter: null,
     _currentTransactionId: 0,
     _lastScrollTop: 0,
     _incomplete: false, // true if more transactions would exists but limited to max transactions
@@ -23,6 +24,9 @@ export const TransactionStore = defineStore('transaction', {
     },
     searchCategories(state) {
       return state._searchCategories;
+    },
+    searchDateFilter(state) {
+      return state._searchDateFilter;
     },
     transaction(state) {
       return state._transaction;
@@ -477,6 +481,9 @@ export const TransactionStore = defineStore('transaction', {
     },
     setSearchCategories(categoryIds) {
       this._searchCategories = categoryIds;
+    },
+    setSearchDateFilter(dateFilter) {
+      this._searchDateFilter = dateFilter;
     },
     setCurrentTransactionId(id) {
       this._currentTransactionId = id;

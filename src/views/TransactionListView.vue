@@ -1,509 +1,588 @@
 <script setup>
-defineProps({
-  accountId: {type: Array},
-  givenSearchTerm: {type: String},
-});
-</script>
-
-<script>
 import {DateTime, Settings as DateTimeSettings} from 'luxon';
-import router from '@/router';
 import _ from 'lodash';
-import {useTemplateRef} from 'vue';
-import {mapActions, mapState, mapStores} from 'pinia';
+import {computed, onMounted, ref, useTemplateRef, watch} from 'vue';
 import {UserStore} from '@/stores/user';
 import {AccountStore} from '@/stores/accounts';
 import {TransactionStore} from '@/stores/transactions';
 import {MasterDataStore} from '@/stores/masterdata';
+import {useRouter} from "vue-router";
 
-export default {
-  name: 'TransactionListView',
-  data() {
-    return {
-      error: this.error,
-      loading: this.loading,
-      selectAllOrNoting: this.selectAllOrNoting,
-      isMultiSelectMode: this.isMultiSelectMode,
-      isSearchMode: this.isSearchMode,
-      selectionListShown: this.selectionListShown,
-      accountName: this.accountName,
-      accountBalance: this.accountBalance,
-      accountBalanceDateStr: this.accountBalanceDateStr,
-      currencyStr: this.currencyStr,
-      timespanList: this.timespanList,
-      dateFilter: this.dateFilter,
-      transactionsByDate: this.transactionsByDate,
-      accountTypeIsCash: this.accountTypeIsCash,
-      searchTermInput: '',
-      transactionsCount: this.transactionsCount,
-      amountSumStr: this.amountSumStr,
-      isFiltered: this.isFiltered,
-      transactionsSelected: this.transactionsSelected,
-      filterSelectedCategories: [],
-      categoryList: [],
-      dataFilter: null,
-    };
-  },
-  computed: {
-    ...mapStores(UserStore),
-    ...mapStores(AccountStore),
-    ...mapStores(TransactionStore),
-    ...mapStores(MasterDataStore),
-    ...mapState(UserStore, ['authenticated']),
-    ...mapState(TransactionStore, [
-      'transactions',
-      'incompleteTransactionList',
-      'maxTransactions',
-      'lastScrollTop',
-      'searchTerm',
-      'searchCategories',
-      'selectedTransactions',
-    ]),
-    ...mapState(AccountStore, ['accounts']),
-    ...mapState(MasterDataStore, ['timespans', 'categories']),
-    isSelectionIndeterminate() {
-      return this.transactionsSelected.length > 0 &&
-        this.transactionsSelected.length < this.transactions.length;
-    },
-  },
-  watch: {
-    'transactionsSelected.length': function (val, oldVal) {
-      this.selectAllOrNoting = this.transactionsSelected.length === this.transactions.length;
-      if (this.transactionsSelected.length === 0) {
-        this.selectionListShown = false;
-      }
-    },
-    selectionListShown: function (val, oldVal) {
-      // can't implement show here, because show needs the event
-      if (!val && this.multiSelectPopover?.value) {
-        this.multiSelectPopover.value.hide();
-      }
+const props = defineProps({
+  accountId: {type: Array},
+  givenSearchTerm: {type: String},
+});
+
+defineOptions({
+  name: 'TransactionListView'
+});
+
+const router = useRouter();
+const userStore = UserStore();
+const accountStore = AccountStore();
+const transactionStore = TransactionStore();
+const masterDataStore = MasterDataStore();
+
+const multiSelectPopover = useTemplateRef('multiSelectPopover')
+
+const error = ref('');
+const loading = ref(false);
+const selectAllOrNoting = ref(false);
+const isMultiSelectMode = ref(false);
+const isSearchMode = ref(false);
+const selectionListShown = ref(false);
+const accountName = ref('');
+const accountBalance = ref(0);
+const accountBalanceDateStr = ref('');
+const currencyStr = ref('');
+const timespanList = ref([]);
+const dateFilter = ref(null);
+const transactionsByDate = ref([]);
+const accountTypeIsCash = ref(false);
+const searchTermInput = ref('');
+const transactionsSelected = ref([]);
+const filterSelectedCategories = ref([]);
+
+let dateFilterFrom;
+let dateFilterTo;
+let accountsWhereIn = [];
+let idAccount;
+let currency;
+
+const transactions = computed(() => transactionStore.transactions);
+const incompleteTransactionList = computed(() => transactionStore.incompleteTransactionList);
+const maxTransactions = computed(() => transactionStore.maxTransactions);
+const lastScrollTop = computed(() => transactionStore.lastScrollTop);
+const searchTerm = computed(() => transactionStore.searchTerm);
+const searchCategories = computed(() => transactionStore.searchCategories);
+const searchDateFilter = computed(() => transactionStore.searchDateFilter);
+const selectedTransactions = computed(() => transactionStore.selectedTransactions);
+const timespans = computed(() => masterDataStore.timespans);
+const categories = computed(() => masterDataStore.categories);
+
+const isSelectionIndeterminate = computed(() => {
+  return transactionsSelected.value.length > 0 &&
+      transactionsSelected.value.length < transactions.value.length;
+});
+
+const severityForSearchToggleButton = computed(() => {
+    if (isFiltered.value) {
+      return 'warn';
     }
-  },
-  methods: {
-    ...mapActions(MasterDataStore, ['getTimespans', 'getCurrencies', 'getCurrencyDetails', 'getTags', 'getTagById', 'getCategories']),
-    ...mapActions(TransactionStore, ['getTransactions', 'setLastScrollTop', 'clearTransactions', 'setSearchTerm', 'setSearchCategories', 'setSelectedTransactions']),
-    ...mapActions(AccountStore, ['getAccounts', 'getAccountById']),
-    ...mapActions(UserStore, ['setNotAuthenticated']),
-    navigateToAddTransaction() {
-      router.push({name: 'AddTransaction', params: {accountId: this.idAccount}});
-    },
-    navigateBack() {
-      router.back();
-    },
-    onSelectAllOrNotingChanged(event) {
-      if (this.selectAllOrNoting) {
-        this.selectAll();
-      } else {
-        this.clearSelection();
-      }
-    },
-    toggleSelectionList(event) {
-      this.selectionListShown = !this.selectionListShown;
-      const popover = this.multiSelectPopover.value;
-      if (this.selectionListShown) {
-        popover.show(event);
-      }
-    },
-    toggleMultiSelectMode(event) {
-      this.isMultiSelectMode = !this.isMultiSelectMode;
-    },
-    selectAll() {
-      this.transactionsSelected = [];
-      this.transactions.forEach((item) => {
-        item.selected = true;
-        this.transactionsSelected.push(item);
-      });
-      this.setSelectedTransactions(this.transactionsSelected);
-      this.updateTransactionCount();
-      this.calculateIsFiltered();
-      this.calculateSumAmountOfFiltered();
-    },
-    clearSelection() {
-      this.transactionsSelected = [];
-      this.transactions.forEach((item) => {
-        item.selected = false;
-      });
-      this.setSelectedTransactions(this.transactionsSelected);
-      this.updateTransactionCount();
-      this.calculateIsFiltered();
-    },
-    batchSetCategory() {
-      router.push({name: 'BatchSetCategory'});
-    },
-    batchSetTags() {
-      router.push({name: 'BatchSetTags'});
-    },
-    removeItemFromSelectionList(item) {
-      item.selected = false;
-      this.updateTransactionSelection(item);
-      this.updateTransactionCount();
-      this.calculateIsFiltered();
-      this.calculateSumAmountOfFiltered();
-    },
-    toggleSearch(event) {
-      this.isSearchMode = !this.isSearchMode;
-    },
-    clearSearch() {
-      this.searchTermInput = '';
-      this.filterSelectedCategories = [];
-      this.searchTransactions();
-      this.isSearchMode = false;
-    },
-    clearSearchTerm() {
-      this.searchTermInput = '';
-      this.searchTransactions();
-    },
-    async popoverKeyDown(event) {
-      if (event.key === 'Enter') {
-        await this.searchTransactions();
-      }
-    },
-    tableScroll(ev) {
-      this.setLastScrollTop(ev.srcElement.scrollTop);
-    },
-    async searchTransactions() {
-      this.setSearchTerm(this.searchTermInput);
-      this.setSearchCategories(this.filterSelectedCategories);
-      await this.loadDataFromServer();
-    },
-    accountChanged() {
-      this.loadDataFromServer();
-    },
-    dateFilterChanged() {
-      const tsInfos = this.timespans.filter((item) => {
-        return item.id === this.dateFilter?.id;
-      });
-      if (tsInfos.length > 0) {
-        this.dateFilterTo = undefined;
-        const tsInfo = tsInfos[0];
-        switch (tsInfo.fromRuleNo) {
-          case 1: // months back
-            const noMonth = parseInt(tsInfo.fromRuleAttribute);
-            this.dateFilterFrom = DateTime.now().minus({months: noMonth}).toISO();
-            break;
-          case 2: // this year
-            const currentYear = DateTime.now().year;
-            this.dateFilterFrom = DateTime.fromObject(
-                {year: currentYear, month: 1, day: 1}).toISO();
-            break;
-          case 3: // last year
-            const lastYear = DateTime.now().minus({years: 1}).year;
-            this.dateFilterFrom = DateTime.fromObject({year: lastYear, month: 1, day: 1}).toISO();
-            this.dateFilterTo = DateTime.fromObject({
-              year: lastYear, month: 12, day: 31, hour: 23, minute: 59,
-              second: 59,
-            }).toISO();
-            break;
-          case 4: // given year
-            const year = parseInt(tsInfo.fromRuleAttribute);
-            this.dateFilterFrom = DateTime.fromObject({year: year, month: 1, day: 1}).toISO();
-            this.dateFilterTo = DateTime.fromObject({
-              year: year, month: 12, day: 31, hour: 23, minute: 59,
-              second: 59,
-            }).toISO();
-            break;
-          default:
-            this.dateFilterFrom = undefined;
-        }
-      } else {
-        this.dateFilterFrom = undefined;
-        this.dateFilterTo = undefined;
-      }
-      this.loadDataFromServer();
-    },
-    async loadDataFromServer() {
-      this.error = '';
-      this.loading = true;
-      this.isFiltered = false;
-      try {
-        this._updateAccountsWhereIn();
-        const promises = [];
-        promises.push(this.getAccounts(true));
-        promises.push(this.getTags());
-        promises.push(this.getCategories());
-        promises.push(this.getCurrencies(true));
-        promises.push(this.getTimespans());
-        promises.push(this.getTransactions({
-          maxItems: this.maxTransactions + 10, searchTerm: this.searchTerm,
-          categoriesWhereIn: this.searchCategories,
-          accountsWhereIn: this.accountsWhereIn, dateFilterFrom: this.dateFilterFrom,
-          dateFilterTo: this.dateFilterTo,
-        }));
-        const results = await Promise.all(promises);
-        this.loading = false;
-        let mustAuthenticate = false;
-        let notAuthorized = false;
-        let not_ok = false;
-        results.forEach((result) => {
-          let status = result;
-          if (_.isObject(result)) {
-            status = result.status;
-          }
-          switch (status) {
-            case 403:
-              notAuthorized = true;
-              break;
-            case 401:
-            case 404:
-              mustAuthenticate = true;
-              break;
-            case 200:
-              break;
-            default:
-              not_ok = true;
-          }
-        });
-        if (mustAuthenticate) {
-          this.setNotAuthenticated();
-          router.replace({name: 'login'});
-          return;
-        }
-        if (notAuthorized) {
-          router.replace({name: 'notAuthorized'});
-          return;
-        }
-        if (not_ok) {
-          this.error = result.message;
-          return;
-        }
-        await this.prepareDataForList();
-      } catch (ex) {
-        this.error = ex.message;
-        this.loading = false;
-      }
-    },
-    calculateIsFiltered() {
-      // calculate isFiltered: if a search term, date filter or selection of transactions exist, assume the list is filtered
-      if (this.searchTerm || this.dateFilterFrom || this.dateFilterTo || this.transactionsSelected.length > 0 || this.filterSelectedCategories.length > 0) {
-        this.isFiltered = true;
-      } else {
-        this.isFiltered = false;
-      }
-    },
-    calculateSumAmountOfFiltered() {
-      // calculate sum of filtered or selected (if at least one transaction is selected) transactions
-      const s = this.transactions.reduce((sum, item) => {
-        if (this.transactionsSelected.length > 0) {
-          if (item.selected) {
-            return sum + parseFloat(item.t_amount);
-          }
-          return sum;
-        }
-        return sum + parseFloat(item.t_amount);
-      }, 0);
+    if (isSearchMode.value) {
+      return 'info';
+    }
+    return null;
+});
 
-      // format sum as currency
-      this.amountSumStr = new Intl.NumberFormat(DateTimeSettings.defaultLocale, {
-        style: 'currency',
-        currency: this.currency ? this.currency : 'EUR',
-      }).format(s);
-    },
-    updateTransactionCount() {
-      if (this.transactionsSelected.length > 0) {
-        this.transactionsCount = this.transactionsSelected.length;
-      } else {
-        this.transactionsCount = this.transactions.length;
-      }
-    },
-    updateTransactionSelection(item) {
+const isFiltered = computed(() => {
+  // calculate isFiltered: if a search term, date filter or selection of transactions exist, assume the list is filtered
+  return !!(searchTerm.value || dateFilterFrom || dateFilterTo || transactionsSelected.value?.length > 0 || filterSelectedCategories.value?.length > 0);
+});
+
+const amountSumStr = computed(() => {
+  // calculate sum of filtered or selected (if at least one transaction is selected) transactions
+  const s = transactions.value.reduce((sum, item) => {
+    if (transactionsSelected.value.length > 0) {
       if (item.selected) {
-        this.transactionsSelected.push(item);
-      } else {
-        const index = this.transactionsSelected.indexOf(item);
-        if (index > -1) {
-          this.transactionsSelected.splice(index, 1);
-        }
+        return sum + parseFloat(item.t_amount);
       }
-      this.setSelectedTransactions(this.transactionsSelected);
-    },
-    async prepareDataForList() {
-      this.transactionsSelected = [];
-      const previouslySelected = this.selectedTransactions;
-      for (let i = 0; i < this.transactions.length; i++) {
-        const t = this.transactions[i];
-        if (previouslySelected.find(p => p.t_id === t.t_id)) {
-          t.selected = true;
-          this.transactionsSelected.push(t);
-        }
-      }
-      this.isMultiSelectMode = this.transactionsSelected.length > 0;
-      this.transactionsCount = this.transactions.length;
-      if (this.accountsWhereIn.length === 0) {
-        this.accountName = 'Alle Transaktionen';
-      } else if (this.accountsWhereIn.length === 1) {
-        const account = this.getAccountById(this.accountsWhereIn[0]);
-        const currencyDetails = this.getCurrencyDetails(account.currency);
-        this.idAccount = account.id;
-        this.accountName = account.name;
-        this.accountBalance = account.balance;
-        this.accountBalanceDateStr = account.balanceDate ? DateTime.fromISO(account.balanceDate).toLocaleString() : '';
-        this.currency = currencyDetails ? currencyDetails.id : 'EUR';
-        this.currencyStr = currencyDetails ? currencyDetails.short : '';
-        this.accountTypeIsCash = account.type === 'cash';
-      } else {
-        this.accountName = 'Alle Buchungen';
-      }
-      this.updateTransactionCount();
-      this.calculateIsFiltered();
-      this.calculateSumAmountOfFiltered();
-
-      this._fillTimespanList();
-      this._buildTransactionsPerDate();
-    },
-    _buildTransactionsPerDate() {
-      const transactionsOfDate = {};
-      this.transactions.forEach((t) => {
-        // concatenate tags
-        t.tagsStr = t.tagIds ? t.tagIds.reduce((acc, id) => {
-          const tagInfo = this.getTagById(id);
-          if (tagInfo) {
-            if (acc.length > 0) {
-              acc += ', ';
-            }
-            acc += '#' + tagInfo.tag;
-          }
-          return acc;
-        }, '') : undefined;
-
-        t.tags = t.tagIds ? t.tagIds.map((id) => {
-          const tagInfo = this.getTagById(id);
-          if (tagInfo) {
-            return tagInfo.tag;
-          }
-          return '?';
-        }) : [];
-
-        const tDateShortStr = DateTime.fromISO(t.t_value_date).toISODate();
-        if (transactionsOfDate[tDateShortStr] === undefined) {
-          transactionsOfDate[tDateShortStr] = [];
-        }
-        if (this.accountsWhereIn.length > 1) {
-          const account = this.getAccountById(t.account_id);
-          t.accountName = account.name;
-          const currencyDetails = this.getCurrencyDetails(t.account_id);
-          const currency = currencyDetails ? currencyDetails.id : 'EUR';
-          t.amountStr = new Intl.NumberFormat(DateTimeSettings.defaultLocale, {
-            style: 'currency',
-            currency: currency,
-          }).format(t.t_amount);
-        } else {
-          t.amountStr = new Intl.NumberFormat(DateTimeSettings.defaultLocale, {
-            style: 'currency',
-            currency: this.currency,
-          }).format(t.t_amount);
-        }
-        transactionsOfDate[tDateShortStr].push(t);
-      });
-      const transactionDatesSorted = Object.keys(transactionsOfDate).toSorted((a, b) => {
-        const aDate = DateTime.fromISO(a);
-        const bDate = DateTime.fromISO(b);
-        if (aDate > bDate) return -1;
-        if (bDate < aDate) return 1;
-        return 0;
-      });
-      this.transactionsByDate = transactionDatesSorted.map((tDate) => {
-        return {
-          valueDate: tDate,
-          valueDateStr: DateTime.fromISO(tDate).toLocaleString(),
-          transactions: transactionsOfDate[tDate].toSorted((a, b) => {
-            return b.t_id - a.t_id;
-          }),
-        };
-      });
-    },
-    _fillTimespanList() {
-      this.timespanList = this.timespans.map((tsInfo) => {
-        if (this.dateFilter === undefined) {
-          this.dateFilter = tsInfo.id;
-        }
-        return {id: tsInfo.id, name: tsInfo.name};
-      });
-    },
-    onSelectionClicked(event) {
-      event.stopPropagation();
-    },
-    onSelectionChange(event, item) {
-      event.stopPropagation();
-      item.selected = event.target.checked;
-
-      this.updateTransactionSelection(item);
-      this.updateTransactionCount();
-      this.calculateIsFiltered();
-      this.calculateSumAmountOfFiltered();
-    },
-    _updateAccountsWhereIn: function() {
-      if (_.isArray(this.accountId)) {
-        this.accountsWhereIn = this.accountId;
-      } else {
-        const parts = this.accountId.split(',');
-        this.accountsWhereIn = [];
-        parts.forEach((part) => {
-          const accountId = parseInt(part);
-          if (isNaN(accountId)) {
-            return;
-          }
-          this.accountsWhereIn.push(accountId);
-        });
-      }
-    },
-    getSeverityForSearchToggleButton() {
-      if (this.isFiltered) {
-        return 'warn';
-      }
-      if (this.isSearchMode) {
-        return 'info';
-      }
-      return null;
-    },
-  },
-  async mounted() {
-    this.multiSelectPopover = useTemplateRef('multiSelectPopover');
-    if (this.accountId !== undefined) {
-      this.clearTransactions(); // always load the transactions
+      return sum;
     }
-    if (this.transactions.length) {
-      await this.prepareDataForList();
+    return sum + parseFloat(item.t_amount);
+  }, 0);
+
+  // format sum as currency
+  return new Intl.NumberFormat(DateTimeSettings.defaultLocale, {
+    style: 'currency',
+    currency: currency ? currency : 'EUR',
+  }).format(s);
+
+});
+
+const transactionsCount = computed(() => {
+  if (transactionsSelected.value.length > 0) {
+    return transactionsSelected.value.length;
+  } else {
+    return transactions.value.length;
+  }
+});
+
+watch(dateFilter, (newVal) => {
+  _updateDateFilter();
+  searchTransactions();
+});
+
+watch(filterSelectedCategories, newVal => {
+  searchTransactions();
+});
+
+watch(transactionsSelected, (newVal) => {
+  selectAllOrNoting.value = transactionsSelected.value.length === transactions.value.length;
+  if (transactionsSelected.value.length === 0) {
+    selectionListShown.value = false;
+  }
+});
+
+watch(selectionListShown, (newVal) => {
+  // can't implement show here, because show needs the event
+  if (!newVal && multiSelectPopover.value) {
+    multiSelectPopover.value.hide();
+  }
+});
+
+function selectAll() {
+  transactionsSelected.value = [];
+  transactions.value.forEach((item) => {
+    item.selected = true;
+    transactionsSelected.value.push(item);
+  });
+  transactionStore.setSelectedTransactions(transactionsSelected.value);
+}
+
+function clearSelection() {
+  transactionsSelected.value = [];
+  transactions.value.forEach((item) => {
+    item.selected = false;
+  });
+  transactionStore.setSelectedTransactions(transactionsSelected.value);
+}
+
+async function loadDataFromServer() {
+  error.value = '';
+  loading.value = true;
+  try {
+    // _updateDateFilter();
+    _updateAccountsWhereIn();
+    const promises = [];
+    promises.push(accountStore.getAccounts(true));
+    promises.push(masterDataStore.getTags());
+    promises.push(masterDataStore.getCategories());
+    promises.push(masterDataStore.getCurrencies(true));
+    promises.push(masterDataStore.getTimespans());
+    promises.push(transactionStore.getTransactions({
+      maxItems: maxTransactions.value + 10,
+      searchTerm: searchTerm.value,
+      categoriesWhereIn: searchCategories.value,
+      accountsWhereIn: accountsWhereIn,
+      dateFilterFrom: dateFilterFrom,
+      dateFilterTo: dateFilterTo,
+    }));
+    const results = await Promise.all(promises);
+    loading.value = false;
+    let mustAuthenticate = false;
+    let notAuthorized = false;
+    let not_ok = false;
+    let message = '';
+    results.forEach((result) => {
+      let status = result;
+      if (_.isObject(result)) {
+        status = result.status;
+      }
+      switch (status) {
+        case 403:
+          notAuthorized = true;
+          break;
+        case 401:
+        case 404:
+          mustAuthenticate = true;
+          break;
+        case 200:
+          break;
+        default:
+          not_ok = true;
+          if (!message) {
+            message = result.message;
+          }
+      }
+    });
+    if (mustAuthenticate) {
+      userStore.setNotAuthenticated();
+      await router.replace({name: 'login'});
+      return;
+    }
+    if (notAuthorized) {
+      await router.replace({name: 'notAuthorized'});
+      return;
+    }
+    if (not_ok) {
+      error.value = message;
+      return;
+    }
+    await prepareDataForList();
+  } catch (ex) {
+    error.value = ex.message;
+    loading.value = false;
+  }
+}
+
+async function searchTransactions() {
+  transactionStore.setSearchTerm(searchTermInput.value);
+  transactionStore.setSearchCategories(filterSelectedCategories.value);
+  transactionStore.setSearchDateFilter(dateFilter.value);
+  await loadDataFromServer();
+}
+
+function updateTransactionSelection(item) {
+  if (item.selected) {
+    transactionsSelected.value.push(item);
+  } else {
+    const index = transactionsSelected.value.indexOf(item);
+    if (index > -1) {
+      transactionsSelected.value.splice(index, 1);
+    }
+  }
+  transactionStore.setSelectedTransactions(transactionsSelected.value);
+}
+
+async function prepareDataForList() {
+  transactionsSelected.value = [];
+  for (let i = 0; i < transactions.value.length; i++) {
+    const t = transactions.value[i];
+    if (selectedTransactions.value.find(p => p.t_id === t.t_id)) {
+      t.selected = true;
+      transactionsSelected.value.push(t);
+    }
+  }
+  isMultiSelectMode.value = transactionsSelected.value.length > 0;
+  if (accountsWhereIn.length === 0) {
+    accountName.value = 'Alle Transaktionen';
+  } else if (accountsWhereIn.length === 1) {
+    const account = accountStore.getAccountById(accountsWhereIn[0]);
+    const currencyDetails = masterDataStore.getCurrencyDetails(account.currency);
+    idAccount = account.id;
+    accountName.value = account.name;
+    accountBalance.value = account.balance;
+    accountBalanceDateStr.value = account.balanceDate ? DateTime.fromISO(account.balanceDate).toLocaleString() : '';
+    currency = currencyDetails ? currencyDetails.id : 'EUR';
+    currencyStr.value = currencyDetails ? currencyDetails.short : '';
+    accountTypeIsCash.value = account.type === 'cash';
+  } else {
+    accountName.value = 'Alle Buchungen';
+  }
+
+  _fillTimespanList();
+  _buildTransactionsPerDate();
+}
+
+function _buildTransactionsPerDate() {
+  const transactionsOfDate = {};
+  transactions.value.forEach((t) => {
+    // concatenate tags
+    t.tagsStr = t.tagIds ? t.tagIds.reduce((acc, id) => {
+      const tagInfo = masterDataStore.getTagById(id);
+      if (tagInfo) {
+        if (acc.length > 0) {
+          acc += ', ';
+        }
+        acc += '#' + tagInfo.tag;
+      }
+      return acc;
+    }, '') : undefined;
+
+    t.tags = t.tagIds ? t.tagIds.map((id) => {
+      const tagInfo = masterDataStore.getTagById(id);
+      if (tagInfo) {
+        return tagInfo.tag;
+      }
+      return '?';
+    }) : [];
+
+    const tDateShortStr = DateTime.fromISO(t.t_value_date).toISODate();
+    if (transactionsOfDate[tDateShortStr] === undefined) {
+      transactionsOfDate[tDateShortStr] = [];
+    }
+    if (accountsWhereIn.length > 1) {
+      const account = accountStore.getAccountById(t.account_id);
+      t.accountName = account.name;
+      const currencyDetails = masterDataStore.getCurrencyDetails(t.account_id);
+      const accountCurrency = currencyDetails ? currencyDetails.id : 'EUR';
+      t.amountStr = new Intl.NumberFormat(DateTimeSettings.defaultLocale, {
+        style: 'currency',
+        currency: accountCurrency,
+      }).format(t.t_amount);
     } else {
-      await this.loadDataFromServer();
+      t.amountStr = new Intl.NumberFormat(DateTimeSettings.defaultLocale, {
+        style: 'currency',
+        currency: currency,
+      }).format(t.t_amount);
     }
-    this.searchTermInput = this.searchTerm;
-    this.filterSelectedCategories = this.searchCategories;
-    if (this.lastScrollTop) {
-      const list = document.querySelector('.table-scroll');
-      list.scrollTop = this.lastScrollTop;
+    transactionsOfDate[tDateShortStr].push(t);
+  });
+  const transactionDatesSorted = Object.keys(transactionsOfDate).toSorted((a, b) => {
+    const aDate = DateTime.fromISO(a);
+    const bDate = DateTime.fromISO(b);
+    if (aDate > bDate) return -1;
+    if (bDate < aDate) return 1;
+    return 0;
+  });
+  transactionsByDate.value = transactionDatesSorted.map((tDate) => {
+    return {
+      valueDate: tDate,
+      valueDateStr: DateTime.fromISO(tDate).toLocaleString(),
+      transactions: transactionsOfDate[tDate].toSorted((a, b) => {
+        return b.t_id - a.t_id;
+      }),
+    };
+  });
+}
+
+function _fillTimespanList() {
+  timespanList.value = timespans.value.map((tsInfo) => {
+    if (dateFilter.value === undefined) {
+      dateFilter.value = tsInfo.id;
     }
-  },
-  created() {
-    this.transactionsSelected = [];
-    this.transactionsByDate = [];
-    this.error = null;
-    this.loading = false;
-    this.accountName = '';
-    this.accountBalance = 0;
-    this.accountTypeIsCash = false;
-    this.accountBalanceDateStr = '';
-    this.currencyStr = '';
-    this.accountsWhereIn = [];
-    this.dateFilterFrom = undefined;
-    this.dateFilterTo = undefined;
-    this.selectAllOrNoting = false;
-    this.isMultiSelectMode = false;
-    this.isSearchMode = false;
-    this.selectionListShown = false;
-    this.transactionsCount = 0;
-    this.amountSumStr = '';
-    this.isFiltered = false;
-  },
-};
+    return {id: tsInfo.id, name: tsInfo.name};
+  });
+}
+
+function _updateDateFilter() {
+  const tsInfos = timespans.value.filter((item) => {
+    return item.id === dateFilter.value?.id;
+  });
+  if (tsInfos.length > 0) {
+    dateFilterTo = undefined;
+    const tsInfo = tsInfos[0];
+    switch (tsInfo.fromRuleNo) {
+      case 1: // months back
+        const noMonth = parseInt(tsInfo.fromRuleAttribute);
+        dateFilterFrom = DateTime.now().minus({months: noMonth}).toISO();
+        break;
+      case 2: // this year
+        const currentYear = DateTime.now().year;
+        dateFilterFrom = DateTime.fromObject(
+            {year: currentYear, month: 1, day: 1}).toISO();
+        break;
+      case 3: // last year
+        const lastYear = DateTime.now().minus({years: 1}).year;
+        dateFilterFrom = DateTime.fromObject({year: lastYear, month: 1, day: 1}).toISO();
+        dateFilterTo = DateTime.fromObject({
+          year: lastYear, month: 12, day: 31, hour: 23, minute: 59,
+          second: 59,
+        }).toISO();
+        break;
+      case 4: // given year
+        const year = parseInt(tsInfo.fromRuleAttribute);
+        dateFilterFrom = DateTime.fromObject({year: year, month: 1, day: 1}).toISO();
+        dateFilterTo = DateTime.fromObject({
+          year: year, month: 12, day: 31, hour: 23, minute: 59,
+          second: 59,
+        }).toISO();
+        break;
+      case 5: { // Month, starting at first of it + offset
+        const monthOffset = parseInt(tsInfo.fromRuleAttribute);
+        const targetDate = DateTime.now().plus({months: monthOffset});
+        const from = DateTime.fromObject(
+            {year: targetDate.year, month: targetDate.month, day: 1});
+        dateFilterFrom = from.toISO();
+        dateFilterTo = from.plus({months: 1}).minus({days: 1}).endOf('day').toISO();
+        break;
+      }
+      case 6: { // current quarter, starting at first of it
+        const quarterOffset = parseInt(tsInfo.fromRuleAttribute);
+        const monthOffset = quarterOffset * 3;
+        const currentDate = DateTime.now();
+        const currentMonth = currentDate.month;
+        let quarterStartMonth;
+
+        // Determine the start month of the current quarter
+        if (currentMonth <= 3) {
+          quarterStartMonth = 1; // Q1: Jan-Mar
+        } else if (currentMonth <= 6) {
+          quarterStartMonth = 4; // Q2: Apr-Jun
+        } else if (currentMonth <= 9) {
+          quarterStartMonth = 7; // Q3: Jul-Sep
+        } else {
+          quarterStartMonth = 10; // Q4: Oct-Dec
+        }
+
+        // Set the date range for the quarter
+        dateFilterFrom = DateTime.fromObject({
+          year: currentDate.year,
+          month: quarterStartMonth,
+          day: 1
+        }).plus({month: monthOffset}).toISO();
+
+        // End of quarter (last day of the 3rd month)
+        dateFilterTo = DateTime.fromObject({
+          year: currentDate.year,
+          month: quarterStartMonth + 2,
+          day: 1
+        })
+            .plus({month: monthOffset})
+            .plus({months: 1})
+            .minus({days: 1})
+            .endOf('day')
+            .toISO();
+        break;
+      }
+      case 7: { // Q1, Q2, Q3, Q4 of current year - depending on from
+        // fromRuleAttribute should be 0 for Q1, 1 for Q2, 2 for Q3, 3 for Q4
+        // negative values are allowed, e.g. -1 for last year's Q4
+        const quarterOffset = parseInt(tsInfo.fromRuleAttribute);
+        const currentYear = DateTime.now().year;
+
+        // month to add to get to the first month of the quarter
+        const monthOffset = (quarterOffset * 3);
+
+        // Set first day of the specified quarter
+        dateFilterFrom = DateTime.fromObject({
+          year: currentYear,
+          month: 1,
+          day: 1
+        }).plus({ months: monthOffset }).toISO();
+
+        // Set last day of the specified quarter (last day of the 3rd month in the quarter)
+        dateFilterTo = DateTime.fromObject({
+          year: currentYear,
+          month: 3, // Last month in the first quarter
+          day: 1
+        })
+            .plus({ months: monthOffset })
+            .plus({ months: 1 }) // Move to first day of next month
+            .minus({ days: 1 })  // Go back to last day of the quarter
+            .endOf('day')        // End of the day (23:59:59)
+            .toISO();
+        break;
+      }
+      default:
+        dateFilterFrom = undefined;
+    }
+  } else {
+    dateFilterFrom = undefined;
+    dateFilterTo = undefined;
+  }
+}
+
+function _updateAccountsWhereIn() {
+  if (_.isArray(props.accountId)) {
+    accountsWhereIn = props.accountId;
+  } else {
+    const parts = props.accountId.split(',');
+    accountsWhereIn = [];
+    parts.forEach((part) => {
+      const accountId = parseInt(part);
+      if (isNaN(accountId)) {
+        return;
+      }
+      accountsWhereIn.push(accountId);
+    });
+  }
+}
+
+function onNavigateToAddTransaction() {
+  router.push({name: 'AddTransaction', params: {accountId: idAccount}});
+}
+
+function onNavigateBack() {
+  router.back();
+}
+
+function onSelectAllOrNotingChanged(event) {
+  if (selectAllOrNoting.value) {
+    selectAll();
+  } else {
+    clearSelection();
+  }
+}
+
+function onToggleSelectionList(event) {
+  selectionListShown.value = !selectionListShown.value;
+  const popover = multiSelectPopover.value;
+  if (selectionListShown.value) {
+    popover.show(event);
+  }
+}
+
+function onToggleMultiSelectMode(event) {
+  isMultiSelectMode.value = !isMultiSelectMode.value;
+}
+
+function onSelectionChange(event, item) {
+  event.stopPropagation();
+  item.selected = event.target.checked;
+
+  updateTransactionSelection(item);
+}
+
+function onSelectionClicked(event) {
+  event.stopPropagation();
+}
+
+function onClearSearchTerm() {
+  searchTermInput.value = '';
+  searchTransactions();
+}
+
+async function onSearchTermKeyDown(event) {
+  if (event.key === 'Enter') {
+    await searchTransactions();
+  }
+}
+
+function onTableScroll(ev) {
+  transactionStore.setLastScrollTop(ev.srcElement.scrollTop);
+}
+
+function onDateFilterChanged() {
+  // _updateDateFilter();
+}
+
+function onSearchTransactions() {
+  searchTransactions();
+}
+
+function onBatchSetCategory() {
+  router.push({name: 'BatchSetCategory'});
+}
+
+function onBatchSetTags() {
+  router.push({name: 'BatchSetTags'});
+}
+
+function onRemoveItemFromSelectionList(item) {
+  item.selected = false;
+  updateTransactionSelection(item);
+}
+
+function onToggleSearch(event) {
+  isSearchMode.value = !isSearchMode.value;
+}
+
+function onClearSearch() {
+  searchTermInput.value = '';
+  dateFilter.value = undefined;
+  clearSelection();
+  // _updateDateFilter();
+  filterSelectedCategories.value = [];
+  isSearchMode.value = false;
+  searchTransactions();
+}
+
+onMounted(async () => {
+  if (props.accountId !== undefined) {
+    transactionStore.clearTransactions(); // always load the transactions
+  }
+
+  // pre-fill search criteria from store
+  searchTermInput.value = searchTerm.value;
+  filterSelectedCategories.value = searchCategories.value;
+  dateFilter.value = searchDateFilter.value;
+
+  await loadDataFromServer();
+
+  if (lastScrollTop.value) {
+    const list = document.querySelector('.table-scroll');
+    list.scrollTop = lastScrollTop.value;
+  }
+});
 
 </script>
 <template>
   <div class="page page--is-transactions-list-view">
     <div class="page--header">
       <div class="page--title title__with-buttons">
-        <Button v-if="searchTermInput || filterSelectedCategories.length > 0" @click="navigateBack" icon="pi pi-angle-left"></Button>
-        <Button v-else label="Zurück" @click="navigateBack" size="large"></Button>
+        <Button @click="onNavigateBack" icon="pi pi-angle-left"></Button>
         <span v-if="loading && !isFiltered" class="element--is-grow element--is-centered">Buchungen laden...</span>
         <span v-if="!loading && !isFiltered" class="element--is-grow element--is-centered">{{ accountName }}</span>
         <div class="element-as-columns element--is-right-aligned" v-if="isFiltered">
@@ -515,27 +594,35 @@ export default {
           <span v-if="!loading && accountBalanceDateStr"
                 class="element--is-grow is-de-emphasized">{{ accountBalanceDateStr }}</span>
         </div>
-        <Button v-if="accountTypeIsCash" @click="navigateToAddTransaction()" @keydown.enter="navigateToAddTransaction()"
-                icon="pi pi-plus" variant="text" aria-label="Buchung hinzufügen" />
-        <Button @click="toggleSearch" :icon="isSearchMode ? 'pi pi-filter-fill' : 'pi pi-filter'" :severity="getSeverityForSearchToggleButton()" aria-label="Suche einblenden" />
-        <Button :disabled="transactionsSelected.length === 0" @click="toggleSelectionList" :icon="selectionListShown ? 'pi pi-list-check' : 'pi pi-list'" :severity="selectionListShown ? 'info' : null" aria-label="Ausgewählte einblenden"/>
-        <Button @click="toggleMultiSelectMode" :icon="isMultiSelectMode ? 'pi pi-pen-to-square' : 'pi pi-check-square'" :severity="isMultiSelectMode ? 'info' : null"/>
+        <Button v-if="accountTypeIsCash" @click="onNavigateToAddTransaction()" @keydown.enter="onNavigateToAddTransaction()"
+                icon="pi pi-plus" variant="text" aria-label="Buchung hinzufügen"/>
+        <Button @click="onToggleSearch" :icon="isSearchMode ? 'pi pi-filter-fill' : 'pi pi-filter'"
+                :severity="severityForSearchToggleButton" aria-label="Suche einblenden"/>
+        <Button :disabled="transactionsSelected.length === 0" @click="onToggleSelectionList"
+                :icon="selectionListShown ? 'pi pi-list-check' : 'pi pi-list'"
+                :severity="selectionListShown ? 'info' : null" aria-label="Ausgewählte einblenden"/>
+        <Button @click="onToggleMultiSelectMode" :icon="isMultiSelectMode ? 'pi pi-pen-to-square' : 'pi pi-check-square'"
+                :severity="isMultiSelectMode ? 'info' : null"/>
         <Popover ref="multiSelectPopover" class="multi-select-popover">
           <div class="multi-select-popover__wrapper">
             <div class="multi-select-popover__header">
               Ausgewählte Buchungen:
             </div>
             <div class="multi-select-popover__content">
-              <div class="multi-select-popover__content__item" v-for="(item, index) in transactionsSelected" :key="item.t_id" :id="'transaction-' + item.t_id">
+              <div class="multi-select-popover__content__item" v-for="(item, index) in transactionsSelected"
+                   :key="item.t_id" :id="'transaction-' + item.t_id">
                 <div class="multi-select-popover__content__item__main">
-                  <div v-if="item.payeeShortened">{{item.payeeShortened}}</div>
+                  <div v-if="item.payeeShortened">{{ item.payeeShortened }}</div>
                   <div v-if="item.textShortened">{{ item.textShortened }}</div>
                   <div v-if="item.t_notes">{{ item.t_notes }}</div>
-                  <div v-if="item.t_entry_text && !item.t_notes && !item.textShortened && !item.payeeShortened">{{ item.t_entry_text }}</div>
+                  <div v-if="item.t_entry_text && !item.t_notes && !item.textShortened && !item.payeeShortened">
+                    {{ item.t_entry_text }}
+                  </div>
                   <div v-if="item.category_name">{{ item.category_name }}</div>
                 </div>
                 <div class="multi-select-popover__content__item__suffix">
-                  <Button icon="pi pi-times-circle" variant="text" size="small" aria-label="Selection aufheben" @click="removeItemFromSelectionList(item)"/>
+                  <Button icon="pi pi-times-circle" variant="text" size="small" aria-label="Selection aufheben"
+                          @click="onRemoveItemFromSelectionList(item)"/>
                 </div>
               </div>
             </div>
@@ -547,38 +634,43 @@ export default {
           <InputGroup>
             <InputText fluid placeholder="Text oder Betrag suchen" inputmode="text" enterKeyHint="search"
                        v-model="searchTermInput" class="element--is-grow"
-                       @keydown="popoverKeyDown"
+                       @keydown="onSearchTermKeyDown"
                        autofocus></InputText>
             <InputGroupAddon>
-              <Button severity="secondary" variant="text" icon="pi pi-times" title="Suchbegriff löschen" @click="clearSearchTerm"/>
+              <Button severity="secondary" variant="text" icon="pi pi-times" title="Suchbegriff löschen"
+                      @click="onClearSearchTerm"/>
             </InputGroupAddon>
           </InputGroup>
-          <MultiSelect class="element--is-grow" id="categories" fluid filter showClear v-model="filterSelectedCategories"
+          <MultiSelect class="element--is-grow" id="categories" fluid filter showClear
+                       v-model="filterSelectedCategories"
                        :options="categories" optionValue="id"
                        optionLabel="full_name" autoFilterFocus placeholder="Mögliche Kategorien auswählen"/>
-          <Select :loading="loading" placeholder="Zeitspanne einschränken" class="element--is-grow" id="timespans" fluid v-model="dateFilter" :options="timespanList"
-                  optionLabel="name" showClear @change="dateFilterChanged"/>
+          <Select :loading="loading" placeholder="Zeitspanne einschränken" class="element--is-grow" id="timespans" fluid
+                  v-model="dateFilter" :options="timespanList"
+                  optionLabel="name" showClear @change="onDateFilterChanged"/>
         </div>
-        <div class="title--action-buttons">
-          <Button :severity="getSeverityForSearchToggleButton()" icon="pi pi-search" title="Suche ausführen" @click="searchTransactions"/>
-          <Button severity="secondary" icon="pi pi-times" title="Kriterien zurücksetzen" @click="clearSearch"/>
+        <div class="title--action-buttons title--action-buttons-vertical">
+          <Button :severity="severityForSearchToggleButton" icon="pi pi-search" title="Suche ausführen"
+                  @click="onSearchTransactions"/>
+          <Button severity="secondary" icon="pi pi-times" title="Kriterien zurücksetzen" @click="onClearSearch"/>
         </div>
       </div>
       <div v-if="isMultiSelectMode" class="page--title title__with-buttons">
         <div class="title--action-buttons">
           <Checkbox v-model="selectAllOrNoting"
-                    @change="onSelectAllOrNotingChanged($event)" size="small" :indeterminate="isSelectionIndeterminate" binary/>
-          <span>{{transactionsSelected.length}} ausgewählt</span>
+                    @change="onSelectAllOrNotingChanged($event)" size="small" :indeterminate="isSelectionIndeterminate"
+                    binary/>
+          <span>{{ transactionsSelected.length }} ausgewählt</span>
         </div>
         <div class="title--action-buttons">
-          <Button severity="secondary" icon="pi pi-folder" aria-label="Kategorie setzen" @click="batchSetCategory"
+          <Button severity="secondary" icon="pi pi-folder" aria-label="Kategorie setzen" @click="onBatchSetCategory"
                   :disabled="transactionsSelected.length === 0"/>
-          <Button severity="secondary" icon="pi pi-tag" aria-label="Tag setzen" @click="batchSetTags"
+          <Button severity="secondary" icon="pi pi-tag" aria-label="Tag setzen" @click="onBatchSetTags"
                   :disabled="transactionsSelected.length === 0"/>
         </div>
       </div>
     </div>
-    <div class="page--content table-scroll" @scroll="tableScroll">
+    <div class="page--content table-scroll" @scroll="onTableScroll">
       <div class="page--content--row">
         <div class="data--list data--list--grouped" v-if="transactionsByDate.length">
           <div class="data--list__group" v-for="(trOfDate, index) in transactionsByDate" :key="trOfDate">
@@ -600,7 +692,7 @@ export default {
                 <div class="data--list__line" v-if="item.accountName">{{ item.accountName }}</div>
                 <div class="data--list__line" v-if="item.category_name">{{ item.category_name }}</div>
                 <div class="data--list__line" v-if="item.tagsStr">
-                  <span v-for="(tag, index) of item.tags" :key="tag" >
+                  <span v-for="(tag, index) of item.tags" :key="tag">
                     <Chip class="element--is-chip" :label="tag" :title="tag"/>
                   </span>
                 </div>
@@ -610,7 +702,7 @@ export default {
                 <span :class="{'data--list__line--bold': item.unseen }">{{ item.amountStr }}</span>
               </div>
             </div>
-            <router-link  v-else class="data--list__item" append
+            <router-link v-else class="data--list__item" append
                          :to="{ path:'/transaction/:transactionId', name: 'TransactionDetail',  params: { transactionId: item.t_id }}"
                          v-for="(item, index) in trOfDate.transactions" :key="item.t_id"
                          :id="'transaction-' + item.t_id" :class="{'alternate-row-background': index % 2 }">
@@ -627,7 +719,7 @@ export default {
                 <div class="data--list__line" v-if="item.accountName">{{ item.accountName }}</div>
                 <div class="data--list__line" v-if="item.category_name">{{ item.category_name }}</div>
                 <div class="data--list__line" v-if="item.tagsStr">
-                  <span v-for="(tag, index) of item.tags" :key="tag" >
+                  <span v-for="(tag, index) of item.tags" :key="tag">
                     <Chip class="element--is-chip" :label="tag" :title="tag"/>
                   </span>
                 </div>
@@ -641,7 +733,8 @@ export default {
         </div>
         <div v-else class="row--item.row--item--is-grow row--item--is-centered">
           <div v-if="loading" class="row--item--is-centered progress">
-            <progress-spinner strokeWidth="4" fill="transparent" animationDuration="1s"></progress-spinner></div>
+            <progress-spinner strokeWidth="4" fill="transparent" animationDuration="1s"></progress-spinner>
+          </div>
           <div v-else class="row--item--is-centered row--item--is-emphasized empty-message">Keine Ergebnisse</div>
         </div>
       </div>
@@ -665,6 +758,7 @@ export default {
   align-items: center;
   width: 250px;
 }
+
 .multi-select-popover__header {
   display: flex;
   flex-direction: row;
@@ -673,11 +767,13 @@ export default {
   justify-content: space-between;
   width: 100%;
 }
+
 .multi-select-popover__header > div {
   display: flex;
   flex-direction: row;
   gap: 0.5em;
 }
+
 .multi-select-popover__content {
   display: flex;
   flex-direction: column;
@@ -687,6 +783,7 @@ export default {
   overflow-y: auto;
   max-height: 70vH;
 }
+
 .multi-select-popover__content__item {
   display: flex;
   flex-direction: row;
@@ -694,6 +791,7 @@ export default {
   background-color: var(--data-list-header-background-color);
   width: 100%;
 }
+
 .multi-select-popover__content__item__main {
   display: flex;
   flex-direction: column;
@@ -701,24 +799,29 @@ export default {
   overflow: hidden;
   gap: 0.125em;
 }
+
 .multi-select-popover__content__item__main > div {
   font-size: 0.7em;
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
 }
+
 .multi-select-popover__content__item__main > div:first-child {
   font-size: 1em;
 }
+
 .multi-select-popover__content__item__suffix {
   display: flex;
   justify-content: flex-end;
   align-items: center;
 }
+
 .data--list__prefix-icon {
   font-size: 0.5em;
   color: var(--p-primary-color);
 }
+
 .progress {
   --p-progressspinner-color-one: var(--sgbus-green);
   --p-progressspinner-color-two: var(--sgbus-green);
