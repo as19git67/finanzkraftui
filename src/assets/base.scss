@@ -206,6 +206,8 @@
   --data-list-item-font-weight-emphasize: 600;
   --data-list-item-font-size-deemphasize: 14px;
   --data-list-item-font-weight-deemphasize: 400;
+  --data-list-chip-background-color-1: var(--asparagus);
+  --data-list-chip-background-color-2: var(--eggplant);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -311,6 +313,7 @@ button:hover svg .metaphor {
 .page.page--is-accounts-view,
 .page.page--is-account-detail-view,
 .page.page--is-transactions-list-view,
+.page.page--is-users-list-view,
 .page.page--is-transaction-new-view,
 .page.page--is-transaction-detail-view,
 .page.page--is-batch-set-category-view,

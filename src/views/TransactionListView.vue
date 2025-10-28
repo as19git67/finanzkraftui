@@ -690,10 +690,13 @@ onMounted(async () => {
                 <div class="data--list__line" v-if="item.textShortened">{{ item.textShortened }}</div>
                 <div class="data--list__line" v-if="item.t_entry_text">{{ item.t_entry_text }}</div>
                 <div class="data--list__line" v-if="item.accountName">{{ item.accountName }}</div>
-                <div class="data--list__line" v-if="item.category_name">{{ item.category_name }}</div>
+                <div class="data--list__line" v-if="item.category_name">
+                  <Chip class="element--is-chip element--is-category" :label="item.category_name"
+                        :title="item.category_name"/>
+                </div>
                 <div class="data--list__line" v-if="item.tagsStr">
                   <span v-for="(tag, index) of item.tags" :key="tag">
-                    <Chip class="element--is-chip" :label="tag" :title="tag"/>
+                    <Chip class="element--is-chip element--is-tag" :label="tag" :title="tag"/>
                   </span>
                 </div>
                 <div class="data--list__line" v-if="item.t_notes">{{ item.t_notes }}</div>
@@ -717,10 +720,13 @@ onMounted(async () => {
                 <div class="data--list__line" v-if="item.textShortened">{{ item.textShortened }}</div>
                 <div class="data--list__line" v-if="item.t_entry_text">{{ item.t_entry_text }}</div>
                 <div class="data--list__line" v-if="item.accountName">{{ item.accountName }}</div>
-                <div class="data--list__line" v-if="item.category_name">{{ item.category_name }}</div>
+                <div class="data--list__line" v-if="item.category_name">
+                  <Chip class="element--is-chip element--is-category" :label="item.category_name"
+                        :title="item.category_name"/>
+                </div>
                 <div class="data--list__line" v-if="item.tagsStr">
                   <span v-for="(tag, index) of item.tags" :key="tag">
-                    <Chip class="element--is-chip" :label="tag" :title="tag"/>
+                    <Chip class="element--is-chip element--is-tag" :label="tag" :title="tag"/>
                   </span>
                 </div>
                 <div class="data--list__line" v-if="item.t_notes">{{ item.t_notes }}</div>
@@ -751,6 +757,16 @@ onMounted(async () => {
 </style>
 
 <style scoped>
+.element--is-chip {
+  margin-block: 1px;
+}
+.element--is-chip.element--is-tag {
+  --p-chip-background: var(--data-list-chip-background-color-1);
+}
+.element--is-chip.element--is-category {
+  --p-chip-background: var(--data-list-chip-background-color-2);
+}
+
 .multi-select-popover__wrapper {
   display: flex;
   flex-direction: column;

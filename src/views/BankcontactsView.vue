@@ -134,7 +134,7 @@ function createNew() {
               <Button @click="navigateToBankcontactDetail(item)"
                       @keydown.enter="navigateToBankcontactDetail(item)"
                       icon="pi pi-caret-right" severity="contrast"
-                      variant="text" rounded aria-label="Ändern" />
+                      variant="text" rounded title="Ändern" />
             </div>
           </div>
         </div>

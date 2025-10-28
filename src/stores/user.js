@@ -1,6 +1,7 @@
 import axios from 'axios';
 import _ from 'lodash';
 import { defineStore } from 'pinia';
+import {DateTime} from "luxon";
 
 export const UserStore = defineStore('user', {
   state: () => {
@@ -211,7 +212,12 @@ export const UserStore = defineStore('user', {
         try {
           const response = await axios.get('/api/user', config);
           if (response.status === 200) {
-            this._users = response.data;
+            this._users = response.data.map((user) => {
+              return {
+                ...user,
+                ExpiredAfterFormatted: user.ExpiredAfter ? DateTime.fromISO(user.ExpiredAfter).toLocaleString(DateTime.DATETIME_FULL) : '',
+              }
+            });
           } else {
             this._users = [];
           }
@@ -237,6 +243,7 @@ export const UserStore = defineStore('user', {
       if (!userId) {
         return { status: 404, message: 'Missing id in updateData for updateUser' };
       }
+      delete updateData.ExpiredAfterFormatted;
       const userStore = UserStore();
       let resultData = {};
       if (userStore.authenticated) {
