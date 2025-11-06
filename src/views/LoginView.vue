@@ -3,6 +3,10 @@ import {ref, onMounted, computed} from 'vue';
 import {useRouter} from 'vue-router';
 import {UserStore} from '@/stores/user';
 
+defineOptions({
+  name: 'LoginView'
+});
+
 const router = useRouter();
 const userStore = UserStore();
 

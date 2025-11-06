@@ -143,6 +143,38 @@ export const UserStore = defineStore('user', {
         throw ex;
       }
     },
+    async registerNewUserForWebAuth(email, password) {
+      try {
+        const data = { email, password };
+        const config = {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        };
+        const response = await axios.post('/api/passkeyRegisterStart', data, config);
+        this.email = email;
+        return response;
+      } catch (ex) {
+        this.setAuthenticated(false);
+        console.log('New user registration threw an exception');
+        throw ex;
+      }
+    },
+    async verifyNewUserWebAuthnRegistration(email, attestationResponse) {
+      try {
+        const config = {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        };
+        const response = await axios.post('/api/passkeyRegisterFinish', attestationResponse, config);
+        return response;
+      } catch (ex) {
+        this.setAuthenticated(false);
+        console.log('New user registration threw an exception while verifying WebAuthn attestation');
+        throw ex;
+      }
+    },
     async loginBasic(email, password) {
       try {
         const basicAuthHash = btoa(`${email}:${password}`);
