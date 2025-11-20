@@ -151,7 +151,7 @@ export const UserStore = defineStore('user', {
             'Content-Type': 'application/json',
           },
         };
-        const response = await axios.post('/api/passkeyRegisterStart', data, config);
+        const response = await axios.post('/api/passkeyRegister', data, config);
         this.email = email;
         return response;
       } catch (ex) {
@@ -160,14 +160,14 @@ export const UserStore = defineStore('user', {
         throw ex;
       }
     },
-    async verifyNewUserWebAuthnRegistration(email, attestationResponse) {
+    async verifyNewUserWebAuthnRegistration(email, loginOptions) {
       try {
         const config = {
           headers: {
             'Content-Type': 'application/json',
           },
         };
-        const response = await axios.post('/api/passkeyRegisterFinish', attestationResponse, config);
+        const response = await axios.post('/api/passkeyLogin', loginOptions, config);
         return response;
       } catch (ex) {
         this.setAuthenticated(false);

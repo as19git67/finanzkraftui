@@ -2,6 +2,7 @@
 import {computed, onMounted, ref} from 'vue';
 import {useRouter} from 'vue-router';
 import {UserStore} from '@/stores/user';
+import '../base64url';
 
 defineOptions({
   name: 'RegistrationForm1'
@@ -62,16 +63,15 @@ const userValidationMessage = computed(() => {
 });
 
 async function createPublicKeyPairWith(challengeResponse) {
-  const challenge = new ArrayBuffer(btoa(challengeResponse.challenge));
   const options = {
     publicKey: {
       rp: { name: 'finanzkraftpasskeys' },
       user: {
-        id: new ArrayBuffer(challengeResponse.user.id),
+        id: base64url.decode(challengeResponse.user.id),
         name: challengeResponse.user.name,
         displayName: challengeResponse.user.name,
       },
-      challenge,
+      challenge: base64url.decode(challengeResponse.challenge),
       pubKeyCredParams: [
         {
           type: 'public-key',
@@ -96,10 +96,25 @@ async function createPublicKeyPairWith(challengeResponse) {
 }
 
 function buildLoginOptionsWith(userCredentials) {
+
+  // if configured use configured origin by replacing it in clientData
+  const baseServerUrlFromConfig = import.meta.env.VITE_APP_API_BASE_URL;
+  if (baseServerUrlFromConfig) {
+
+    // replace origin in debug mode
+    const clientData = JSON.parse(new TextDecoder().decode(userCredentials.response.clientDataJSON));
+    clientData.origin = baseServerUrlFromConfig;
+
+    // convert back to arraybuffer
+    const encoder = new TextEncoder();
+    const uint8Array = encoder.encode(JSON.stringify(clientData));
+    userCredentials.response.clientDataJSON = uint8Array.buffer;
+  }
+
   const body = {
     response: {
-      clientDataJSON: btoa(userCredentials.response.clientDataJSON),
-      attestationObject: btoa(userCredentials.response.attestationObject),
+      clientDataJSON: base64url.encode(userCredentials.response.clientDataJSON),
+      attestationObject: base64url.encode(userCredentials.response.attestationObject),
     },
   }
 
@@ -116,9 +131,9 @@ async function registerClicked() {
     const response = await userStore.registerNewUserForWebAuth(email.value, password.value);
     if (response.status === 200) {
       const challengeResponse = response.data
-      const credential = await createPublicKeyPairWith(challengeResponse);
-      console.log('credential', credential);
-      const loginOptions = buildLoginOptionsWith(credential);
+      const userCredentials = await createPublicKeyPairWith(challengeResponse);
+      console.log('userCredentials', userCredentials);
+      const loginOptions = buildLoginOptionsWith(userCredentials);
       const verifyResponse = await userStore.verifyNewUserWebAuthnRegistration(email.value, loginOptions);
     } else {
       error.value = response.message || 'Fehler bei der Registrierung';
