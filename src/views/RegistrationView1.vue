@@ -14,7 +14,7 @@ const userStore = UserStore();
 const email = ref('');
 const password = ref('');
 const passwordRepeat = ref('');
-const error = ref(null);
+const error = ref('');
 
 const passwordValidationMessage = computed(() => {
   if (password.value.length === 0) {
@@ -47,6 +47,12 @@ const passwordValidationMessage = computed(() => {
   }
 });
 
+const passwordsOk = computed(() => {
+  const notOk = !password.value || password.value.length < 8|| !passwordRepeat.value || passwordRepeat.value.length < 8 ||
+      password.value !== passwordRepeat.value;
+  return !notOk;
+});
+
 const userValidationMessage = computed(() => {
   if (email.value.length > 0) {
     let re = new RegExp(/[@]/);
@@ -65,7 +71,7 @@ const userValidationMessage = computed(() => {
 async function createPublicKeyPairWith(challengeResponse) {
   const options = {
     publicKey: {
-      rp: { name: 'finanzkraftpasskeys' },
+      rp: {name: 'finanzkraftpasskeys'},
       user: {
         id: base64url.decode(challengeResponse.user.id),
         name: challengeResponse.user.name,
@@ -97,10 +103,12 @@ async function createPublicKeyPairWith(challengeResponse) {
 
 function buildLoginOptionsWith(userCredentials) {
 
+  let clientDataJSON;
+
   // if configured use configured origin by replacing it in clientData
   const baseServerUrlFromConfig = import.meta.env.VITE_APP_API_BASE_URL;
-  if (baseServerUrlFromConfig) {
 
+  if (baseServerUrlFromConfig) {
     // replace origin in debug mode
     const clientData = JSON.parse(new TextDecoder().decode(userCredentials.response.clientDataJSON));
     clientData.origin = baseServerUrlFromConfig;
@@ -108,12 +116,14 @@ function buildLoginOptionsWith(userCredentials) {
     // convert back to arraybuffer
     const encoder = new TextEncoder();
     const uint8Array = encoder.encode(JSON.stringify(clientData));
-    userCredentials.response.clientDataJSON = uint8Array.buffer;
+    clientDataJSON = uint8Array.buffer;
+  } else {
+    clientDataJSON = userCredentials.response.clientDataJSON;
   }
 
   const body = {
     response: {
-      clientDataJSON: base64url.encode(userCredentials.response.clientDataJSON),
+      clientDataJSON: base64url.encode(clientDataJSON),
       attestationObject: base64url.encode(userCredentials.response.attestationObject),
     },
   }
@@ -127,26 +137,41 @@ function buildLoginOptionsWith(userCredentials) {
 
 async function registerClicked() {
   error.value = '';
+  if (!passwordsOk.value) {
+    return;
+  }
+  const emailTrimmed = email.value.trim();
   try {
-    const response = await userStore.registerNewUserForWebAuth(email.value, password.value);
-    if (response.status === 200) {
-      const challengeResponse = response.data
-      const userCredentials = await createPublicKeyPairWith(challengeResponse);
-      console.log('userCredentials', userCredentials);
-      const loginOptions = buildLoginOptionsWith(userCredentials);
-      const verifyResponse = await userStore.verifyNewUserWebAuthnRegistration(email.value, loginOptions);
-    } else {
+    let response = await userStore.registerNewUserForWebAuth(emailTrimmed, password.value);
+    if (response.status !== 200) {
       error.value = response.message || 'Fehler bei der Registrierung';
+      return;
     }
+    const challengeResponse = response.data
+    const userCredentials = await createPublicKeyPairWith(challengeResponse);
+    const loginOptions = buildLoginOptionsWith(userCredentials);
+    response = await userStore.verifyNewUserWebAuthnRegistration(loginOptions, emailTrimmed);
+    if (response.status !== 200) {
+      error.value = response.message || 'Fehler bei der Registrierung';
+      return;
+    }
+    await router.replace({name: 'home'});
   } catch (ex) {
+    console.log(ex);
     if (ex.response) {
       switch (ex.response.status) {
         case 422:
           error.value = "Es existiert bereits ein Benutzerkonto mit der gleichen Email-Adresse."
           break;
+        default:
+          error.value = ex.response.statusText;
       }
     } else {
-      error.value = ex.message;
+      if (ex.message) {
+        error.value = ex.message;
+      } else {
+        error.value = 'Unknown error';
+      }
     }
   }
 }
@@ -184,9 +209,10 @@ onMounted(async () => {
           </IconField>
           <span v-if="userValidationMessage" class="error">{{ userValidationMessage }}</span>
           <span v-if="passwordValidationMessage" class="error">{{ passwordValidationMessage }}</span>
+          <span v-if="error" class="error">{{ error }}</span>
         </div>
         <Button label="Registrieren"
-                :disabled="!email || email.length < 8 || !password || password.length < 8|| !passwordRepeat || passwordRepeat.length < 8 || password !== passwordRepeat"
+                :disabled="!email || email.length < 8 || !passwordsOk"
                 @click="registerClicked()"/>
       </div>
     </div>

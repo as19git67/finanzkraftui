@@ -139,8 +139,8 @@ export const UserStore = defineStore('user', {
         this.email = email;
         return true;
       } catch (ex) {
-        console.log('New user registration threw an exception');
-        throw ex;
+        console.log('New user registration threw an exception', ex);
+        return this.handleAxiosException(ex, userStore, {});
       }
     },
     async registerNewUserForWebAuth(email, password) {
@@ -156,11 +156,11 @@ export const UserStore = defineStore('user', {
         return response;
       } catch (ex) {
         this.setAuthenticated(false);
-        console.log('New user registration threw an exception');
-        throw ex;
+        console.log('New user registration threw an exception:', ex);
+        return this.handleAxiosException(ex, userStore, {});
       }
     },
-    async verifyNewUserWebAuthnRegistration(email, loginOptions) {
+    async verifyNewUserWebAuthnRegistration(loginOptions, email) {
       try {
         const config = {
           headers: {
@@ -168,11 +168,24 @@ export const UserStore = defineStore('user', {
           },
         };
         const response = await axios.post('/api/passkeyLogin', loginOptions, config);
+        if (response.status === 200) {
+          this.setAuthenticated(
+            true,
+            response.data.idUser,
+            email,
+            response.data.AccessToken,
+            response.data.AccessTokenExpiredAfter,
+            response.data.RefreshToken,
+            response.data.permissions,
+          );
+        } else {
+          this.setAuthenticated(false);
+        }
         return response;
       } catch (ex) {
         this.setAuthenticated(false);
-        console.log('New user registration threw an exception while verifying WebAuthn attestation');
-        throw ex;
+        console.log('New user registration threw an exception while verifying WebAuthn attestation:', ex);
+        return this.handleAxiosException(ex, userStore, {});
       }
     },
     async loginBasic(email, password) {
@@ -198,11 +211,11 @@ export const UserStore = defineStore('user', {
         } else {
           this.setAuthenticated(false);
         }
-        return true;
+        return response;
       } catch (ex) {
         this.setAuthenticated(false);
-        console.log('Login threw an exception');
-        throw ex;
+        console.log('Login threw an exception:', ex);
+        return this.handleAxiosException(ex, userStore, {});
       }
     },
     logout() {
