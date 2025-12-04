@@ -230,6 +230,7 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
+  --p-button-link-color: white
 }
 
 .sign-in-card {

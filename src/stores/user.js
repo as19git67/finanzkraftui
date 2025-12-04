@@ -140,7 +140,7 @@ export const UserStore = defineStore('user', {
         return true;
       } catch (ex) {
         console.log('New user registration threw an exception', ex);
-        return this.handleAxiosException(ex, userStore, {});
+        return this.handleAxiosException(ex, this, {});
       }
     },
     async registerNewUserForWebAuth(email, password) {
@@ -151,13 +151,13 @@ export const UserStore = defineStore('user', {
             'Content-Type': 'application/json',
           },
         };
-        const response = await axios.post('/api/passkeyRegister', data, config);
+        const response = await axios.post('/api/passkeyRegisterChallenge', data, config);
         this.email = email;
         return response;
       } catch (ex) {
         this.setAuthenticated(false);
         console.log('New user registration threw an exception:', ex);
-        return this.handleAxiosException(ex, userStore, {});
+        return this.handleAxiosException(ex, this, {});
       }
     },
     async verifyNewUserWebAuthnRegistration(loginOptions, email) {
@@ -171,12 +171,12 @@ export const UserStore = defineStore('user', {
         if (response.status === 200) {
           this.setAuthenticated(
             true,
-            response.data.idUser,
+            response.data.id,
             email,
             response.data.AccessToken,
             response.data.AccessTokenExpiredAfter,
             response.data.RefreshToken,
-            response.data.permissions,
+            response.data.permissions || {},
           );
         } else {
           this.setAuthenticated(false);
@@ -185,7 +185,19 @@ export const UserStore = defineStore('user', {
       } catch (ex) {
         this.setAuthenticated(false);
         console.log('New user registration threw an exception while verifying WebAuthn attestation:', ex);
-        return this.handleAxiosException(ex, userStore, {});
+        return this.handleAxiosException(ex, this, {});
+      }
+    },
+    async getLoginChallengeForWebAuth() {
+      try {
+        const data = {};
+        const config = { headers: { 'Content-Type': 'application/json' }};
+        const response = await axios.post('/api/passkeyLoginChallenge', data, config);
+        return base64url.decode(response.data.challenge);
+      } catch (ex) {
+        this.setAuthenticated(false);
+        console.log('New user registration threw an exception:', ex);
+        return this.handleAxiosException(ex, this, {});
       }
     },
     async loginBasic(email, password) {
@@ -197,11 +209,12 @@ export const UserStore = defineStore('user', {
             Authorization: `Basic ${basicAuthHash}`,
           },
         };
+        // server creates access token and evaluates permissions
         const response = await axios.post('/api/auth', undefined, config);
         if (response.status === 200) {
           this.setAuthenticated(
             true,
-            response.data.idUser,
+            response.data.id,
             email,
             response.data.AccessToken,
             response.data.AccessTokenExpiredAfter,
@@ -215,7 +228,7 @@ export const UserStore = defineStore('user', {
       } catch (ex) {
         this.setAuthenticated(false);
         console.log('Login threw an exception:', ex);
-        return this.handleAxiosException(ex, userStore, {});
+        return this.handleAxiosException(ex, this, {});
       }
     },
     logout() {
@@ -268,7 +281,7 @@ export const UserStore = defineStore('user', {
           }
           return response.status;
         } catch (ex) {
-          return this.handleAxiosException(ex, userStore, resultData);
+          return this.handleAxiosException(ex, this, resultData);
         }
       }
     },
@@ -300,7 +313,7 @@ export const UserStore = defineStore('user', {
           }
           return { status: response.status, data: resultData };
         } catch (ex) {
-          return this.handleAxiosException(ex, userStore, resultData);
+          return this.handleAxiosException(ex, this, resultData);
         }
       }
       return { status: 401, data: resultData };
@@ -317,7 +330,7 @@ export const UserStore = defineStore('user', {
           }
           return { status: response.status, data: resultData };
         } catch (ex) {
-          return this.handleAxiosException(ex, userStore, resultData);
+          return this.handleAxiosException(ex, this, resultData);
         }
       }
       return { status: 401, data: resultData };
@@ -357,7 +370,7 @@ export const UserStore = defineStore('user', {
           }
           return { status: response.status };
         } catch (ex) {
-          return this.handleAxiosException(ex, userStore);
+          return this.handleAxiosException(ex, this);
         }
       }
       return { status: 401 };
@@ -371,7 +384,7 @@ export const UserStore = defineStore('user', {
 
           return { status: response.status };
         } catch (ex) {
-          return this.handleAxiosException(ex, userStore);
+          return this.handleAxiosException(ex, this);
         }
       }
       return { status: 401 };
@@ -388,7 +401,7 @@ export const UserStore = defineStore('user', {
           }
           return { status: response.status, data: resultData };
         } catch (ex) {
-          return this.handleAxiosException(ex, userStore, resultData);
+          return this.handleAxiosException(ex, this, resultData);
         }
       }
       return { status: 401, data: resultData };
@@ -405,7 +418,7 @@ export const UserStore = defineStore('user', {
           }
           return { status: response.status, data: resultData };
         } catch (ex) {
-          return this.handleAxiosException(ex, userStore, resultData);
+          return this.handleAxiosException(ex, this, resultData);
         }
       }
       return { status: 401, data: resultData };
@@ -422,7 +435,7 @@ export const UserStore = defineStore('user', {
           }
           return { status: response.status, resultData: newRoleId };
         } catch (ex) {
-          return this.handleAxiosException(ex, userStore, newRoleId);
+          return this.handleAxiosException(ex, this, newRoleId);
         }
       }
       return { status: 401 };
@@ -439,7 +452,7 @@ export const UserStore = defineStore('user', {
           }
           return { status: response.status, data: resultData };
         } catch (ex) {
-          return this.handleAxiosException(ex, userStore, resultData);
+          return this.handleAxiosException(ex, this, resultData);
         }
       }
       return { status: 401, data: resultData };
@@ -456,7 +469,7 @@ export const UserStore = defineStore('user', {
           }
           return { status: response.status, data: resultData };
         } catch (ex) {
-          return this.handleAxiosException(ex, userStore, resultData);
+          return this.handleAxiosException(ex, this, resultData);
         }
       }
       return { status: 401, data: resultData };
@@ -473,7 +486,7 @@ export const UserStore = defineStore('user', {
           }
           return { status: response.status, data: resultData };
         } catch (ex) {
-          return this.handleAxiosException(ex, userStore, resultData);
+          return this.handleAxiosException(ex, this, resultData);
         }
       }
       return { status: 401, data: resultData };

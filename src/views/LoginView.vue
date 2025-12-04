@@ -13,6 +13,7 @@ const userStore = UserStore();
 const email = ref('');
 const password = ref('');
 const error = ref(null);
+const isCMA = ref(false);
 
 const authenticated = computed(() => userStore.authenticated);
 
@@ -30,19 +31,71 @@ const loginClicked = async () => {
   }
 };
 
-onMounted(() => {
+async function loginWithPasskeyClicked() {
+  // 1. Get challenge from server (Relying Party)
+  const challenge = await userStore.getLoginChallengeForWebAuth();
+  // 2. Use existing public key credential to authenticate user
+  const credentials = await navigator.credentials.get({
+    mediation: 'conditional',
+    publicKey: { challenge: challenge },
+  })
+  const loginOptions = buildLoginOptionsWith(credentials);
+  const response = await userStore.verifyNewUserWebAuthnRegistration(loginOptions);
+  if (response.status !== 200) {
+    error.value = response.message || 'Fehler beim Anmelden mit Passkey';
+    return;
+  }
+  await router.replace({name: 'home'});
+}
+
+function buildLoginOptionsWith(userCredentials) {
+
+  let clientDataJSON;
+
+  // if configured use configured origin by replacing it in clientData
+  const baseServerUrlFromConfig = import.meta.env.VITE_APP_API_BASE_URL;
+
+  if (baseServerUrlFromConfig) {
+    // replace origin in debug mode
+    const clientData = JSON.parse(new TextDecoder().decode(userCredentials.response.clientDataJSON));
+    clientData.origin = baseServerUrlFromConfig;
+
+    // convert back to arraybuffer
+    const encoder = new TextEncoder();
+    const uint8Array = encoder.encode(JSON.stringify(clientData));
+    clientDataJSON = uint8Array.buffer;
+  } else {
+    clientDataJSON = userCredentials.response.clientDataJSON;
+  }
+
+  const body = {
+    response: {
+      clientDataJSON: base64url.encode(clientDataJSON),
+      attestationObject: base64url.encode(userCredentials.response.attestationObject),
+    },
+  }
+
+  if (userCredentials.response.getTransports) {
+    body.response.transports = userCredentials.response.getTransports()
+  }
+
+  return body
+}
+
+onMounted(async () => {
   error.value = null;
   if (authenticated.value) {
-    router.replace({name: 'home'});
+    await router.replace({name: 'home'});
+    return;
   }
+  // check if conditional mediation is available
+  isCMA.value = await window.PublicKeyCredential.isConditionalMediationAvailable();
 });
+
 </script>
 
 <template>
-  <div
-      class="sign-in-container"
-      style="xbackground-image: url('https://fqjltiegiezfetthbags.supabase.co/storage/v1/object/public/block.images/blocks/signin/signin-glass.jpg')"
-  >
+  <div class="sign-in-container">
     <div class="sign-in-card">
       <div class="sign-in-title-container">
         <svg xmlns="http://www.w3.org/2000/svg" class="sign-in-svg" width="33" height="32" viewBox="0 0 33 32">
@@ -75,9 +128,10 @@ onMounted(() => {
             <InputText fluid type="password" class="sign-in-input" placeholder="Passwort" v-model="password"/>
           </IconField>
         </div>
-        <Button label="Sign In" :disabled="!email || email.length < 8 || !password || password.length < 8"
+        <Button label="Anmelden" :disabled="!email || email.length < 8 || !password || password.length < 8"
                 @click="loginClicked()"/>
       </div>
+      <Button label="Mit einem Passkey anmelden" :disabled="!isCMA" @click="loginWithPasskeyClicked()"/>
       <Button asChild v-slot="slotProps" variant="link">
         <RouterLink class="sign-in-forgot-password" to="/" :class="slotProps.class">Passwort vergessen?</RouterLink>
       </Button>
@@ -119,6 +173,7 @@ onMounted(() => {
   align-items: center;
   gap: 4px;
   width: 100%;
+  --p-button-link-color: white
 }
 
 .sign-in-svg {
