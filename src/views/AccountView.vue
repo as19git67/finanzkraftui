@@ -44,6 +44,8 @@ const fintsAuthRequired = ref(false);
 const fintsAccountsOfBankcontact = ref([]);
 const selectedFintsAccountNumber = ref(null);
 const fintsTanChallenge = ref('');
+const fintsPhotoTanObjectUrl = ref('');
+const fintsTanEntry = ref('');
 
 onMounted(async () => {
   error.value = '';
@@ -86,11 +88,14 @@ function integerSort(arr) {
   });
 }
 
-// watch(selectedBankcontact, async (newVal) => {
-//   if (newVal && (newVal.id !== originalData.idBankcontact)) {
-//     await loadFintsAccountsOfBankcontact(selectedBankcontact.value.id);
-//   }
-// });
+function createPhotoTanObjectUrl(mimeType, imageData) {
+  // if (fintsPhotoTanObjectUrl.value) URL.revokeObjectURL(fintsPhotoTanObjectUrl.value);
+  if (mimeType && imageData) {
+    fintsPhotoTanObjectUrl.value = `data:${mimeType};base64,${imageData}`;
+  } else {
+    fintsPhotoTanObjectUrl.value = '';
+  }
+}
 
 async function loadFintsAccountsOfBankcontact(idBankcontact) {
   let not_ok = false;
@@ -144,8 +149,14 @@ async function loadFintsAccountsOfBankcontact(idBankcontact) {
   if (result.data.status === onlineBankingStore.statusRequiresTAN) {
     fintsAuthRequired.value = true;
     fintsAccountsOfBankcontact.value = [];
-    fintsTanChallenge.value = `${result.data.tanInfo.tanChallenge} (${result.data.tanInfo.tanMediaName})`;
+    fintsTanChallenge.value = result.data.tanInfo.tanChallenge;
+    if (result.data.tanInfo.tanMediaName) {
+      fintsTanChallenge.value += `(${result.data.tanInfo.tanMediaName})`;
+    }
     fintsTanReference = result.data.tanInfo.tanReference;
+    if (result.data.tanInfo.tanPhoto) {
+      createPhotoTanObjectUrl(result.data.tanInfo.tanPhoto.mimeType, result.data.tanInfo.tanPhoto.image);
+    }
     return;
   }
   fintsTanChallenge.value = '';
@@ -372,6 +383,9 @@ function onBeforeShow() {
 }
 
 function continueFintsSync() {
+  if (fintsTanEntry.value) {
+    fintsTan = fintsTanEntry.value;
+  }
   synchronizeBankcontact();
 }
 
@@ -451,7 +465,7 @@ function continueFintsSync() {
           <label for="idFintsError">FinTS Fehler</label>
         </FloatLabel>
       </div>
-      <div class="page--content--row" v-if="fintsTanChallenge && selectedBankcontact">
+      <div class="page--content--row" v-if="fintsTanChallenge && selectedBankcontact && !fintsPhotoTanObjectUrl">
         <div class="page--content--row__inline">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
           <InputText id="idFintsTanChallenge" v-model="fintsTanChallenge" variant="filled"
@@ -464,6 +478,21 @@ function continueFintsSync() {
                 icon="pi pi-forward" title="Weiter" severity="warn"/>
         </div>
       </div>
+      <div class="page--content--row" v-if="fintsTanChallenge && selectedBankcontact && fintsPhotoTanObjectUrl">
+        <div class="page--content--row__inline">
+          <FloatLabel variant="in" class="row--item row--item--is-grow">
+            <InputText :disabled="loading" id="idTan" v-model="fintsTanEntry"
+                       size="small"></InputText>
+            <label for="idTan">TAN</label>
+          </FloatLabel>
+          <Button v-if="!loading&& fintsAuthRequired"
+                @click="continueFintsSync"
+                @keydown.enter="continueFintsSync"
+                icon="pi pi-forward" title="Weiter" severity="warn"/>
+        </div>
+        <img class="photoTanImage" :src="fintsPhotoTanObjectUrl" alt="Photo Tan"/>
+      </div>
+
       <div class="page--content--row" v-if="typeObj.id !== 'cash' && selectedBankcontact && !fintsAuthRequired">
         <FloatLabel variant="in" class="row--item row--item--is-grow">
           <Select :loading="loading" class="row--item" id="idFintsAccountNumber" fluid v-model="selectedFintsAccountNumber" :options="fintsAccountsOfBankcontact"
@@ -498,6 +527,10 @@ function continueFintsSync() {
 <style scoped>
   .closedToggle {
     padding-inline: 1em;
+  }
+  .photoTanImage {
+    max-width: 200px;
+    max-height: 200px;
   }
   #idFintsError {
     --p-inputtext-filled-background: var(--message-color-background-error);
