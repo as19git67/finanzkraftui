@@ -214,7 +214,7 @@ export const UserStore = defineStore('user', {
         if (response.status === 200) {
           this.setAuthenticated(
             true,
-            response.data.id,
+            response.data.idUser,
             email,
             response.data.AccessToken,
             response.data.AccessTokenExpiredAfter,

@@ -48,8 +48,7 @@ async function loginWithPasskeyClicked() {
   await router.replace({name: 'home'});
 }
 
-function buildLoginOptionsWith(userCredentials) {
-
+function buildLoginOptionsWith(credential) {
   let clientDataJSON;
 
   // if configured use configured origin by replacing it in clientData
@@ -57,7 +56,7 @@ function buildLoginOptionsWith(userCredentials) {
 
   if (baseServerUrlFromConfig) {
     // replace origin in debug mode
-    const clientData = JSON.parse(new TextDecoder().decode(userCredentials.response.clientDataJSON));
+    const clientData = JSON.parse(new TextDecoder().decode(credential.response.clientDataJSON));
     clientData.origin = baseServerUrlFromConfig;
 
     // convert back to arraybuffer
@@ -65,20 +64,21 @@ function buildLoginOptionsWith(userCredentials) {
     const uint8Array = encoder.encode(JSON.stringify(clientData));
     clientDataJSON = uint8Array.buffer;
   } else {
-    clientDataJSON = userCredentials.response.clientDataJSON;
+    clientDataJSON = credential.response.clientDataJSON;
   }
 
   const body = {
+    id: credential.id,
     response: {
       clientDataJSON: base64url.encode(clientDataJSON),
-      attestationObject: base64url.encode(userCredentials.response.attestationObject),
-    },
+      authenticatorData: base64url.encode(credential.response.authenticatorData),
+      signature: base64url.encode(credential.response.signature),
+      userHandle: credential.response.userHandle ? base64url.encode(credential.response.userHandle) : null
+    }
+  };
+  if (credential.authenticatorAttachment) {
+    body.authenticatorAttachment = credential.authenticatorAttachment;
   }
-
-  if (userCredentials.response.getTransports) {
-    body.response.transports = userCredentials.response.getTransports()
-  }
-
   return body
 }
 
